@@ -3,6 +3,7 @@ The official GitHub repository for ZBot, a multi-purpose bot you can use in your
 [Discord Server](https://discord.gg/6tkn6m5g52)
 
 [Add ZBot to your discord server](https://discord.com/api/oauth2/authorize?client_id=956596792542257192&permissions=8&scope=bot%20applications.commands) with **`Administrator` permission**.<sup>\[1\]</sup>
+
 [Alternative link](https://discord.com/api/oauth2/authorize?client_id=956596792542257192&permissions=1644971949559&scope=bot%20applications.commands) using **all other permissions**, if you __don't__ have `Administrator` perms.<sup>\[2\]</sup>
 
 ## Features
