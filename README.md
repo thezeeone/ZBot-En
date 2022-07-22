@@ -70,4 +70,4 @@ Want to contribute?
 - Problem? Bug? Bot working unexpectedly? **Report in the [Issues](https://github.com/Zahid556/ZBot/issues) page** to get it sorted!
 - Join the **[ZBot Discord Server](https://discord.gg/6tkn6m5g52) for further help**
 
-<sup>[1][2]</sup>For you to be able to add the bot to the server, you **__must__ have** the **`Manage Server` permission** and you need to share some permissions you have with the permissions the bot requests, for the bot to be able to have permissions in that server. Examples:
+<sup>[1][2]</sup>*For you to be able to add the bot to the server, you **__must__ have** the **`Manage Server` permission** and you need to share some permissions you have with the permissions the bot requests, for the bot to be able to have permissions in that server.*
