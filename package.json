@@ -2,7 +2,7 @@
   "name": "zhbot",
   "version": "1.0.0",
   "engines": {
-     "version": "17.8.0"
+     "version": "17.x"
   },
   "description": "",
   "main": "index.js",
