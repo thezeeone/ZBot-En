@@ -62,21 +62,88 @@ const banCommand: Cmd = {
         if (subcmd === "remove") {
             // Remove a user's ban
 
-            const user = (<ChatInputCommandInteraction<"cached">>interaction).options.getUser('user')
-            const reason = (<ChatInputCommandInteraction<"cached">>interaction).options.getString('reason')
+            // Input
+            const user = interaction.options.getUser('user')
+            const reason = interaction.options.getString('reason')
+
+            // Check if the user exists
             if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
-            interaction.guild.bans.fetch({ user })
-            .then(
-                async () => {
-                    await interaction.guild.bans.remove(user, `Unbanned by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without reason'}`)
-                    return await interaction.reply(`Successfully unbanned ${Formatters.bold(user.tag)} (${Formatters.inlineCode(user.id)}) from this server ${reason ? `with reason ${Formatters.bold(reason)}` : 'without a reason'}. They can now rejoin using an existing invite.`)
-                }
-            )
-            .catch(
-                async () => {
-                    return await interaction.reply({ content: 'That user isn\'t banned.', ephemeral: true })
-                }
-            )
+
+            // Check if the user is already banned
+            if (!interaction.guild.bans.cache.has(user.id)) return await interaction.reply({ content: 'That user isn\'t banned!', ephemeral: true })
+
+            // Required permissions
+            const perms = new PermissionsBitField('BanMembers').toArray()
+
+            if (
+                !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
+            ) {
+                return await interaction.reply({
+                    content: `Bot is missing permissions.\nThis command requires the bot to have the ${
+                        perms
+                        .map(
+                            s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                        )    
+                    } ${
+                        pluralisation(
+                            perms.length,
+                            'permission'
+                        )    
+                    }. The bot is missing ${
+                        Formatters.bold('this permission')
+                    }.`    
+                })    
+            }
+
+            // Check if the user exists
+            if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
+
+            // Unban the user
+            user.send(`You have been unbanned from ${
+                Formatters.bold(interaction.guild.name)
+            } ${
+                reason 
+                ? `with reason ${Formatters.bold(reason)}` 
+                : 'without a reason'
+            }.`)
+            .then(async () => {
+                await interaction.reply({
+                    content: `Successfully unbanned ${
+                        Formatters.bold(user.tag)
+                    } (${
+                        Formatters.inlineCode(user.id)
+                    }) from the server ${
+                        reason
+                        ? `with reason ${Formatters.bold(reason)}`
+                        : 'without a reason'
+                    }.`
+                })
+            })
+            .catch(async () => {
+                await interaction.reply({
+                    content: `Successfully unbanned ${
+                        Formatters.bold(user.tag)
+                    } (${
+                        Formatters.inlineCode(user.id)
+                    }) from the server ${
+                        reason
+                        ? `with reason ${Formatters.bold(reason)}`
+                        : 'without a reason'
+                    }. I could not DM them.`
+                })
+            })
+            .finally(async () => {
+                await interaction.guild.members.unban(user, `Unbanned by ${
+                        interaction.user.tag
+                    } (${
+                        interaction.user.id
+                    }) ${
+                        reason 
+                        ? `with reason ${reason}` 
+                        : 'without a reason'
+                    }.`
+                )
+            })
         } else {
             // Ban a user/member
 
