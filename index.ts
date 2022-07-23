@@ -33,9 +33,6 @@ const client = new Client({
 client.on('ready', async () => {
     console.log('Client is now ready!')
     
-    const guild = client.guilds.cache.get('988857660109643836') as Guild
-    const guild2 = client.guilds.cache.get('990290773746532392') as Guild
-
     sequelize.authenticate().then(() => {
         console.log("Successfully connected to database")
     })
@@ -44,18 +41,10 @@ client.on('ready', async () => {
         console.log("Synchronised all models successfully")
     });
 
-    [guild, guild2].forEach(async guild => {
-        (await guild.commands.fetch()).filter(c => !commands.some(s => s.data.name === c.name)).forEach(async (cmd) => {
-            await cmd.delete()
-        });
-    })
-
-    commands.forEach(async (cmd) => {  
-        await guild.commands.create(cmd.data)
-        .catch((error: Error) => console.log(`Error while creating command ${cmd.data.name}:\n\n${error}`))
-        await guild2.commands.create(cmd.data)
-        .catch((error: Error) => console.log(`Error while creating command ${cmd.data.name}:\n\n${error}`))
-    })
+    // Global
+    (<ClientApplication>client.application).commands.set(
+        commands.map(c => c.data)
+    )
 })
 
 client.on('interactionCreate', (interaction) => {
