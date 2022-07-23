@@ -1,4 +1,5 @@
-import { Formatters, ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType } from "discord.js"
+import { Formatters, ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField } from "discord.js"
+import { commaList, ordinalNumber, pluralisation } from "../util"
 import { Cmd } from "./command-exports"
 
 const timeoutCommand: Cmd = {
@@ -83,10 +84,71 @@ const timeoutCommand: Cmd = {
 
         if (sc === "set") {
             const member = (<ChatInputCommandInteraction<"cached">>interaction).options.getMember("member")
+
+            // Check if the member is in the server
             if (!member) return await interaction.reply({
-                content: 'Member is not in this server',
+                content: 'Cannot find that member.',
                 ephemeral: true
             })
+
+            // Check if the bot's highest role is higher than the member's highest
+            if (member.roles.highest.position >= (<GuildMember>interaction.guild.members.me).roles.highest.position) {
+                const memberRolePos = member.roles.highest.position
+                const botRolePos = (<GuildMember>interaction.guild.members.me).roles.highest.position
+                const numRoles = interaction.guild.roles.cache.size - 1
+                return await interaction.reply({
+                    content: `I cannot timeout ${
+                        Formatters.bold(member.user.tag)
+                    } (${
+                        Formatters.inlineCode(member.id)
+                    }) because their highest role (${
+                        Formatters.inlineCode(member.roles.highest.name)
+                    }, ${
+                        numRoles - memberRolePos === 0 ? 'highest role' : `${
+                            Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
+                        } highest role`
+                    }) is higher than or the same as my highest role (${
+                        Formatters.inlineCode((<GuildMember>interaction.guild.members.me).roles.highest.name)
+                    }, ${
+                        memberRolePos === botRolePos 
+                        ? 'same role' 
+                        : `${memberRolePos - botRolePos} ${pluralisation(memberRolePos - botRolePos, 'role')} higher`
+                    }).`,
+                    ephemeral: true
+                })
+            }
+
+            // Required permissions
+            const perms = new PermissionsBitField('ModerateMembers').toArray()
+
+            if (
+                !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
+            ) {
+                return await interaction.reply({
+                    content: `Bot is missing permissions.\nThis command requires the bot to have the ${
+                        perms
+                        .map(
+                            s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                        )
+                    } ${
+                        pluralisation(
+                            perms.length,
+                            'permission'
+                        )
+                    }. The bot is missing ${
+                        Formatters.bold('this permission')
+                    }.`
+                })
+            }
+
+            // Check if the member is manageable apart from any other conditions
+            // This will stop the bot from throwing errors when it kicks the member afterwards
+            if (!member.moderatable) return await interaction.reply({
+                content: 'This member is unmoderateable/untimeoutable.',
+                ephemeral: true
+            })
+
+            // Calculate the number of days, hours, minutes, seconds
             const [
                 days,
                 hours,
@@ -98,12 +160,18 @@ const timeoutCommand: Cmd = {
                 (<ChatInputCommandInteraction<"cached">>interaction).options.getInteger('minutes', false) || 0,
                 (<ChatInputCommandInteraction<"cached">>interaction).options.getInteger('seconds', false) || 0
             ]
+
+            // Check if it adds up to a value
             if (days + hours + minutes + seconds === 0) return await interaction.reply({
                 content: 'You must provide a duration!',
                 ephemeral: true
             })
+
+            // Input
             const reason = (<ChatInputCommandInteraction<"cached">>interaction).options.getString('reason', false)
 
+            // CONFIRMATION
+            // Buttons
             const [
                 yesButton,
                 noButton
@@ -121,18 +189,15 @@ const timeoutCommand: Cmd = {
             const confirmationRow = new ActionRowBuilder<ButtonBuilder>()
             .addComponents([yesButton, noButton])
 
+            // Check if the user wants to timeout
             await interaction.reply({
                 content: `Are you sure you would like to timeout ${
                     Formatters.bold(member.user.tag)
                 } (${Formatters.inlineCode(member.user.id)}) for a duration of ${Formatters.bold(
-                    [days, hours, minutes, seconds]
-                    .map(
-                        (n, i) => n === 1 
-                        ? `1 ${["days", "hours", "minutes", "seconds"][i]}` 
-                        : `${n} ${["days", "hours", "minutes", "seconds"][i]}`
+                    commaList(
+                        [days, hours, minutes, seconds]
+                        .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
                     )
-                    .filter(s => !s.startsWith('0'))
-                    .join(' ')
                 )} ${
                     reason 
                     ? `with reason ${Formatters.bold(reason)}` 
@@ -159,27 +224,59 @@ const timeoutCommand: Cmd = {
                     original.edit({
                         components: [ confirmationRow ]
                     })
-                    try {
-                        member.timeout(
-                            1000 * (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds),
-                            `Timed out by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason: ${reason}` : 'without reason'}`
-                        )
-                        return await button.reply(`Successfully timed out ${
-                            Formatters.bold(member.user.tag)
-                        } (${Formatters.inlineCode(member.user.id)}) for a duration of ${
-                            Formatters.bold(
-                                [days, hours, minutes, seconds]
-                                .map(
-                                    (n, i) => n === 1 
-                                    ? `1 ${["days", "hours", "minutes", "seconds"][i]}` 
-                                    : `${n} ${["days", "hours", "minutes", "seconds"][i]}`
+                    // Directly message the member and reply, if it doesn't work the bot will inform, and kick anyways
+                    member.send(`You have been timed out in ${
+                        Formatters.bold(interaction.guild.name)
+                    } ${
+                        reason 
+                        ? `with reason ${Formatters.bold(reason)}` 
+                        : 'without a reason'
+                    }.`)
+                    .then(async () => {
+                        await interaction.reply({
+                            content: `Successfully timed out ${
+                                Formatters.bold(member.user.tag)
+                            } (${
+                                Formatters.inlineCode(member.id)
+                            }) ${
+                                reason
+                                ? `with reason ${Formatters.bold(reason)}`
+                                : 'without a reason'
+                            }, for a duration of ${Formatters.bold(
+                                commaList(
+                                    [days, hours, minutes, seconds]
+                                    .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
                                 )
-                                .filter(s => !s.startsWith('0'))
-                                .join(' '))
-                            } ${reason ? `with reason ${Formatters.bold(reason)}` : 'without reason'}.`)
-                        } catch (error) {
-                            return await button.reply('Unable to timeout this member.')
-                        }
+                            )}.`
+                        })
+                    })
+                    .catch(async () => {
+                        await interaction.reply({
+                            content: `Successfully timed out ${
+                                Formatters.bold(member.user.tag)
+                            } (${
+                                Formatters.inlineCode(member.id)
+                            }) ${
+                                reason
+                                ? `with reason ${Formatters.bold(reason)}`
+                                : 'without a reason'
+                            }, for a duration of ${Formatters.bold(
+                                commaList(
+                                    [days, hours, minutes, seconds]
+                                    .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
+                                )
+                            )}. I could not DM them.`
+                        })
+                    })
+                    .finally(async () => {
+                        await member.timeout(
+                            1000 * (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds),
+                            `Timed out by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without reason'} for a duration of ${commaList(
+                                [days, hours, minutes, seconds]
+                                .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
+                            )}`
+                        )
+                    })
                 } else {
                     const original = await interaction.fetchReply()
                     yesButton.setDisabled(true)
@@ -197,19 +294,85 @@ const timeoutCommand: Cmd = {
                     yesButton.setDisabled(true)
                     noButton.setDisabled(true)
                     original.edit({
-                        content: 'Time is up.',
+                        content: 'Didn\'t receive a response in time.',
                         components: [ confirmationRow ]
                     })
                     return await interaction.followUp('Took too long for a response.')
                 }
             })
         } else {
-            const member = (<ChatInputCommandInteraction<"cached">>interaction).options.getMember("member")
+            // Input
+            const member = interaction.options.getMember('member')
+            const reason = interaction.options.getString('reason')
+
+            // Check if the member is in the server
             if (!member) return await interaction.reply({
-                content: 'Member is not in this server',
+                content: 'Cannot find that member.',
                 ephemeral: true
             })
-            const reason = (<ChatInputCommandInteraction<"cached">>interaction).options.getString('reason', false)
+
+            // Check if the bot's highest role is higher than the member's highest
+            if (member.roles.highest.position >= (<GuildMember>interaction.guild.members.me).roles.highest.position) {
+                const memberRolePos = member.roles.highest.position
+                const botRolePos = (<GuildMember>interaction.guild.members.me).roles.highest.position
+                const numRoles = interaction.guild.roles.cache.size - 1
+                return await interaction.reply({
+                    content: `I cannot remove the timeout for ${
+                        Formatters.bold(member.user.tag)
+                    } (${
+                        Formatters.inlineCode(member.id)
+                    }) because their highest role (${
+                        Formatters.inlineCode(member.roles.highest.name)
+                    }, ${
+                        numRoles - memberRolePos === 0 ? 'highest role' : `${
+                            Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
+                        } highest role`
+                    }) is higher than or the same as my highest role (${
+                        Formatters.inlineCode((<GuildMember>interaction.guild.members.me).roles.highest.name)
+                    }, ${
+                        memberRolePos === botRolePos 
+                        ? 'same role' 
+                        : `${memberRolePos - botRolePos} ${pluralisation(memberRolePos - botRolePos, 'role')} higher`
+                    }).`,
+                    ephemeral: true
+                })
+            }
+
+            // Required permissions
+            const perms = new PermissionsBitField('ModerateMembers').toArray()
+
+            if (
+                !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
+            ) {
+                return await interaction.reply({
+                    content: `Bot is missing permissions.\nThis command requires the bot to have the ${
+                        perms
+                        .map(
+                            s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                        )
+                    } ${
+                        pluralisation(
+                            perms.length,
+                            'permission'
+                        )
+                    }. The bot is missing ${
+                        Formatters.bold('this permission')
+                    }.`
+                })
+            }
+
+            // Check if the member is manageable apart from any other conditions
+            // This will stop the bot from throwing errors when it kicks the member afterwards
+            if (!member.moderatable) return await interaction.reply({
+                content: 'This member is unmoderateable/untimeoutable.',
+                ephemeral: true
+            })
+
+            // A final check to ensure the member IS timed out
+            if (!member.communicationDisabledUntil) return await interaction.reply({
+                content: 'This user is not timed out.',
+                ephemeral: true
+            })
          
             const [
                 yesButton,
@@ -235,7 +398,9 @@ const timeoutCommand: Cmd = {
                     reason 
                     ? `with reason ${Formatters.bold(reason)}` 
                     : `without a reason`
-                }? A response is required ${Formatters.time(Math.floor(Date.now()/1000) + 120, 'R')}.`,                
+                }? The user's timeout ends ${
+                    Formatters.time(member.communicationDisabledUntil, 'R')
+                }.\nA response is required ${Formatters.time(Math.floor(Date.now()/1000) + 120, 'R')}.`,                
                 components: [ confirmationRow ]
             })
 
@@ -257,15 +422,45 @@ const timeoutCommand: Cmd = {
                     original.edit({
                         components: [ confirmationRow ]
                     })
-                    try {
-                        member.timeout(
+                    member.send(`Your timeout has been removed in ${
+                        Formatters.bold(interaction.guild.name)
+                    } ${
+                        reason 
+                        ? `with reason ${Formatters.bold(reason)}` 
+                        : 'without a reason'
+                    }.`)
+                    .then(async () => {
+                        await interaction.reply({
+                            content: `Successfully removed timeout for ${
+                                Formatters.bold(member.user.tag)
+                            } (${
+                                Formatters.inlineCode(member.id)
+                            }) ${
+                                reason
+                                ? `with reason ${Formatters.bold(reason)}`
+                                : 'without a reason'
+                            }.`
+                        })
+                    })
+                    .catch(async () => {
+                        await interaction.reply({
+                            content: `Successfully removed timeout for ${
+                                Formatters.bold(member.user.tag)
+                            } (${
+                                Formatters.inlineCode(member.id)
+                            }) ${
+                                reason
+                                ? `with reason ${Formatters.bold(reason)}`
+                                : 'without a reason'
+                            }. I could not DM them.`
+                        })
+                    })
+                    .finally(async () => {
+                        await member.timeout(
                             null,
-                            `Timed out by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason: ${reason}` : 'without reason'}`
+                            `Timed out by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without reason'}`
                         )
-                        return await interaction.followUp(`Successfully removed timeout for ${Formatters.bold(member.user.tag)} (${Formatters.inlineCode(member.user.id)}) ${reason ? `with reason ${Formatters.bold(reason)}` : 'without reason'}.`)
-                    } catch (error) {
-                        return await interaction.followUp('Unable to remove timeout from member.')
-                    }
+                    })
                 } else {
                     const original = await interaction.fetchReply()
                     yesButton.setDisabled(true)

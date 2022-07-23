@@ -1,10 +1,12 @@
-import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, ContextMenuCommandInteraction } from "discord.js";
+import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, UserResolvable } from "discord.js";
 
 interface Cmd {
     data: ApplicationCommandData,
     permissions?: ApplicationCommandPermissionType[],
     execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">): any
 }
+
+const queue = new Collection<UserResolvable, string>()
 
 import { rankCommand } from "./rank";
 import { leaderboardCommand } from "./leaderboard";
@@ -14,10 +16,10 @@ import { banCommand } from "./ban";
 import { tttCommand } from "./tictactoe";
 import { gtwCommand } from "./guesstheword";
 import { memoryGameCommand } from "./memorygame";
-import { ytVidCommand } from "./ytvid";
 
 export {
     Cmd,
+    queue,
     rankCommand,
     leaderboardCommand,
     timeoutCommand,
@@ -25,6 +27,5 @@ export {
     banCommand,
     tttCommand,
     gtwCommand,
-    memoryGameCommand,
-    ytVidCommand
+    memoryGameCommand
 }

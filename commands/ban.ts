@@ -1,4 +1,5 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters } from "discord.js"
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters, GuildMember, PermissionsBitField } from "discord.js"
+import { ordinalNumber, pluralisation } from "../util"
 import { Cmd } from "./command-exports"
 
 const banCommand: Cmd = {
@@ -55,41 +56,227 @@ const banCommand: Cmd = {
         ]
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
+        // Input
         const subcmd = (<ChatInputCommandInteraction<"cached">>interaction).options.getSubcommand(true) as "set" | "remove"
 
         if (subcmd === "remove") {
-            const user = (<ChatInputCommandInteraction<"cached">>interaction).options.getUser('user', true)
-            const reason = (<ChatInputCommandInteraction<"cached">>interaction).options.getString('reason')
+            // Remove a user's ban
+
+            // Input
+            const user = interaction.options.getUser('user')
+            const reason = interaction.options.getString('reason')
+
+            // Check if the user exists
             if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
-            interaction.guild.bans.fetch({ user })
-            .then(
-                async () => {
-                    await interaction.guild.bans.remove(user, `Unbanned by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without reason'}`)
-                    return await interaction.reply(`Successfully unbanned ${Formatters.bold(user.tag)} (${Formatters.inlineCode(user.id)}) from this server ${reason ? `with reason ${Formatters.bold(reason)}` : 'without a reason'}. They can now rejoin using an existing invite.`)
-                }
-            )
-            .catch(
-                async () => {
-                    return await interaction.reply({ content: 'That user isn\'t banned.', ephemeral: true })
-                }
-            )
+
+            // Check if the user is already banned
+            if (!interaction.guild.bans.cache.has(user.id)) return await interaction.reply({ content: 'That user isn\'t banned!', ephemeral: true })
+
+            // Required permissions
+            const perms = new PermissionsBitField('BanMembers').toArray()
+
+            if (
+                !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
+            ) {
+                return await interaction.reply({
+                    content: `Bot is missing permissions.\nThis command requires the bot to have the ${
+                        perms
+                        .map(
+                            s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                        )    
+                    } ${
+                        pluralisation(
+                            perms.length,
+                            'permission'
+                        )    
+                    }. The bot is missing ${
+                        Formatters.bold('this permission')
+                    }.`    
+                })    
+            }
+
+            // Check if the user exists
+            if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
+
+            // Unban the user
+            user.send(`You have been unbanned from ${
+                Formatters.bold(interaction.guild.name)
+            } ${
+                reason 
+                ? `with reason ${Formatters.bold(reason)}` 
+                : 'without a reason'
+            }.`)
+            .then(async () => {
+                await interaction.reply({
+                    content: `Successfully unbanned ${
+                        Formatters.bold(user.tag)
+                    } (${
+                        Formatters.inlineCode(user.id)
+                    }) from the server ${
+                        reason
+                        ? `with reason ${Formatters.bold(reason)}`
+                        : 'without a reason'
+                    }.`
+                })
+            })
+            .catch(async () => {
+                await interaction.reply({
+                    content: `Successfully unbanned ${
+                        Formatters.bold(user.tag)
+                    } (${
+                        Formatters.inlineCode(user.id)
+                    }) from the server ${
+                        reason
+                        ? `with reason ${Formatters.bold(reason)}`
+                        : 'without a reason'
+                    }. I could not DM them.`
+                })
+            })
+            .finally(async () => {
+                await interaction.guild.members.unban(user, `Unbanned by ${
+                        interaction.user.tag
+                    } (${
+                        interaction.user.id
+                    }) ${
+                        reason 
+                        ? `with reason ${reason}` 
+                        : 'without a reason'
+                    }.`
+                )
+            })
         } else {
-            const user = (<ChatInputCommandInteraction<"cached">>interaction).options.getUser('user', true)
-            const reason = (<ChatInputCommandInteraction<"cached">>interaction).options.getString('reason')
+            // Ban a user/member
+
+            const user = interaction.options.getUser('user', true)
+            const reason = interaction.options.getString('reason')
+            const userAsMember = interaction.guild.members.cache.get(user.id)
+            const days = interaction.options.getInteger('clear') || 0
+
+            if (userAsMember) {
+                // Check if the bot's highest role is higher than the member's highest, IF the member is in the server
+                if (userAsMember.roles.highest.position >= (<GuildMember>interaction.guild.members.me).roles.highest.position) {
+                    const memberRolePos = userAsMember.roles.highest.position
+                    const botRolePos = (<GuildMember>interaction.guild.members.me).roles.highest.position
+                    const numRoles = interaction.guild.roles.cache.size - 1
+                    return await interaction.reply({
+                        content: `I cannot ban ${
+                            Formatters.bold(userAsMember.user.tag)
+                        } (${
+                            Formatters.inlineCode(userAsMember.id)
+                        }) because their highest role (${
+                            Formatters.inlineCode(userAsMember.roles.highest.name)
+                        }, ${
+                            numRoles - memberRolePos === 0 ? 'highest role' : `${
+                                Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            } highest role`
+                        }) is higher than or the same as my highest role (${
+                            Formatters.inlineCode((<GuildMember>interaction.guild.members.me).roles.highest.name)
+                        }, ${
+                            memberRolePos === botRolePos 
+                            ? 'same role' 
+                            : `${memberRolePos - botRolePos} ${pluralisation(memberRolePos - botRolePos, 'role')} higher`
+                        }).`,
+                        ephemeral: true
+                    })
+                }
+
+                // Check if the member is bannable apart from any other conditions
+                // This will stop the bot from throwing errors when it bans the member afterwards
+                if (!userAsMember.bannable) return await interaction.reply({
+                    content: 'This member is unbannable.',
+                    ephemeral: true
+                })
+            }
+            
+            // Check if the user exists
             if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
+
+            // Check if the user is already banned
             if (interaction.guild.bans.cache.has(user.id)) return await interaction.reply({ content: 'That user has already been banned!', ephemeral: true })
-            interaction.guild.bans.create(user, { deleteMessageDays: (<ChatInputCommandInteraction<"cached">>interaction).options.getInteger('days') || 0, reason: `Banned by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without reason'}` })
-            .then(
-                async () => {
-                    await interaction.guild.bans.remove(user)
-                    return await interaction.reply(`Successfully banned ${Formatters.bold(user.tag)} (${Formatters.inlineCode(user.id)}) from this server ${reason ? `with reason ${Formatters.bold(reason)}` : 'without a reason'}. They are unable to join this server until they are unbanned.`)
-                }
-            )
-            .catch(
-                async () => {
-                    return await interaction.reply({ content: 'Unable to ban that user.', ephemeral: true })
-                }
-            )
+
+            // Required permissions
+            const perms = new PermissionsBitField('BanMembers').toArray()
+
+            if (
+                !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
+            ) {
+                return await interaction.reply({
+                    content: `Bot is missing permissions.\nThis command requires the bot to have the ${
+                        perms
+                        .map(
+                            s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                        )    
+                    } ${
+                        pluralisation(
+                            perms.length,
+                            'permission'
+                        )    
+                    }. The bot is missing ${
+                        Formatters.bold('this permission')
+                    }.`    
+                })    
+            }    
+
+            // Directly message the user (if possible) and reply, if it doesn't work the bot will inform, and ban anyways
+            user.send(`You have been banned from ${
+                Formatters.bold(interaction.guild.name)
+            } ${
+                reason 
+                ? `with reason ${Formatters.bold(reason)}` 
+                : 'without a reason'
+            }.`)
+            .then(async () => {
+                await interaction.reply({
+                    content: `Successfully banned ${
+                        Formatters.bold(user.tag)
+                    } (${
+                        Formatters.inlineCode(user.id)
+                    }) from the server ${
+                        reason
+                        ? `with reason ${Formatters.bold(reason)}`
+                        : 'without a reason'
+                    }${
+                        days === 0
+                        ? '. **No message history** has been cleared'
+                        : `, clearing **${Formatters.inlineCode(pluralisation(days, 'day'))} of message history**`
+                    }.`
+                })
+            })
+            .catch(async () => {
+                await interaction.reply({
+                    content: `Successfully banned ${
+                        Formatters.bold(user.tag)
+                    } (${
+                        Formatters.inlineCode(user.id)
+                    }) from the server ${
+                        reason
+                        ? `with reason ${Formatters.bold(reason)}`
+                        : 'without a reason'
+                    }${
+                        days === 0
+                        ? '. **No message history** has been cleared'
+                        : `, clearing **${Formatters.inlineCode(pluralisation(days, 'day'))} of message history**`
+                    }. I could not DM them.`
+                })
+            })
+            .finally(async () => {
+                await interaction.guild.bans.create(user, {
+                    deleteMessageDays: days,
+                    reason: `Banned by ${
+                        interaction.user.tag
+                    } (${
+                        interaction.user.id
+                    }) ${
+                        reason 
+                        ? `with reason ${reason}` 
+                        : 'without a reason'
+                    }. ${
+                        days === 0 
+                        ? 'No message history cleared' 
+                        : `${pluralisation(days, 'day')} of message history cleared`
+                    }.`
+                })
+            })
         }
     }
 }
