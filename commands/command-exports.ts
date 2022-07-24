@@ -1,4 +1,4 @@
-import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, UserResolvable } from "discord.js";
+import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, ContextMenuCommandInteraction } from "discord.js";
 
 interface Cmd {
     data: ApplicationCommandData,
@@ -17,6 +17,8 @@ import { tttCommand } from "./tictactoe";
 import { gtwCommand } from "./guesstheword";
 import { memoryGameCommand } from "./memorygame";
 import { playCommand } from "./play";
+import { skipCommand } from "./skip";
+import { stopCommand } from "./stop";
 
 export {
     Cmd,
@@ -29,5 +31,7 @@ export {
     tttCommand,
     gtwCommand,
     memoryGameCommand,
-    playCommand
+    playCommand,
+    skipCommand,
+    stopCommand
 }
