@@ -16,7 +16,7 @@ const playCommand: Cmd = {
 		]
 	},
 	async execute(interaction: ChatInputCommandInteraction<"cached">): {
-		// get the voice channel of the member
+		// Get the voice channel of the member
 		const memberVC = interaction.member.voice?.channelId
 
 		// if the member is not in VC, throw back a message informing the user
@@ -25,9 +25,11 @@ const playCommand: Cmd = {
 			ephemeral: true
 		})
 		
-		// get the link
+		// Get the link
 		const link = interaction.options.getString('yt-vid')
 		
+		// Regex
+		// /(?:(?:https?:)?\/\/)?(?:(?:www\.|m\.)?youtube(?:-nocookie)?\.com|youtu.be)\/(?:watch\?v=([\w-]+)|embed\/([\w-]+)|v\/([\w-]+)|([\w-]+))/gm
 	}
 }
 
