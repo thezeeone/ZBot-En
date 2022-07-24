@@ -29,6 +29,8 @@ Keep your server alive with a level system that encourages members to talk and u
 #### **Slash Commands**
 - `/rank`               **Rank** \- Check your rank. *(Displays **level**, **experience points** and **number of experience points required to reach the next level**)*
 - `/leaderboard`        **Leaderboard** \- Check the global leaderboard.
+### Music
+*Coming soon!*
 
 ## Resources
 ### Core
@@ -69,7 +71,7 @@ This bot uses discord.js and typescript.
 ### Other packages
 - **dotenv**, if you want to keep sensitive information safe from anyone when publishing your files in public.
     - [NPM package](https://www.npmjs.com/package/dotenv)
-    
+
 ## Much more to be added
 Want to contribute?
 - Head to the **[Pull Request (PR)](https://github.com/Zahid556/ZBot/pulls) page** to suggest a new feature
