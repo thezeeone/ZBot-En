@@ -1,4 +1,7 @@
 # ZBot-En
+*هذه هي النسخة الإنجليزية لهذا الآلة. للنسخة العربية، [انقر على هذا الرابط](https://github.com/Zahid556/ZBot-Ar).*
+*Esta es la versión inglesda de este bot. Para la versión español, [haz click en este enlace](https://www.youtube.com/watch?v=eOkTvqRAmHM).*
+
 The official GitHub repository for ZBot, a multi-purpose bot you can use in your server. (English)
 [Discord Server](https://discord.gg/6tkn6m5g52)
 
