@@ -2,7 +2,7 @@ import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInpu
 import { config } from "dotenv"
 config()
 
-import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand } from "./commands/command-exports"
+import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, playCommand } from "./commands/command-exports"
 import { sequelize, LevelModel } from "./database"
 
 const commands: Cmd[] = [
@@ -14,6 +14,7 @@ const commands: Cmd[] = [
     tttCommand,
     gtwCommand,
     memoryGameCommand,
+    playCommand
 ]
 
 const client = new Client({
