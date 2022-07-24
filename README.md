@@ -1,5 +1,5 @@
-# ZBot
-The official GitHub repository for ZBot, a multi-purpose bot you can use in your server.
+# ZBot-En
+The official GitHub repository for ZBot, a multi-purpose bot you can use in your server. (English)
 [Discord Server](https://discord.gg/6tkn6m5g52)
 
 [Add ZBot to your discord server](https://discord.com/api/oauth2/authorize?client_id=956596792542257192&permissions=8&scope=bot%20applications.commands) with **`Administrator` permission**.<sup>\[1\]</sup>
