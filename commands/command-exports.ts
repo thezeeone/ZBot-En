@@ -16,6 +16,7 @@ import { banCommand } from "./ban";
 import { tttCommand } from "./tictactoe";
 import { gtwCommand } from "./guesstheword";
 import { memoryGameCommand } from "./memorygame";
+import { playCommand } from "./play";
 
 export {
     Cmd,
@@ -27,5 +28,6 @@ export {
     banCommand,
     tttCommand,
     gtwCommand,
-    memoryGameCommand
+    memoryGameCommand,
+    playCommand
 }
