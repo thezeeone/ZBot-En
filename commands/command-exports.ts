@@ -1,4 +1,4 @@
-import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, ContextMenuCommandInteraction } from "discord.js";
+import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, UserResolvable } from "discord.js";
 
 interface Cmd {
     data: ApplicationCommandData,
