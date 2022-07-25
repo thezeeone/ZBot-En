@@ -1,4 +1,4 @@
-import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ApplicationCommand, ClientApplication } from "discord.js"
+import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ApplicationCommand, ClientApplication, ApplicationCommandPermissionType, User } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
@@ -52,10 +52,25 @@ client.on('ready', async () => {
     );
 
     // Private
-    (<ClientApplication>client.application).commands.set(
-        privateCommands.map(p => p.data),
-        '1000073833551769600'
-    )
+    (await
+        (<ClientApplication>client.application).commands.set(
+            privateCommands.map(p => p.data),
+            '1000073833551769600'
+        )
+    ).forEach((cmd) => {
+        if (cmd.permissions) {
+            cmd.permissions.set({
+                permissions: [
+                    {
+                        id: (<User>(<ClientApplication>client.application).owner).id,
+                        type: ApplicationCommandPermissionType.User,
+                        permission: true
+                    }
+                ],
+                token: process.env.TOKEN as string
+            })
+        }
+    });
 })
 
 client.on('interactionCreate', async (interaction): Promise<any> => {
