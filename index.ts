@@ -1,4 +1,4 @@
-import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction } from "discord.js"
+import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ApplicationCommand } from "discord.js"
 import { config } from "dotenv"
 config()
 
