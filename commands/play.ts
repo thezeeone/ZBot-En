@@ -45,7 +45,7 @@ const playCommand: Cmd = {
 		const link = interaction.options.getString('yt-vid') as string
 		
 		// Get the actual video ID itself (for the purpose of files)
-		const vidId = link.match(/(?:(?:https?:)?\/\/)?(?:(?:www\.|m\.)?youtube(?:-nocookie)?\.com|youtu.be)\/(?:watch\?v=([\w-]+)|embed\/([\w-]+)|v\/([\w-]+)|([\w-]+))/gm)?.[0]
+		const vidId = link.match(/(?:(?:https?:)?\/\/)?(?:(?:www\.|m\.)?youtube(?:-nocookie)?\.com|youtu.be)\/(?:watch\?v=([\w-]+)|embed\/([\w-]+)|v\/([\w-]+)|([\w-]+))/gm)?.[1]
 
 		// Test the URL against a regex to see if it's valid.
 		if (!vidId) return await interaction.reply({
