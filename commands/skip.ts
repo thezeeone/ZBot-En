@@ -69,7 +69,7 @@ const skipCommand: Cmd = {
 
       // Edit the reply
       
-      const resource = createAudioResource(join(__dirname, queue.first()))
+      const resource = createAudioResource(join(__dirname, queue.first() as string))
       
       // Play the user's song
       player.play(resource)
