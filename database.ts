@@ -10,6 +10,10 @@ interface LevelModel extends Model<InferAttributes<LevelModel>, InferCreationAtt
     lvl: number
 }
 
+interface BlacklistModel extends Model<InferAttributes<BlacklistModel>, InferCreationAttributes<BlacklistModel>> {
+    id: string
+}
+
 const LevelModel = sequelize.define<LevelModel>('Levels', {
     id: {
         primaryKey: true,
@@ -23,7 +27,12 @@ const LevelModel = sequelize.define<LevelModel>('Levels', {
     }
 })
 
+const BlacklistModel = sequelize.define<BlacklistModel>('Blacklists', {
+    id: DataTypes.STRING
+})
+
 export {
     sequelize,
-    LevelModel
+    LevelModel,
+    BlacklistModel
 }
