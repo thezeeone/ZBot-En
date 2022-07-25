@@ -1,6 +1,7 @@
 import { AudioPlayerStatus, createAudioPlayer, createAudioResource, getVoiceConnection } from '@discordjs/voice'
 import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters, GuildMember, TextChannel, User, VoiceChannel } from 'discord.js'
 import { Cmd, queue } from './command-exports'
+import { join } from 'node:path'
 
 const skipCommand: Cmd = {
   data: {
@@ -100,7 +101,3 @@ const skipCommand: Cmd = {
 export {
   skipCommand
 }
-function join(__dirname: string, arg1: any): string | import("stream").Readable {
-  throw new Error('Function not implemented.')
-}
-
