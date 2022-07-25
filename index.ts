@@ -1,5 +1,6 @@
-import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ApplicationCommand } from "discord.js"
+import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ApplicationCommand, ClientApplication } from "discord.js"
 import { config } from "dotenv"
+import { blacklistCommand } from "./commands/blacklist"
 config()
 
 import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand } from "./commands/command-exports"
@@ -14,6 +15,10 @@ const commands: Cmd[] = [
     tttCommand,
     gtwCommand,
     memoryGameCommand,
+]
+
+const privateCommands: Cmd[] = [
+    blacklistCommand
 ]
 
 const client = new Client({
@@ -44,6 +49,12 @@ client.on('ready', async () => {
     // Global
     (<ClientApplication>client.application).commands.set(
         commands.map(c => c.data)
+    );
+
+    // Private
+    (<ClientApplication>client.application).commands.set(
+        privateCommands.map(p => p.data),
+        '1000073833551769600'
     )
 })
 
