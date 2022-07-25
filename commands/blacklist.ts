@@ -14,7 +14,9 @@ const blacklistCommand: Cmd = {
 				type: ApplicationCommandOptionType.User,
 				required: true
 			}
-		]
+		],
+		dmPermission: false,
+		defaultMemberPermissions: "0"
 	},
 	async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
 		const user = interaction.options.getUser('user')
