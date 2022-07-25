@@ -69,13 +69,13 @@ const playCommand: Cmd = {
 
 		// Create a file in a directory to be played later
 		ytdl(link)
-			.pipe(createWriteStream(`/Users/zahid/Code Folder/Bots/ZBot-En/ZBot-En/commands/ytfiles/${URL[1]}.mp3`))
+			.pipe(createWriteStream(`/Users/zahid/Code Folder/Bots/ZBot-En/ZBot-En/commands/ytfiles/${vidId}.mp3`))
 
 		// Create a player for the user's audio
 		const player = createAudioPlayer()
 
 		// Create a resource for the player to play
-		const resource = createAudioResource(join(__dirname, `./ytfiles/${URL[1]}.mp3`))
+		const resource = createAudioResource(join(__dirname, `./ytfiles/${vidId}.mp3`))
 
 		// Subscribe to the connection
 		connection.subscribe(player)
@@ -85,7 +85,7 @@ const playCommand: Cmd = {
 		await interaction.reply(`Song (${link}) added to queue.`)
 
 		// Is there something in the queue?
-		if (queue.size) {
+		if (queue.size - 1) {
 			// Leave it to the end
 			await interaction.followUp(`${interaction.user} There are songs in the queue, your song has been placed in the end.`)
 		} else {
