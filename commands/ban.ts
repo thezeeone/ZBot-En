@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters, GuildMember, PermissionsBitField } from "discord.js"
-import { ordinalNumber, pluralisation } from "../util"
+import { ordinalNumber } from "../util"
 import { Cmd } from "./command-exports"
 
 const banCommand: Cmd = {
@@ -84,12 +84,7 @@ const banCommand: Cmd = {
                         .map(
                             s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                         )    
-                    } ${
-                        pluralisation(
-                            perms.length,
-                            'permission'
-                        )    
-                    }. The bot is missing ${
+                    } permission(s). The bot is missing ${
                         Formatters.bold('this permission')
                     }.`    
                 })    
@@ -174,7 +169,7 @@ const banCommand: Cmd = {
                         }, ${
                             memberRolePos === botRolePos 
                             ? 'same role' 
-                            : `${memberRolePos - botRolePos} ${pluralisation(memberRolePos - botRolePos, 'role')} higher`
+                            : `${memberRolePos - botRolePos} role(s) higher`
                         }).`,
                         ephemeral: true
                     })
@@ -206,12 +201,7 @@ const banCommand: Cmd = {
                         .map(
                             s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                         )    
-                    } ${
-                        pluralisation(
-                            perms.length,
-                            'permission'
-                        )    
-                    }. The bot is missing ${
+                    } permission(s). The bot is missing ${
                         Formatters.bold('this permission')
                     }.`    
                 })    
@@ -238,7 +228,7 @@ const banCommand: Cmd = {
                     }${
                         days === 0
                         ? '. **No message history** has been cleared'
-                        : `, clearing **${Formatters.inlineCode(pluralisation(days, 'day'))} of message history**`
+                        : `, clearing **${Formatters.inlineCode(`${days}`)} day(s) of message history**`
                     }.`
                 })
             })
@@ -255,7 +245,7 @@ const banCommand: Cmd = {
                     }${
                         days === 0
                         ? '. **No message history** has been cleared'
-                        : `, clearing **${Formatters.inlineCode(pluralisation(days, 'day'))} of message history**`
+                        : `, clearing **${Formatters.inlineCode(`${days}`)} day(s) of message history**`
                     }. I could not DM them.`
                 })
             })
@@ -273,7 +263,7 @@ const banCommand: Cmd = {
                     }. ${
                         days === 0 
                         ? 'No message history cleared' 
-                        : `${pluralisation(days, 'day')} of message history cleared`
+                        : `${days} day(s) of message history cleared`
                     }.`
                 })
             })

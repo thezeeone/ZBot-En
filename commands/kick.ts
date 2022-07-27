@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters, GuildMember, PermissionsBitField } from "discord.js"
-import { ordinalNumber, pluralisation } from "../util"
+import { ordinalNumber } from "../util"
 import { Cmd } from "./command-exports"
 
 const kickCommand: Cmd = {
@@ -53,7 +53,7 @@ const kickCommand: Cmd = {
                 }, ${
                     memberRolePos === botRolePos 
                     ? 'same role' 
-                    : `${memberRolePos - botRolePos} ${pluralisation(memberRolePos - botRolePos, 'role')} higher`
+                    : `${memberRolePos - botRolePos} role(s) higher`
                 }).`,
                 ephemeral: true
             })
@@ -71,12 +71,7 @@ const kickCommand: Cmd = {
                     .map(
                         s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                     )
-                } ${
-                    pluralisation(
-                        perms.length,
-                        'permission'
-                    )
-                }. The bot is missing ${
+                } permission(s). The bot is missing ${
                     Formatters.bold('this permission')
                 }.`
             })
