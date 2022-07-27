@@ -1,5 +1,5 @@
 import { Formatters, ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField } from "discord.js"
-import { commaList, ordinalNumber, pluralisation } from "../util"
+import { ordinalNumber } from "../util"
 import { Cmd } from "./command-exports"
 
 const timeoutCommand: Cmd = {
@@ -112,7 +112,7 @@ const timeoutCommand: Cmd = {
                     }, ${
                         memberRolePos === botRolePos 
                         ? 'same role' 
-                        : `${memberRolePos - botRolePos} ${pluralisation(memberRolePos - botRolePos, 'role')} higher`
+                        : `${memberRolePos - botRolePos} role(s) higher`
                     }).`,
                     ephemeral: true
                 })
@@ -130,12 +130,7 @@ const timeoutCommand: Cmd = {
                         .map(
                             s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                         )
-                    } ${
-                        pluralisation(
-                            perms.length,
-                            'permission'
-                        )
-                    }. The bot is missing ${
+                    } permission(s). The bot is missing ${
                         Formatters.bold('this permission')
                     }.`
                 })
@@ -194,10 +189,7 @@ const timeoutCommand: Cmd = {
                 content: `Are you sure you would like to timeout ${
                     Formatters.bold(member.user.tag)
                 } (${Formatters.inlineCode(member.user.id)}) for a duration of ${Formatters.bold(
-                    commaList(
-                        [days, hours, minutes, seconds]
-                        .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
-                    )
+                    [days, hours, minutes, seconds].map((i, ind) => `${["day", "hour", "minute", "second"][ind]}${i === 1 ? 's' : ''}`).join(' ')
                 )} ${
                     reason 
                     ? `with reason ${Formatters.bold(reason)}` 
@@ -243,10 +235,7 @@ const timeoutCommand: Cmd = {
                                 ? `with reason ${Formatters.bold(reason)}`
                                 : 'without a reason'
                             }, for a duration of ${Formatters.bold(
-                                commaList(
-                                    [days, hours, minutes, seconds]
-                                    .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
-                                )
+                                [days, hours, minutes, seconds].map((i, ind) => `${["day", "hour", "minute", "second"][ind]}${i === 1 ? 's' : ''}`).join(' ')
                             )}.`
                         })
                     })
@@ -261,20 +250,14 @@ const timeoutCommand: Cmd = {
                                 ? `with reason ${Formatters.bold(reason)}`
                                 : 'without a reason'
                             }, for a duration of ${Formatters.bold(
-                                commaList(
-                                    [days, hours, minutes, seconds]
-                                    .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
-                                )
+                                [days, hours, minutes, seconds].map((i, ind) => `${["day", "hour", "minute", "second"][ind]}${i === 1 ? 's' : ''}`).join(' ')
                             )}. I could not DM them.`
                         })
                     })
                     .finally(async () => {
                         await member.timeout(
                             1000 * (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds),
-                            `Timed out by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without reason'} for a duration of ${commaList(
-                                [days, hours, minutes, seconds]
-                                .map((i, ind) => pluralisation(i, ["day", "hour", "minute", "second"][ind]))
-                            )}`
+                            `Timed out by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without reason'} for a duration of ${[days, hours, minutes, seconds].map((i, ind) => `${["day", "hour", "minute", "second"][ind]}${i === 1 ? 's' : ''}`).join(' ')}`
                         )
                     })
                 } else {
@@ -332,7 +315,7 @@ const timeoutCommand: Cmd = {
                     }, ${
                         memberRolePos === botRolePos 
                         ? 'same role' 
-                        : `${memberRolePos - botRolePos} ${pluralisation(memberRolePos - botRolePos, 'role')} higher`
+                        : `${memberRolePos - botRolePos} role(s) higher`
                     }).`,
                     ephemeral: true
                 })
@@ -350,12 +333,7 @@ const timeoutCommand: Cmd = {
                         .map(
                             s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                         )
-                    } ${
-                        pluralisation(
-                            perms.length,
-                            'permission'
-                        )
-                    }. The bot is missing ${
+                    } permission(s). The bot is missing ${
                         Formatters.bold('this permission')
                     }.`
                 })
