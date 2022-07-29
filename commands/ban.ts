@@ -1,5 +1,5 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters, GuildMember, PermissionsBitField } from "discord.js"
-import { ordinalNumber } from "../util"
+import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField } from "discord.js"
+import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
 const banCommand: Cmd = {
@@ -57,74 +57,176 @@ const banCommand: Cmd = {
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
         // Input
-        const subcmd = (<ChatInputCommandInteraction<"cached">>interaction).options.getSubcommand(true) as "set" | "remove"
+        const subcmd = interaction.options.getSubcommand(true) as "set" | "remove"
+
+        // Avoid repetition
+        const botMember = <GuildMember>interaction.guild.members.me
 
         if (subcmd === "remove") {
             // Remove a user's ban
 
             // Input
-            const user = interaction.options.getUser('user')
-            const reason = interaction.options.getString('reason')
+            const user = interaction.options.getUser('user', true)
+            const reason = interaction.options.getString('reason', true)
 
             // Check if the user exists
-            if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
+            if (!user) return await interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(`${inlineCode('/ban remove')} - User not found`)
+                    .setDescription(`Couldn't find that user.`)
+                    .setColor(0xff0000)
+                ],
+                ephemeral: true
+            })
 
             // Check if the user is already banned
-            if (!interaction.guild.bans.cache.has(user.id)) return await interaction.reply({ content: 'That user isn\'t banned!', ephemeral: true })
+            if (!interaction.guild.bans.cache.has(user.id)) return await interaction.reply({ 
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(`${inlineCode('/ban remove')} - User not banned`)
+                    .setDescription('This user isn\'t banned.')
+                    .setColor(0xff0000)
+                ], 
+                ephemeral: true 
+            })
 
             // Required permissions
             const perms = new PermissionsBitField('BanMembers').toArray()
 
             if (
-                !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
-            ) {
+                !perms.every(perm => botMember.permissions.has(perm))
+                ) {
+                const missingPerms = perms.filter(p => !botMember.permissions.has(p))
                 return await interaction.reply({
-                    content: `Bot is missing permissions.\nThis command requires the bot to have the ${
-                        perms
-                        .map(
-                            s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
-                        )    
-                    } permission(s). The bot is missing ${
-                        Formatters.bold('this permission')
-                    }.`    
-                })    
+                    embeds: [
+                        new EmbedBuilder()
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle(`${inlineCode('/ban remove')} - Missing Permissions`)
+                        .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
+                            bold(
+                                `${commaList(
+                                    perms
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    pluralise(perms.length, 'permissions')
+                                }`
+                            )
+                        }.\nThe bot has the ${
+                            bold(
+                                `${commaList(
+                                    perms
+                                    .filter(
+                                        p => !missingPerms.includes(p)
+                                    )
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
+                                }`
+                            )
+                        }, however is __missing__ the ${
+                            bold(
+                                `${commaList(
+                                    missingPerms
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    pluralise(missingPerms.length, 'permissions')
+                                }`
+                            )
+                        }.`)
+                        .setColor(0xff0000)
+                    ],
+                    ephemeral: true
+                })
             }
 
             // Check if the user exists
-            if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
+            if (!user) return await interaction.reply({ embeds: [
+                new EmbedBuilder()
+                .setAuthor({
+                    name: `${interaction.user.tag} (${interaction.user.id})`,
+                    iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                })
+                .setTitle(`${inlineCode('/ban remove')} - User ID incorrect`)
+                .setDescription(`Couldn't find that user, check the user ID is correct.`)
+                .setColor(0xff0000)
+            ], 
+            ephemeral: true })
 
             // Unban the user
-            user.send(`You have been unbanned from ${
-                Formatters.bold(interaction.guild.name)
-            } ${
-                reason 
-                ? `with reason ${Formatters.bold(reason)}` 
-                : 'without a reason'
-            }.`)
+            user.send({
+                embeds: [
+                    new EmbedBuilder()
+                    .setColor(0x00ff00)
+                    .setTitle('Unban')
+                    .setDescription(`Your ban has been removed in ${bold(interaction.guild.name)}.`)
+                    .addFields([
+                        {
+                            name: 'Reason',
+                            value: reason
+                                ? reason
+                                : inlineCode(italic('No reason provided'))
+                        }
+                    ])
+                ]
+            })
             .then(async () => {
                 await interaction.reply({
-                    content: `Successfully unbanned ${
-                        Formatters.bold(user.tag)
-                    } (${
-                        Formatters.inlineCode(user.id)
-                    }) from the server ${
-                        reason
-                        ? `with reason ${Formatters.bold(reason)}`
-                        : 'without a reason'
-                    }.`
+                    content: 'Unban successful. Member has been messaged.',
+                    embeds: [
+                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                        .setColor(0x00ff00)
+                        .setTitle('Unban Successful')
+                        .setDescription(`Successfully unbanned ${
+                            bold(user.tag)
+                        } (${user.id}) from ${
+                            bold(interaction.guild.name)  
+                        } ${
+                            reason
+                            ? `with reason ${bold(reason)}`
+                            : 'without a reason'
+                        }.`)
+                        .setAuthor(null)
+                        .setFields([])
+                    ]
                 })
             })
             .catch(async () => {
                 await interaction.reply({
-                    content: `Successfully unbanned ${
-                        Formatters.bold(user.tag)
-                    } (${
-                        Formatters.inlineCode(user.id)
-                    }) from the server ${
-                        reason
-                        ? `with reason ${Formatters.bold(reason)}`
-                        : 'without a reason'
-                    }. I could not DM them.`
+                    content: 'Unban removal successful. Couldn\'t send the member a message.',
+                    embeds: [
+                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                        .setColor(0x00ff00)
+                        .setTitle('Unban Successful')
+                        .setDescription(`Successfully unbanned ${
+                            bold(user.tag)
+                        } (${user.id}) from ${
+                            bold(interaction.guild.name)
+                        } ${
+                            reason
+                            ? `with reason ${bold(reason)}`
+                            : 'without a reason'
+                        }.`)
+                        .setAuthor(null)
+                        .setFields([])
+                    ]
                 })
             })
             .finally(async () => {
@@ -149,28 +251,47 @@ const banCommand: Cmd = {
 
             if (userAsMember) {
                 // Check if the bot's highest role is higher than the member's highest, IF the member is in the server
-                if (userAsMember.roles.highest.position >= (<GuildMember>interaction.guild.members.me).roles.highest.position) {
+                if (userAsMember.roles.highest.position >= botMember.roles.highest.position) {
                     const memberRolePos = userAsMember.roles.highest.position
-                    const botRolePos = (<GuildMember>interaction.guild.members.me).roles.highest.position
+                    const botRolePos = botMember.roles.highest.position
                     const numRoles = interaction.guild.roles.cache.size - 1
                     return await interaction.reply({
-                        content: `I cannot ban ${
-                            Formatters.bold(userAsMember.user.tag)
-                        } (${
-                            Formatters.inlineCode(userAsMember.id)
-                        }) because their highest role (${
-                            Formatters.inlineCode(userAsMember.roles.highest.name)
-                        }, ${
-                            numRoles - memberRolePos === 0 ? 'highest role' : `${
-                                Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
-                            } highest role`
-                        }) is higher than or the same as my highest role (${
-                            Formatters.inlineCode((<GuildMember>interaction.guild.members.me).roles.highest.name)
-                        }, ${
-                            memberRolePos === botRolePos 
-                            ? 'same role' 
-                            : `${memberRolePos - botRolePos} role(s) higher`
-                        }).`,
+                        embeds: [
+                            new EmbedBuilder()
+                            .setAuthor({
+                                name: `${interaction.user.tag} (${interaction.user.id})`,
+                                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                            })
+                            .setTitle(`${inlineCode('/ban set')} - Role Hierarchy`)
+                            .setDescription(`Unable to ban member. Member's highest permission (${
+                                bold(userAsMember.roles.highest.name)
+                            } ${
+                                inlineCode(userAsMember.roles.highest.id)
+                            }, ${
+                                numRoles - memberRolePos === 0 
+                                ? bold('highest role')
+                                : bold(`${
+                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
+                                } highest role`)
+                            }) is ${
+                                memberRolePos === botRolePos
+                                ? bold('the same role as')
+                                : bold(`${inlineCode(
+                                    pluralise(memberRolePos - botRolePos, 'role')
+                                )}`)
+                            } higher than my highest role (${
+                                bold(botMember.roles.highest.name)
+                            } ${
+                                inlineCode(botMember.roles.highest.id)
+                            }, ${
+                                numRoles - memberRolePos === 0 
+                                ? bold('highest role')
+                                : bold(`${
+                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
+                                } highest role`)
+                            }).`)
+                            .setColor(0xff0000)
+                        ],
                         ephemeral: true
                     })
                 }
@@ -178,81 +299,176 @@ const banCommand: Cmd = {
                 // Check if the member is bannable apart from any other conditions
                 // This will stop the bot from throwing errors when it bans the member afterwards
                 if (!userAsMember.bannable) return await interaction.reply({
-                    content: 'This member is unbannable.',
+                    embeds: [
+                        new EmbedBuilder()
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle(`${inlineCode('/ban set')} - Member unbannable`)
+                        .setDescription('This member cannot be unbanned. Reason unknown.')
+                        .setColor(0xff0000)
+                    ],
                     ephemeral: true
                 })
             }
             
             // Check if the user exists
-            if (!user) return await interaction.reply({ content: 'Cannot find that user, check the user ID is correct.', ephemeral: true })
+            if (!user) return await interaction.reply({ 
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(`${inlineCode('/ban set')} - User unknown`)
+                    .setDescription('Couldn\'t find that user.')
+                    .setColor(0xff0000)
+                ], ephemeral: true 
+            })
 
             // Check if the user is already banned
-            if (interaction.guild.bans.cache.has(user.id)) return await interaction.reply({ content: 'That user has already been banned!', ephemeral: true })
+            if (interaction.guild.bans.cache.has(user.id)) return await interaction.reply({ 
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(`${inlineCode('/ban set')} - User already banned`)
+                    .setDescription('This user is already banned.')
+                    .setColor(0xff0000)
+                ],
+                ephemeral: true
+            })
 
             // Required permissions
             const perms = new PermissionsBitField('BanMembers').toArray()
 
             if (
-                !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
+                !perms.every(perm => botMember.permissions.has(perm))
             ) {
+                const missingPerms = perms.filter(p => !botMember.permissions.has(p))
                 return await interaction.reply({
-                    content: `Bot is missing permissions.\nThis command requires the bot to have the ${
-                        perms
-                        .map(
-                            s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
-                        )    
-                    } permission(s). The bot is missing ${
-                        Formatters.bold('this permission')
-                    }.`    
-                })    
+                    embeds: [
+                        new EmbedBuilder()
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle(`${inlineCode('/ban set')} - Missing Permissions`)
+                        .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
+                            bold(
+                                `${commaList(
+                                    perms
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    pluralise(perms.length, 'permissions')
+                                }`
+                            )
+                        }.\nThe bot has the ${
+                            bold(
+                                `${commaList(
+                                    perms
+                                    .filter(
+                                        p => !missingPerms.includes(p)
+                                    )
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
+                                }`
+                            )
+                        }, however is __missing__ the ${
+                            bold(
+                                `${commaList(
+                                    missingPerms
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    pluralise(missingPerms.length, 'permissions')
+                                }`
+                            )
+                        }.`)
+                        .setColor(0xff0000)
+                    ],
+                    ephemeral: true
+                })
             }    
 
             // Directly message the user (if possible) and reply, if it doesn't work the bot will inform, and ban anyways
-            user.send(`You have been banned from ${
-                Formatters.bold(interaction.guild.name)
-            } ${
-                reason 
-                ? `with reason ${Formatters.bold(reason)}` 
-                : 'without a reason'
-            }.`)
+            user.send({
+                embeds: [
+                    new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle('Ban')
+                    .setDescription(`You have been banned in ${bold(interaction.guild.name)}.`)
+                    .addFields([
+                        {
+                            name: 'Reason',
+                            value: reason
+                                ? reason
+                                : inlineCode(italic('No reason provided'))
+                        }
+                    ])
+                ]
+            })
             .then(async () => {
                 await interaction.reply({
-                    content: `Successfully banned ${
-                        Formatters.bold(user.tag)
-                    } (${
-                        Formatters.inlineCode(user.id)
-                    }) from the server ${
-                        reason
-                        ? `with reason ${Formatters.bold(reason)}`
-                        : 'without a reason'
-                    }${
-                        days === 0
-                        ? '. **No message history** has been cleared'
-                        : `, clearing **${Formatters.inlineCode(`${days}`)} day(s) of message history**`
-                    }.`
+                    content: 'Ban successful. Member has been messaged.',
+                    embeds: [
+                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                        .setColor(0x00ff00)
+                        .setTitle('Ban Successful')
+                        .setDescription(`Successfully banned ${
+                            bold(user.tag)
+                        } (${user.id}) from ${
+                            bold(interaction.guild.name)  
+                        } ${
+                            reason
+                            ? `with reason ${bold(reason)}`
+                            : 'without a reason'
+                        }, clearing ${
+                            days === 0
+                            ? bold('no message history')
+                            : bold(`${inlineCode(pluralise(days, 'day'))} of message history`)
+                        }.`)
+                        .setAuthor(null)
+                        .setFields([])
+                    ]
                 })
             })
             .catch(async () => {
                 await interaction.reply({
-                    content: `Successfully banned ${
-                        Formatters.bold(user.tag)
-                    } (${
-                        Formatters.inlineCode(user.id)
-                    }) from the server ${
-                        reason
-                        ? `with reason ${Formatters.bold(reason)}`
-                        : 'without a reason'
-                    }${
-                        days === 0
-                        ? '. **No message history** has been cleared'
-                        : `, clearing **${Formatters.inlineCode(`${days}`)} day(s) of message history**`
-                    }. I could not DM them.`
+                    content: 'Ban successful. Couldn\'t send the member a message.',
+                    embeds: [
+                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                        .setColor(0x00ff00)
+                        .setTitle('Ban Successful')
+                        .setDescription(`Successfully banned ${
+                            bold(user.tag)
+                        } (${user.id}) from ${
+                            bold(interaction.guild.name)
+                        } ${
+                            reason
+                            ? `with reason ${bold(reason)}`
+                            : 'without a reason'
+                        }, clearing ${
+                            days === 0
+                            ? bold('no message history')
+                            : bold(`${inlineCode(pluralise(days, 'day'))} of message history`)
+                        }.`)
+                        .setAuthor(null)
+                        .setFields([])
+                    ]
                 })
             })
             .finally(async () => {
-                await interaction.guild.bans.create(user, {
-                    deleteMessageDays: days,
-                    reason: `Banned by ${
+                await interaction.guild.members.unban(user, `Banned by ${
                         interaction.user.tag
                     } (${
                         interaction.user.id
@@ -260,12 +476,12 @@ const banCommand: Cmd = {
                         reason 
                         ? `with reason ${reason}` 
                         : 'without a reason'
-                    }. ${
-                        days === 0 
-                        ? 'No message history cleared' 
-                        : `${days} day(s) of message history cleared`
+                    }, clearing ${
+                        days === 0
+                        ? 'no message history'
+                        : `${pluralise(days, 'day')} of message history`
                     }.`
-                })
+                )
             })
         }
     }
