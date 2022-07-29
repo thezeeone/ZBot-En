@@ -30,32 +30,32 @@ const memoryGameCommand: Cmd = {
         .setColor(0x00ffff)
         .setTitle('Memory Game - Request')
         .setDescription(`${interaction.user} wants to play memory game with you! Click ${
-            bold(inlineCode('Yes'))
+            bold(inlineCode('Accept'))
         } to accept and start playing, or ${
-            bold(inlineCode('No'))
+            bold(inlineCode('Reject'))
         } to reject.\n\n${
-            italic(`A response is required ${time(Math.floor(Date.now() / 1000 + 90), 'R')}.`)
+            italic(`A response is required ${time(Math.floor(Date.now() / 1000 + 91), 'R')}.`)
         }`)
         .setFooter({
             text: `${interaction.user.username} will start first.`
         })
 
-        const yesButton = new ButtonBuilder()
-        .setCustomId('yes')              
+        const acceptButton = new ButtonBuilder()
+        .setCustomId('accept')              
         .setStyle(ButtonStyle.Success)
-        .setLabel('Yes')
+        .setLabel('Accept')
 
-        const noButton = new ButtonBuilder()
-        .setCustomId('no')
+        const rejectButton = new ButtonBuilder()
+        .setCustomId('reject')
         .setStyle(ButtonStyle.Danger)
-        .setLabel('No')
+        .setLabel('Reject')
         
         const requestMessage = await interaction.reply({
             content: opponent.user.toString(),
             embeds: [confirmationEmbed],
             components: [
                 new ActionRowBuilder<ButtonBuilder>()
-                .addComponents([yesButton, noButton])
+                .addComponents([acceptButton, rejectButton])
             ],
             fetchReply: true
         })
@@ -74,7 +74,7 @@ const memoryGameCommand: Cmd = {
                 content: 'Leave it for the other person to reply!',
                 ephemeral: true
             })
-            if (requestBtn.customId === 'no') {
+            if (requestBtn.customId === 'reject') {
                 await requestBtn.reply({ content: 'You rejected the request.', ephemeral: true })
                 confirmationEmbed
                 .setColor(0xff0000)
@@ -85,7 +85,7 @@ const memoryGameCommand: Cmd = {
                     embeds: [confirmationEmbed],
                     components: [
                         new ActionRowBuilder<ButtonBuilder>()
-                        .addComponents(yesButton.setDisabled(true), noButton.setDisabled(true))
+                        .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                     ]
                 })
             } else {
@@ -433,7 +433,7 @@ const memoryGameCommand: Cmd = {
                     ],
                     components: [
                         new ActionRowBuilder<ButtonBuilder>()
-                        .addComponents(yesButton.setDisabled(true), noButton.setDisabled(true))
+                        .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                     ]
                 })
             }
