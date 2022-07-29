@@ -1,4 +1,4 @@
-import { Formatters, ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField, EmbedBuilder } from "discord.js"
+import { Formatters, ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField, EmbedBuilder, bold, inlineCode, italic, time } from "discord.js"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
@@ -80,10 +80,10 @@ const timeoutCommand: Cmd = {
         ]
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
-        const sc = (<ChatInputCommandInteraction<"cached">>interaction).options.getSubcommand(true) as "set" | "remove"
+        const sc = interaction.options.getSubcommand(true) as "set" | "remove"
 
         if (sc === "set") {
-            const member = (<ChatInputCommandInteraction<"cached">>interaction).options.getMember("member")
+            const member = interaction.options.getMember("member")
 
             // Check if the member is in the server
             if (!member) return await interaction.reply({
@@ -93,7 +93,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${Formatters.inlineCode('/timeout set')} - Member not found`)
+                    .setTitle(`${inlineCode('/timeout set')} - Member not found`)
                     .setDescription(`Couldn't find that member.`)
                     .setColor(0xff0000)
                 ],
@@ -114,32 +114,32 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${Formatters.inlineCode('/timeout set')} - Role Hierarchy`)
+                        .setTitle(`${inlineCode('/timeout set')} - Role Hierarchy`)
                         .setDescription(`Unable to timeout member. Member's highest permission (${
-                            Formatters.bold(member.roles.highest.name)
+                            bold(member.roles.highest.name)
                         } ${
-                            Formatters.inlineCode(member.roles.highest.id)
+                            inlineCode(member.roles.highest.id)
                         }, ${
                             numRoles - memberRolePos === 0 
-                            ? Formatters.bold('highest role')
-                            : Formatters.bold(`${
-                                Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
                             } highest role`)
                         }) is ${
                             memberRolePos === botRolePos
-                            ? Formatters.bold('the same role as')
-                            : Formatters.bold(`${Formatters.inlineCode(
+                            ? bold('the same role as')
+                            : bold(`${inlineCode(
                                 pluralise(memberRolePos - botRolePos, 'role')
                             )}`)
                         } higher than my highest role (${
-                            Formatters.bold(botMember.roles.highest.name)
+                            bold(botMember.roles.highest.name)
                         } ${
-                            Formatters.inlineCode(botMember.roles.highest.id)
+                            inlineCode(botMember.roles.highest.id)
                         }, ${
                             numRoles - memberRolePos === 0 
-                            ? Formatters.bold('highest role')
-                            : Formatters.bold(`${
-                                Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
                             } highest role`)
                         }).`)
                         .setColor(0xff0000)
@@ -162,38 +162,38 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${Formatters.inlineCode('/timeout set')} - Missing Permissions`)
+                        .setTitle(`${inlineCode('/timeout set')} - Missing Permissions`)
                         .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
-                            Formatters.bold(
+                            bold(
                                 `${commaList(
                                     perms
                                     .map(
-                                        s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
                                     pluralise(perms.length, 'permissions')
                                 }`
                             )
                         }.\nThe bot has the ${
-                            Formatters.bold(
+                            bold(
                                 `${commaList(
                                     perms
                                     .filter(
                                         p => !missingPerms.includes(p)
                                     )
                                     .map(
-                                        s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
                                     pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
                                 }`
                             )
                         }, however is __missing__ the ${
-                            Formatters.bold(
+                            bold(
                                 `${commaList(
                                     missingPerms
                                     .map(
-                                        s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
                                     pluralise(missingPerms.length, 'permissions')
@@ -214,7 +214,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${Formatters.inlineCode('/timeout set')} - Member unmoderatable`)
+                    .setTitle(`${inlineCode('/timeout set')} - Member unmoderatable`)
                     .setDescription(`Member unmoderatable.\nCannot timeout this member, reason unknown.`)
                     .setColor(0xff0000)
                 ],
@@ -254,7 +254,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${Formatters.inlineCode('/timeout set')} - Invalid duration`)
+                    .setTitle(`${inlineCode('/timeout set')} - Invalid duration`)
                     .setDescription('A duration must be provided.')
                     .setColor(0xff0000)
                 ],
@@ -292,9 +292,9 @@ const timeoutCommand: Cmd = {
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
                     .setTitle('Timeout Confirmation')
-                    .setDescription(`Are you sure you would like to timeout ${Formatters.bold(member.user.tag)} (${Formatters.inlineCode(member.id)})?\n${
-                        Formatters.italic(`A response is required ${
-                            Formatters.time(Math.floor(Date.now()/1000) + 121, 'R')
+                    .setDescription(`Are you sure you would like to timeout ${bold(member.user.tag)} (${inlineCode(member.id)})?\n${
+                        italic(`A response is required ${
+                            time(Math.floor(Date.now()/1000) + 121, 'R')
                         }.`)
                     }`)
                     .addFields([
@@ -309,12 +309,12 @@ const timeoutCommand: Cmd = {
                             name: 'Reason',
                             value: reason
                                 ? reason
-                                : Formatters.inlineCode(Formatters.italic('No reason provided')),
+                                : inlineCode(italic('No reason provided')),
                             inline: true
                         },
                         {
                             name: 'End of timeout',
-                            value: Formatters.time(
+                            value: time(
                                 Math.floor(
                                     Date.now() / 1000
                                 ) + (
@@ -355,14 +355,14 @@ const timeoutCommand: Cmd = {
                             .setColor(0x00ff00)
                             .setTitle('Timeout Successful')
                             .setDescription(`Successfully timed out ${
-                                Formatters.bold(member.user.tag)
-                            } (${member.user.id}) for a duration of ${Formatters.bold(
+                                bold(member.user.tag)
+                            } (${member.user.id}) for a duration of ${bold(
                                 commaList(
                                     [daysString, hoursString, minutesString, secondsString].filter(r => !r.startsWith('0'))
                                 )
                             )} ${
                                 reason
-                                ? `with reason ${Formatters.bold(reason)}`
+                                ? `with reason ${bold(reason)}`
                                 : 'without a reason'
                             }.`)
                         ],
@@ -374,7 +374,7 @@ const timeoutCommand: Cmd = {
                             new EmbedBuilder()
                             .setColor(0xffff00)
                             .setTitle('Timeout')
-                            .setDescription(`You have been timed out in ${Formatters.bold(interaction.guild.name)}.`)
+                            .setDescription(`You have been timed out in ${bold(interaction.guild.name)}.`)
                             .addFields([
                                 {
                                     name: 'Duration',
@@ -387,12 +387,12 @@ const timeoutCommand: Cmd = {
                                     name: 'Reason',
                                     value: reason
                                         ? reason
-                                        : Formatters.inlineCode(Formatters.italic('No reason provided')),
+                                        : inlineCode(italic('No reason provided')),
                                     inline: true
                                 },
                                 {
                                     name: 'End of timeout',
-                                    value: Formatters.time(
+                                    value: time(
                                         Math.floor(
                                             Date.now() / 1000
                                         ) + (
@@ -415,14 +415,14 @@ const timeoutCommand: Cmd = {
                                 .setColor(0x00ff00)
                                 .setTitle('Timeout Successful')
                                 .setDescription(`Successfully timed out ${
-                                    Formatters.bold(member.user.tag)
-                                } (${member.user.id}) for a duration of ${Formatters.bold(
+                                    bold(member.user.tag)
+                                } (${member.user.id}) for a duration of ${bold(
                                     commaList(
                                         [daysString, hoursString, minutesString, secondsString].filter(r => !r.startsWith('0'))
                                     )
                                 )} ${
                                     reason
-                                    ? `with reason ${Formatters.bold(reason)}`
+                                    ? `with reason ${bold(reason)}`
                                     : 'without a reason'
                                 }.`)
                                 .setAuthor(null)
@@ -438,14 +438,14 @@ const timeoutCommand: Cmd = {
                                 .setColor(0x00ff00)
                                 .setTitle('Timeout Successful')
                                 .setDescription(`Successfully timed out ${
-                                    Formatters.bold(member.user.tag)
-                                } (${member.user.id}) for a duration of ${Formatters.bold(
+                                    bold(member.user.tag)
+                                } (${member.user.id}) for a duration of ${bold(
                                     commaList(
                                         [daysString, hoursString, minutesString, secondsString].filter(r => !r.startsWith('0'))
                                     )
                                 )} ${
                                     reason
-                                    ? `with reason ${Formatters.bold(reason)}`
+                                    ? `with reason ${bold(reason)}`
                                     : 'without a reason'
                                 }.`)
                                 .setAuthor(null)
@@ -469,7 +469,7 @@ const timeoutCommand: Cmd = {
                             EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
                             .setColor(0xff0000)
                             .setTitle('Timeout Cancelled')
-                            .setDescription(`Request to timeout ${Formatters.bold(member.user.tag)} (${Formatters.bold(member.user.id)}) has been cancelled.`)
+                            .setDescription(`Request to timeout ${bold(member.user.tag)} (${bold(member.user.id)}) has been cancelled.`)
                             .setAuthor(null)
                             .setFields([])
                         ]
@@ -515,7 +515,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${Formatters.inlineCode('/timeout remove')} - Member not found`)
+                    .setTitle(`${inlineCode('/timeout remove')} - Member not found`)
                     .setDescription(`Couldn't find that member.`)
                     .setColor(0xff0000)
                 ],
@@ -534,32 +534,32 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${Formatters.inlineCode('/timeout remove')} - Role Hierarchy`)
+                        .setTitle(`${inlineCode('/timeout remove')} - Role Hierarchy`)
                         .setDescription(`Unable to remove timeout from member. Member's highest permission (${
-                            Formatters.bold(member.roles.highest.name)
+                            bold(member.roles.highest.name)
                         } ${
-                            Formatters.inlineCode(member.roles.highest.id)
+                            inlineCode(member.roles.highest.id)
                         }, ${
                             numRoles - memberRolePos === 0 
-                            ? Formatters.bold('highest role')
-                            : Formatters.bold(`${
-                                Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
                             } highest role`)
                         }) is ${
                             memberRolePos === botRolePos
-                            ? Formatters.bold('the same role as')
-                            : Formatters.bold(`${Formatters.inlineCode(
+                            ? bold('the same role as')
+                            : bold(`${inlineCode(
                                 pluralise(memberRolePos - botRolePos, 'role')
                             )}`)
                         } higher than my highest role (${
-                            Formatters.bold(botMember.roles.highest.name)
+                            bold(botMember.roles.highest.name)
                         } ${
-                            Formatters.inlineCode(botMember.roles.highest.id)
+                            inlineCode(botMember.roles.highest.id)
                         }, ${
                             numRoles - memberRolePos === 0 
-                            ? Formatters.bold('highest role')
-                            : Formatters.bold(`${
-                                Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
                             } highest role`)
                         }).`)
                         .setColor(0xff0000)
@@ -582,38 +582,38 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${Formatters.inlineCode('/timeout remove')} - Missing Permissions`)
+                        .setTitle(`${inlineCode('/timeout remove')} - Missing Permissions`)
                         .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
-                            Formatters.bold(
+                            bold(
                                 `${commaList(
                                     perms
                                     .map(
-                                        s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
                                     pluralise(perms.length, 'permissions')
                                 }`
                             )
                         }.\nThe bot has the ${
-                            Formatters.bold(
+                            bold(
                                 `${commaList(
                                     perms
                                     .filter(
                                         p => !missingPerms.includes(p)
                                     )
                                     .map(
-                                        s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
                                     pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
                                 }`
                             )
                         }, however is __missing__ the ${
-                            Formatters.bold(
+                            bold(
                                 `${commaList(
                                     missingPerms
                                     .map(
-                                        s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
                                     pluralise(missingPerms.length, 'permissions')
@@ -634,7 +634,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${Formatters.inlineCode('/timeout set')} - Member unmoderatable`)
+                    .setTitle(`${inlineCode('/timeout set')} - Member unmoderatable`)
                     .setDescription(`Member unmoderatable.\nCannot remove the timeout for this member, reason unknown.`)
                     .setColor(0xff0000)
                 ],
@@ -649,7 +649,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${Formatters.inlineCode('/timeout remove')} - Member isn't timed out`)
+                    .setTitle(`${inlineCode('/timeout remove')} - Member isn't timed out`)
                     .setDescription(`Member is not in time out.\nCannot remove the timeout for this member, this command only works on members who are already timed out.`)
                     .setColor(0xff0000)
                 ],
@@ -681,9 +681,9 @@ const timeoutCommand: Cmd = {
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
                     .setTitle('Timeout Removal Confirmation')
-                    .setDescription(`Are you sure you would like to remove the timeout for ${Formatters.bold(member.user.tag)} (${Formatters.inlineCode(member.id)})?\n${
-                        Formatters.italic(`A response is required ${
-                            Formatters.time(Math.floor(Date.now()/1000) + 121, 'R')
+                    .setDescription(`Are you sure you would like to remove the timeout for ${bold(member.user.tag)} (${inlineCode(member.id)})?\n${
+                        italic(`A response is required ${
+                            time(Math.floor(Date.now()/1000) + 121, 'R')
                         }.`)
                     }`)
                     .addFields([
@@ -691,7 +691,7 @@ const timeoutCommand: Cmd = {
                             name: 'Reason',
                             value: reason
                                 ? reason
-                                : Formatters.inlineCode(Formatters.italic('No reason provided')),
+                                : inlineCode(italic('No reason provided')),
                             inline: false
                         },
                     ])
@@ -723,10 +723,10 @@ const timeoutCommand: Cmd = {
                             .setColor(0x00ff00)
                             .setTitle('Timeout Removal Successful')
                             .setDescription(`Successfully removed the timeout for ${
-                                Formatters.bold(member.user.tag)
+                                bold(member.user.tag)
                             } (${member.user.id}) ${
                                 reason
-                                ? `with reason ${Formatters.bold(reason)}`
+                                ? `with reason ${bold(reason)}`
                                 : 'without a reason'
                             }.`)
                         ],
@@ -738,13 +738,13 @@ const timeoutCommand: Cmd = {
                             new EmbedBuilder()
                             .setColor(0x00ff00)
                             .setTitle('Timeout Removal')
-                            .setDescription(`Your timeout has been removed in ${Formatters.bold(interaction.guild.name)}.`)
+                            .setDescription(`Your timeout has been removed in ${bold(interaction.guild.name)}.`)
                             .addFields([
                                 {
                                     name: 'Reason',
                                     value: reason
                                         ? reason
-                                        : Formatters.inlineCode(Formatters.italic('No reason provided'))
+                                        : inlineCode(italic('No reason provided'))
                                 }
                             ])
                         ]
@@ -757,10 +757,10 @@ const timeoutCommand: Cmd = {
                                 .setColor(0x00ff00)
                                 .setTitle('Timeout Removal Successful')
                                 .setDescription(`Successfully removed the timeout from ${
-                                    Formatters.bold(member.user.tag)
+                                    bold(member.user.tag)
                                 } (${member.user.id}) ${
                                     reason
-                                    ? `with reason ${Formatters.bold(reason)}`
+                                    ? `with reason ${bold(reason)}`
                                     : 'without a reason'
                                 }.`)
                                 .setAuthor(null)
@@ -776,10 +776,10 @@ const timeoutCommand: Cmd = {
                                 .setColor(0x00ff00)
                                 .setTitle('Timeout Removal Successful')
                                 .setDescription(`Successfully removed the timeout from ${
-                                    Formatters.bold(member.user.tag)
+                                    bold(member.user.tag)
                                 } (${member.user.id}) ${
                                     reason
-                                    ? `with reason ${Formatters.bold(reason)}`
+                                    ? `with reason ${bold(reason)}`
                                     : 'without a reason'
                                 }.`)
                                 .setAuthor(null)
@@ -803,7 +803,7 @@ const timeoutCommand: Cmd = {
                             EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
                             .setColor(0xff0000)
                             .setTitle('Timeout Cancelled')
-                            .setDescription(`Request to timeout ${Formatters.bold(member.user.tag)} (${Formatters.bold(member.user.id)}) has been cancelled.`)
+                            .setDescription(`Request to timeout ${bold(member.user.tag)} (${bold(member.user.id)}) has been cancelled.`)
                             .setAuthor(null)
                             .setFields([])
                         ]
