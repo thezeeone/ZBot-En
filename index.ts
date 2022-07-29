@@ -1,4 +1,4 @@
-import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ApplicationCommand, ClientApplication, ApplicationCommandPermissionType, User } from "discord.js"
+import { Client, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ClientApplication, ApplicationCommandPermissionType, User, bold, underscore } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
@@ -82,7 +82,7 @@ client.on('interactionCreate', async (interaction): Promise<any> => {
         })
 
         if (isBlacklist) return await interaction.reply({
-            content: `${Formatters.bold(Formatters.underscore('You are blacklisted from using this bot.'))}\n\n⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`,
+            content: `${bold(underscore('You are blacklisted from using this bot.'))}\n\n⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`,
             ephemeral: true
         })
 
@@ -116,7 +116,7 @@ client.on('messageCreate', async (message) => {
             xp: -50 * (lvl.lvl + 1),
             lvl: 1
         })
-        message.channel.send(`Congratulations ${message.author}, you have levelled up to ${Formatters.bold(`Level ${lvl.lvl}`)}!`)
+        message.channel.send(`Congratulations ${message.author}, you have levelled up to ${bold(`Level ${lvl.lvl}`)}!`)
     }
 })
 
