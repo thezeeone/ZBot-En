@@ -82,6 +82,8 @@ const timeoutCommand: Cmd = {
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
         const sc = interaction.options.getSubcommand(true) as "set" | "remove"
 
+        const botMember = <GuildMember>interaction.guild.members.me
+
         if (sc === "set") {
             const member = interaction.options.getMember("member")
 
@@ -200,13 +202,14 @@ const timeoutCommand: Cmd = {
                                 }`
                             )
                         }.`)
+                        .setColor(0xff0000)
                     ],
                     ephemeral: true
                 })
             }
 
             // Check if the member is manageable apart from any other conditions
-            // This will stop the bot from throwing errors when it kicks the member afterwards
+            // This will stop the bot from throwing errors when it times out the member afterwards
             if (!member.moderatable) return await interaction.reply({
                 embeds: [
                     new EmbedBuilder()
@@ -368,7 +371,7 @@ const timeoutCommand: Cmd = {
                         ],
                         components: []
                     })
-                    // Directly message the member and reply, if it doesn't work the bot will inform, and kick anyways
+                    // Directly message the member and reply, if it doesn't work the bot will inform, and time out anyways
                     member.send({
                         embeds: [
                             new EmbedBuilder()
@@ -620,6 +623,7 @@ const timeoutCommand: Cmd = {
                                 }`
                             )
                         }.`)
+                        .setColor(0xff0000)
                     ],
                     ephemeral: true
                 })
@@ -732,7 +736,7 @@ const timeoutCommand: Cmd = {
                         ],
                         components: []
                     })
-                    // Directly message the member and reply, if it doesn't work the bot will inform, and kick anyways
+                    // Directly message the member and reply, if it doesn't work the bot will inform, and remove time out anyways
                     member.send({
                         embeds: [
                             new EmbedBuilder()
