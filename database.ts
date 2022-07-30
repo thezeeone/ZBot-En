@@ -1,4 +1,6 @@
 import { Sequelize, Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
+import { config } from 'dotenv';
+config()
 
 const sequelize = new Sequelize(process.env.DATABASE_URL as string, {
     logging: false
