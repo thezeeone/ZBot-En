@@ -1,4 +1,4 @@
-import { Formatters, ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField, EmbedBuilder, bold, inlineCode, italic, time } from "discord.js"
+import { ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField, EmbedBuilder, bold, inlineCode, italic, time } from "discord.js"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
