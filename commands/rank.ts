@@ -516,4 +516,6 @@ const rankCommand: Cmd = {
     }
 }
 
-export { rankCommand }
+export { 
+    rankCommand
+}
