@@ -42,7 +42,10 @@ const RankCardModel = sequelize.define<RankCardModel>('RankCards', {
 })
 
 const BlacklistModel = sequelize.define<BlacklistModel>('Blacklists', {
-    id: DataTypes.STRING
+    id: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    }
 })
 
 export {
