@@ -17,6 +17,7 @@ import { tttCommand } from "./tictactoe";
 import { gtwCommand } from "./guesstheword";
 import { memoryGameCommand } from "./memorygame";
 import { blacklistCommand } from "./blacklist";
+import { reportCommand } from "./reportproblem";
 
 export {
     Cmd,
@@ -29,5 +30,6 @@ export {
     tttCommand,
     gtwCommand,
     memoryGameCommand,
-    blacklistCommand
+    blacklistCommand,
+    reportCommand
 }
