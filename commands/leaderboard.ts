@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters, GuildMember } from "discord.js";
+import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, GuildMember, inlineCode, underscore, User } from "discord.js";
 import { LevelModel } from "../database";
 import { ordinalNumber } from "../util";
 import { Cmd } from "./command-exports";
@@ -18,8 +18,8 @@ const leaderboardCommand: Cmd = {
                         value: 'global'
                     },
                     {
-                        name: 'Display leaderboard for this server only',
-                        value: 'server'
+                        name: 'Display local leaderboard (this server only)',
+                        value: 'local'
                     }
                 ], 
                 required: true
@@ -27,7 +27,7 @@ const leaderboardCommand: Cmd = {
         ]
     },
     async execute (interaction: ChatInputCommandInteraction<"cached">) {
-        const option = interaction.options.getString('display') as 'global' | 'server'
+        const option = interaction.options.getString('display') as 'global' | 'local'
 
         const leaderboard = await LevelModel.findAll()
         const userPosition = leaderboard
@@ -60,103 +60,170 @@ const leaderboardCommand: Cmd = {
                 )
             )
             .filter(i => i !== undefined)
+            const globalSortedLeaderboard = (
+                await Promise.all(
+                    leaderboard
+                    .filter(async (model) => {
+                        try {
+                            await interaction.client.users.fetch(model.id)
+                            return model
+                        } catch (error) {
+                            return undefined
+                        }
+                    })
+                )
+            )
+            .filter(i => i !== undefined)
+            .sort((l1, l2) => {
+                if (l1.lvl > l2.lvl) return -1
+                else if (l1.lvl < l2.lvl) return 1
+                else {
+                    if (l1.xp > l2.xp) return -1
+                    else if (l1.xp < l2.xp) return 1
+                    else return 0
+                }
+            })
             .slice(0, 10)
 
             await interaction.reply({
-                content: globalLeaderboard.length
-                ? `${Formatters.bold(
-                    `${
-                        Formatters
-                        .underscore(`Leaderboard - Top ${globalLeaderboard.length >= 10 ? 10 : globalLeaderboard.length}`)} Global`)
-                    }\n${
-                    globalLeaderboard.sort((l1, l2) => {
-                        if (l1.lvl > l2.lvl) return -1
-                        else if (l1.lvl < l2.lvl) return 1
-                        else {
-                            if (l1.xp > l2.xp) return -1
-                            else if (l1.xp < l2.xp) return 1
-                            else return 0
-                        } 
-                    }).map((l, i) => {
-                        return `${
-                            i < 2 
-                            ? ['🥇', '🥈', '🥉'][i] 
-                            : Formatters.bold(
-                                ordinalNumber(i + 1)
-                            )} ${
-                                interaction.guild.members.cache.get(l.id)
-                                ? `${
-                                    Formatters.bold((interaction.guild.members.cache.get(l.id) as GuildMember).user.username)
-                                } (${Formatters.inlineCode(l.id)})`
-                                : Formatters.inlineCode('Unknown Member')
-                            } | ${
-                                Formatters.bold('Level')
-                            } ${Formatters.inlineCode(l.lvl.toString())} ${
-                                Formatters.bold('Experience Points')
-                            } ${Formatters.inlineCode(l.xp.toString())}`
-                    }).join('\n')
-                }\n\n${userPosition
-                    ? `You currently rank as ${
-                        userPosition === 1
-                        ? Formatters.bold('🥇 top')
-                        : (
-                            userPosition < 4
-                            ? `${['🥈', '🥉'][userPosition - 1]} ${Formatters.bold(`${Formatters.inlineCode(ordinalNumber(userPosition))} highest`)}`
-                            : `${Formatters.inlineCode(ordinalNumber(userPosition))} highest`
-                          )
-                    } in the global leaderboard, out of ${Formatters.inlineCode(leaderboard.length.toString())}.`
-                    : 'You don\'t have a rank card yet.' 
-                }` : 'There\'s nothing to see here! Send messages or play mini-games to be able to get to the top of the global leaderboard.',
-                ephemeral: true
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(underscore(`Leaderboard - Top ${globalSortedLeaderboard.length >= 10 ? 10 : globalSortedLeaderboard.length} Global`))
+                    .setDescription(
+                        userPosition
+                        ? `You currently rank as ${userPosition < 4 ? bold(['🥇 top', '🥈 second highest', '🥉 third highest'][userPosition - 1]) : bold(`${ordinalNumber(userPosition)} place`)}, out of ${inlineCode(`${globalLeaderboard.length}`)}.`
+                        : 'You don\'t have a rank card yet.'
+                    )
+                    .addFields([
+                        {
+                            name: 'Position and User',
+                            value: (
+                                    await Promise.all(
+                                        globalSortedLeaderboard
+                                        .map(async (pos, ind) => {
+                                            let user = await interaction.client.users.fetch(pos.id) as User
+                                            return `${
+                                                ind < 3 
+                                                ? ['🥇', '🥈', '🥉'][ind] 
+                                                : inlineCode(ordinalNumber(ind + 1, true))
+                                            } ${bold(user.tag)} (${inlineCode(user.id)})`
+                                        })
+                                    )
+                                )
+                                .join('\n'),
+                            inline: true
+                        },
+                        {
+                            name: 'Level',
+                            value: globalSortedLeaderboard
+                                .map((pos) => pos.lvl)
+                                .join('\n'),
+                            inline: true
+                        },
+                        {
+                            name: 'Experience Points',
+                            value: globalSortedLeaderboard
+                                .map((pos) => pos.xp)
+                                .join('\n'),
+                            inline: true
+                        }
+                    ])
+                    .setColor(0x00ffff)
+                ]
             })
-        } else if (option === 'server') {
-            const serverLeaderboard = leaderboard.filter(r => interaction.guild.members.cache.has(r.id)).slice(0, 10)
+        } else if (option === 'local') {
+            const localLeaderboard = (
+                await Promise.all(
+                    leaderboard
+                    .filter(async (model) => {
+                        try {
+                            await interaction.guild.members.fetch(model.id)
+                            return model
+                        } catch (error) {
+                            return undefined
+                        }
+                    })
+                )
+            )
+            .filter(i => i !== undefined)
+            const localSortedLeaderboard = (
+                await Promise.all(
+                    leaderboard
+                    .filter(async (model) => {
+                        try {
+                            await interaction.guild.members.fetch(model.id)
+                            return model
+                        } catch (error) {
+                            return undefined
+                        }
+                    })
+                )
+            )
+            .filter(i => i !== undefined)
+            .sort((l1, l2) => {
+                if (l1.lvl > l2.lvl) return -1
+                else if (l1.lvl < l2.lvl) return 1
+                else {
+                    if (l1.xp > l2.xp) return -1
+                    else if (l1.xp < l2.xp) return 1
+                    else return 0
+                }
+            })
+            .slice(0, 10)
 
             await interaction.reply({
-                content: serverLeaderboard.length
-                ? `${Formatters.bold(
-                    `${
-                        Formatters.underscore(`Leaderboard - Top ${serverLeaderboard.length >= 10 ? 10 : serverLeaderboard.length}`)} for ${Formatters.inlineCode(interaction.guild.name)}`)
-                    }\n${
-                        serverLeaderboard.sort((l1, l2) => {
-                            if (l1.lvl > l2.lvl) return -1
-                            else if (l1.lvl < l2.lvl) return 1
-                            else {
-                                if (l1.xp > l2.xp) return -1
-                                else if (l1.xp < l2.xp) return 1
-                                else return 0
-                            } 
-                        }).map((l, i) => {
-                            return `${
-                                i < 2 
-                                ? ['🥇', '🥈', '🥉'][i] 
-                                : Formatters.bold(
-                                    ordinalNumber(i + 1)
-                                )} ${
-                                    interaction.guild.members.cache.get(l.id)
-                                    ? `${
-                                        Formatters.bold((interaction.guild.members.cache.get(l.id) as GuildMember).user.username)
-                                    } (${Formatters.inlineCode(l.id)})`
-                                    : Formatters.inlineCode('Unknown Member')
-                                } | ${
-                                    Formatters.bold('Level')
-                                } ${Formatters.inlineCode(l.lvl.toString())} ${
-                                    Formatters.bold('Experience Points')
-                                } ${Formatters.inlineCode(l.xp.toString())}`
-                            }).join('\n')
-                }\n\n${userPosition
-                    ? `You currently rank as ${
-                        userPosition === 1
-                        ? Formatters.bold('top')
-                        : (
-                            userPosition < 4
-                            ? `${['🥈', '🥉'][userPosition - 1]} ${Formatters.bold(`${Formatters.inlineCode(ordinalNumber(userPosition))} highest`)}`
-                            : `${Formatters.inlineCode(ordinalNumber(userPosition))} highest`
-                          )
-                    } in the server leaderboard, out of ${Formatters.inlineCode(serverLeaderboard.length.toString())}.`
-                    : 'You don\'t have a rank card yet.' 
-                }` : 'There\'s nothing to see here! Send messages or play mini-games to be able to get to the top of the server leaderboard.',
-                ephemeral: true
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(underscore(`Leaderboard - Top ${localSortedLeaderboard.length >= 10 ? 10 : localSortedLeaderboard.length} Local`))
+                    .setDescription(
+                        userPosition
+                        ? `You currently rank as ${userPosition < 4 ? bold(['🥇 top', '🥈 second highest', '🥉 third highest'][userPosition - 1]) : bold(`${ordinalNumber(userPosition)} place`)}, out of ${inlineCode(`${localLeaderboard.length}`)}.`
+                        : 'You don\'t have a rank card yet.'
+                    )
+                    .addFields([
+                        {
+                            name: 'Position and Member',
+                            value: (
+                                    await Promise.all(
+                                        localSortedLeaderboard
+                                        .map(async (pos, ind) => {
+                                            let user = await interaction.client.users.fetch(pos.id) as User
+                                            return `${
+                                                ind < 3 
+                                                ? ['🥇', '🥈', '🥉'][ind] 
+                                                : inlineCode(ordinalNumber(ind + 1, true))
+                                            } ${bold(user.tag)} (${inlineCode(user.id)})`
+                                        })
+                                    )
+                                )
+                                .join('\n'),
+                            inline: true
+                        },
+                        {
+                            name: 'Level',
+                            value: localSortedLeaderboard
+                                .map((pos) => pos.lvl)
+                                .join('\n'),
+                            inline: true
+                        },
+                        {
+                            name: 'Experience Points',
+                            value: localSortedLeaderboard
+                                .map((pos) => pos.xp)
+                                .join('\n'),
+                            inline: true
+                        }
+                    ])
+                    .setColor(0x00ffff)
+                ]
             })
         }
     }

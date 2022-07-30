@@ -22,17 +22,17 @@ Access all of this bot's slash commands with the click of the forward slash key 
     - `/kick`           **Kick** \- Get rid of a member if they're being a menacing rule-breaker
     - `/ban`            **Ban** \- Slam the judge's banhammer on any member who shall leave!
 - **Music commands** to play music in voice chat:
-    - `/yt-vid`         **Youtube Video** \- Play a YouTube video in VC
+    *Coming soon!*
 ### Level System
 Keep your server alive with a level system that encourages members to talk and use this bot!
-- **Experience points** for members who __send messages__, when they hit a certain level they level up. The __more you talk__, the __**higher** your level__, the __**higher** your rank__ in the leaderboard.
+- **Experience points** for members who __send messages__, when they hit a certain level they level up. The __more you talk__, the __**higher** your level__, the __**higher** your rank__ in the leaderboard, local and global.
 #### **Slash Commands**
-- `/rank`               **Rank** \- Check your rank. *(Displays **level**, **experience points** and **number of experience points required to reach the next level**)*
-- `/leaderboard`        **Leaderboard** \- Check the global leaderboard.
+- `/rank`               **Rank** \- Check your rank and customise your rank card! *(Displays **level**, **experience points** and **number of experience points required to reach the next level** in a nice embed)*
+- `/leaderboard`        **Leaderboard** \- Check the leaderboard, local or global.
 
 ## Resources
 ### Core
-This bot uses discord.js and typescript.
+This bot uses discord.js and TypeScript.
 - **JavaScript**, a both front-end and back-end programming language used often in combination with HTML. `ES2015`
     - Go to the [official website](https://javascript.com/)
     - [Learn JavaScript](https://javascript.info/)
@@ -72,8 +72,9 @@ This bot uses discord.js and typescript.
     
 ## Much more to be added
 Want to contribute?
-- Head to the **[Pull Request (PR)](https://github.com/Zahid556/ZBot/pulls) page** to suggest a new feature
-- Problem? Bug? Bot working unexpectedly? **Report in the [Issues](https://github.com/Zahid556/ZBot/issues) page** to get it sorted!
-- Join the **[ZBot Discord Server](https://discord.gg/6tkn6m5g52) for further help**
+- Head to the **[__Pull Request (PR)__](https://github.com/Zahid556/ZBot/pulls) page** to suggest a new feature
+- Problem? Bug? Bot working unexpectedly? **Report in the [__Issues__](https://github.com/Zahid556/ZBot/issues) page** to get it sorted!
+- Join the **[__ZBot Discord Server__](https://discord.gg/6tkn6m5g52) for further help**
+- The **`/report-problem` command** will give you links to guide you.
 
 <sup>[1][2]</sup>*For you to be able to add the bot to the server, you **__must__ have** the **`Manage Server` permission** and you need to share some permissions you have with the permissions the bot requests, for the bot to be able to have permissions in that server.*

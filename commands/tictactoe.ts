@@ -1,4 +1,4 @@
-import { Formatters, ButtonBuilder, ActionRowBuilder, ButtonStyle, GuildMember, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType } from "discord.js"
+import { Formatters, ButtonBuilder, ActionRowBuilder, ButtonStyle, GuildMember, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time } from "discord.js"
 import { LevelModel } from "../database"
 import { Cmd } from "./command-exports"
 
@@ -32,10 +32,10 @@ const tttCommand: Cmd = {
         ]
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
-        let playerChoice = (<ChatInputCommandInteraction<"cached">>interaction).options.getString('play-as', true) as "X" | "O"
+        let playerChoice = interaction.options.getString('play-as', true) as "X" | "O"
         let opponentChoice = (playerChoice === "X" ? "O" : "X") as "X" | "O"
         let playerTurn: 0 | 1 = 0 as 0 | 1
-        const opponent = (<ChatInputCommandInteraction<"cached">>interaction).options.getMember('play-with') as GuildMember
+        const opponent = interaction.options.getMember('play-with') as GuildMember
 
         if (opponent.user.id === interaction.user.id || opponent.user.id === interaction.client.user?.id) return await interaction.reply({
             content: 'You can\'t play with yourself or the bot, find someone else to play with!',
@@ -44,34 +44,37 @@ const tttCommand: Cmd = {
 
         const confirmationEmbed = new EmbedBuilder()
         .setColor(0x00ffff)
-        .setTitle('Tic Tac Toe - Request')
-        .setDescription(`${interaction.user} wants to play tic-tac-toe with you! Click ${
-            Formatters.bold(Formatters.inlineCode('Yes'))
+        .setTitle('Tic-tac-toe Request')
+        .setDescription(`${interaction.user} wants to play tic-tac-toe with you!\nClick ${
+            bold(inlineCode('Accept'))
         } to accept and start playing, or ${
-            Formatters.bold(Formatters.inlineCode('No'))
+            bold(inlineCode('Reject'))
         } to reject.\n\n${
-            Formatters.italic(`A response is required ${Formatters.time(Math.floor(Date.now() / 1000 + 90), 'R')}.`)
+            italic(`A response is required ${time(Math.floor(Date.now() / 1000 + 91), 'R')}.`)
+        }\n\n${
+            bold(interaction.user.username)
+        } will start first and will play as ${
+            bold(playerChoice)
+        }, so you will play as ${
+            bold(opponentChoice)
         }`)
-        .setFooter({
-            text: `${interaction.user.username} will play as ${playerChoice} and will start first, so you will play as ${opponentChoice}.`
-        })
 
-        const yesButton = new ButtonBuilder()
-        .setCustomId('yes')              
+        const acceptButton = new ButtonBuilder()
+        .setCustomId('accept')              
         .setStyle(ButtonStyle.Success)
-        .setLabel('Yes')
+        .setLabel('Accept')
 
-        const noButton = new ButtonBuilder()
-        .setCustomId('no')
+        const rejectButton = new ButtonBuilder()
+        .setCustomId('reject')
         .setStyle(ButtonStyle.Danger)
-        .setLabel('No')
+        .setLabel('Reject')
         
         const requestMessage = await interaction.reply({
             content: opponent.user.toString(),
             embeds: [confirmationEmbed],
             components: [
                 new ActionRowBuilder<ButtonBuilder>()
-                .addComponents(yesButton, noButton)
+                .addComponents(acceptButton, rejectButton)
             ],
             fetchReply: true
         })
@@ -94,14 +97,14 @@ const tttCommand: Cmd = {
                 await requestBtn.reply({ content: 'You rejected the request.', ephemeral: true })
                 confirmationEmbed
                 .setColor(0xff0000)
-                .setTitle('Tic Tac Toe - Request Rejected')
+                .setTitle('Tic-tac-toe Request Rejected')
                 .setDescription(`${opponent.user} rejected the request, too bad.`)
                 .setFooter(null)
                 return await requestMessage.edit({
                     embeds: [confirmationEmbed],
                     components: [
                         new ActionRowBuilder<ButtonBuilder>()
-                        .addComponents(yesButton.setDisabled(true), noButton.setDisabled(true))
+                        .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                     ]
                 })
             } else {
@@ -146,7 +149,6 @@ const tttCommand: Cmd = {
                 ]
 
                 await requestMessage.edit({
-                    embeds: [],
                     components: [
                         new ActionRowBuilder<ButtonBuilder>()
                         .addComponents(mappedGrid[0]),
@@ -157,11 +159,16 @@ const tttCommand: Cmd = {
                         new ActionRowBuilder<ButtonBuilder>()
                         .addComponents(cancelButton)
                     ],
-                    content: `${
-                        Formatters.bold('Let the game begin!')
-                    }\n${
-                        playerTurn === 0 ? interaction.user : opponent.user
-                    } It's now your turn.`
+                    content: bold('Let the game begin!'),
+                    embeds: [
+                        (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                        .setColor(0x00ffff)
+                        .setTitle('Tic-tac-toe Match')
+                        .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn.`)
+                        .setFooter({
+                            text: `This player is playing as ${playerTurn === 0 ? playerChoice : opponentChoice}`
+                        })
+                    ]
                 })
 
                 const buttonCollector = requestMessage.createMessageComponentCollector({ componentType: ComponentType.Button })
@@ -193,7 +200,13 @@ const tttCommand: Cmd = {
                                 new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[1] }),
                                 new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[2] })
                             ],
-                            content: 'Game cancelled.'
+                            embeds: [
+                                (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                .setColor(0xff0000)
+                                .setTitle('Tic-tac-toe Match Cancelled')
+                                .setDescription(`${collectedBtn.user} cancelled the game.`)
+                                .setFooter(null)
+                            ]
                         })
                         buttonCollector.stop()
                         return await collectedBtn.reply({
@@ -245,20 +258,29 @@ const tttCommand: Cmd = {
                                 })
                             })
                             requestMessage.edit({
-                                content: `${Formatters.bold('We have a winner!')}\nCongratulations ${
-                                    grid[
-                                        Math.floor(combination[0] / 3)
-                                    ][
-                                        combination[0] % 3
-                                    ] === playerChoice ? interaction.user : opponent.user
-                                }, you won the game!\nYou will gain **\`150\` experience points**.`,
+                                content: bold('We have a winner!'),
                                 components: [
                                     new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[0] }),
                                     new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[1] }),
                                     new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[2] })
                                 ],
+                                embeds: [
+                                    (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                    .setColor(0x00ff00)
+                                    .setTitle('Tic-tac-toe Match - Winner!')
+                                    .setDescription(`Congratulations ${
+                                        grid[
+                                            Math.floor(combination[0] / 3)
+                                        ][
+                                            combination[0] % 3
+                                        ] === playerChoice ? interaction.user : opponent.user
+                                    }, you won the game!\n\nYou will gain **\`150\` experience points**.`)
+                                    .setFooter({
+                                        text: `The winner was playing as ${ grid[Math.floor(combination[0] / 3)][combination[0] % 3] === playerChoice ? playerChoice : opponentChoice }.`
+                                    })
+                                ]
                             })
-                            await collectedBtn.followUp('We have a winner!')
+                            await collectedBtn.followUp(`Congratulations, you won! You will gain ${bold(`${inlineCode('150')} experience points`)}.`)
                             LevelModel.increment({
                                 xp: 150
                             }, {
@@ -280,7 +302,16 @@ const tttCommand: Cmd = {
                                     new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[1].map(b => b.setDisabled(true)) }),
                                     new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[2].map(b => b.setDisabled(true)) })
                                 ],
-                                content: `${Formatters.bold('Draw!')}\nNobody won the match, good game!\nYou will both gain **\`75\` experience points**.`
+                                content: bold('Draw!'),
+                                embeds: [
+                                    (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                    .setColor(0xffff00)
+                                    .setTitle('Tic-tac-toe Match - Draw!')
+                                    .setDescription(`Congratulations, you both drew!\n\nYou will both gain **\`75\` experience points**.`)
+                                    .setFooter({
+                                        text: `Neither player got a three-in-a-row.`
+                                    })
+                                ]
                             })
                             await collectedBtn.followUp('That was a draw, nice game!')
                             LevelModel.increment({
@@ -300,9 +331,16 @@ const tttCommand: Cmd = {
                             return buttonCollector.stop()
                         } else {
                             requestMessage.edit({
-                                content: `${
-                                    playerTurn === 0 ? interaction.user : opponent.user
-                                } It's now your turn.`,
+                                content: null,
+                                embeds: [
+                                    (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                    .setColor(0x00ffff)
+                                    .setTitle('Tic-tac-toe Match')
+                                    .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn.`)
+                                    .setFooter({
+                                        text: `This player is playing as ${playerTurn === 0 ? playerChoice : opponentChoice}`
+                                    })
+                                ],
                                 components: [
                                     new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[0] }),
                                     new ActionRowBuilder<ButtonBuilder>({ components: mappedGrid[1] }),
@@ -329,7 +367,7 @@ const tttCommand: Cmd = {
                     ],
                     components: [
                         new ActionRowBuilder<ButtonBuilder>()
-                        .addComponents(yesButton.setDisabled(true), noButton.setDisabled(true))
+                        .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                     ]
                 })
             }

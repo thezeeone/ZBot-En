@@ -14,16 +14,28 @@ interface BlacklistModel extends Model<InferAttributes<BlacklistModel>, InferCre
     id: string
 }
 
+interface RankCardModel extends Model<InferAttributes<RankCardModel>, InferCreationAttributes<RankCardModel>> {
+    id: string,
+    colour: number
+}
+
 const LevelModel = sequelize.define<LevelModel>('Levels', {
     id: {
         primaryKey: true,
         type: DataTypes.STRING
     },
-    xp: {
-        type: DataTypes.INTEGER
+    xp: DataTypes.INTEGER,
+    lvl: DataTypes.INTEGER
+})
+
+const RankCardModel = sequelize.define<RankCardModel>('RankCards', {
+    id: {
+        primaryKey: true,
+        type: DataTypes.NUMBER
     },
-    lvl: {
-        type: DataTypes.INTEGER
+    colour: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0x00ffff
     }
 })
 
@@ -34,5 +46,6 @@ const BlacklistModel = sequelize.define<BlacklistModel>('Blacklists', {
 export {
     sequelize,
     LevelModel,
-    BlacklistModel
+    BlacklistModel,
+    RankCardModel
 }

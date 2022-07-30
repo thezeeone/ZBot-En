@@ -1,5 +1,6 @@
-import { Formatters, ActionRowBuilder, ButtonBuilder, EmbedBuilder, User, ApplicationCommandOptionType, ButtonStyle, GuildMember, ComponentType, ChatInputCommandInteraction } from "discord.js"
+import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, User, ApplicationCommandOptionType, ButtonStyle, GuildMember, ComponentType, ChatInputCommandInteraction, bold, inlineCode, italic, time } from "discord.js"
 import { LevelModel } from "../database"
+import { pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
 const memoryGameCommand: Cmd = {
@@ -16,7 +17,7 @@ const memoryGameCommand: Cmd = {
         ]
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
-        const opponent = (<ChatInputCommandInteraction<"cached">>interaction).options.getMember('opponent') as GuildMember
+        const opponent = interaction.options.getMember('opponent') as GuildMember
         let playerTurn: 0 | 1 = 0 as 0 | 1
         let opponentChoices: number[] = []
 
@@ -29,32 +30,32 @@ const memoryGameCommand: Cmd = {
         .setColor(0x00ffff)
         .setTitle('Memory Game - Request')
         .setDescription(`${interaction.user} wants to play memory game with you! Click ${
-            Formatters.bold(Formatters.inlineCode('Yes'))
+            bold(inlineCode('Accept'))
         } to accept and start playing, or ${
-            Formatters.bold(Formatters.inlineCode('No'))
+            bold(inlineCode('Reject'))
         } to reject.\n\n${
-            Formatters.italic(`A response is required ${Formatters.time(Math.floor(Date.now() / 1000 + 90), 'R')}.`)
+            italic(`A response is required ${time(Math.floor(Date.now() / 1000 + 91), 'R')}.`)
         }`)
         .setFooter({
             text: `${interaction.user.username} will start first.`
         })
 
-        const yesButton = new ButtonBuilder()
-        .setCustomId('yes')              
+        const acceptButton = new ButtonBuilder()
+        .setCustomId('accept')              
         .setStyle(ButtonStyle.Success)
-        .setLabel('Yes')
+        .setLabel('Accept')
 
-        const noButton = new ButtonBuilder()
-        .setCustomId('no')
+        const rejectButton = new ButtonBuilder()
+        .setCustomId('reject')
         .setStyle(ButtonStyle.Danger)
-        .setLabel('No')
+        .setLabel('Reject')
         
         const requestMessage = await interaction.reply({
             content: opponent.user.toString(),
             embeds: [confirmationEmbed],
             components: [
                 new ActionRowBuilder<ButtonBuilder>()
-                .addComponents([yesButton, noButton])
+                .addComponents([acceptButton, rejectButton])
             ],
             fetchReply: true
         })
@@ -73,7 +74,7 @@ const memoryGameCommand: Cmd = {
                 content: 'Leave it for the other person to reply!',
                 ephemeral: true
             })
-            if (requestBtn.customId === 'no') {
+            if (requestBtn.customId === 'reject') {
                 await requestBtn.reply({ content: 'You rejected the request.', ephemeral: true })
                 confirmationEmbed
                 .setColor(0xff0000)
@@ -84,7 +85,7 @@ const memoryGameCommand: Cmd = {
                     embeds: [confirmationEmbed],
                     components: [
                         new ActionRowBuilder<ButtonBuilder>()
-                        .addComponents(yesButton.setDisabled(true), noButton.setDisabled(true))
+                        .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                     ]
                 })
             } else {
@@ -123,10 +124,13 @@ const memoryGameCommand: Cmd = {
                 )
 
                 await requestMessage.edit({
-                    content: `${
-                        playerTurn === 0 ? interaction.user : opponent.user
-                    } It is now your turn, please select two cards.`,
-                    embeds: [],
+                    embeds: [
+                        (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                        .setColor(0x00ffff)
+                        .setTitle('Memory Game Match')
+                        .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('2')} cards`)}.`)
+                    ],
+                    content: bold('Let the game begin!'),
                     components: grid
                 })
 
@@ -173,10 +177,12 @@ const memoryGameCommand: Cmd = {
                         )
 
                         await requestMessage.edit({
-                            content: `${
-                                playerTurn === 0 ? interaction.user : opponent.user
-                            } It is now your turn, please select one more card.`,
-                            embeds: [],
+                            embeds: [
+                                (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                .setColor(0x00ffff)
+                                .setTitle('Memory Game Match')
+                                .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('2')} cards`)}.`)
+                            ],
                             components: grid
                         })
 
@@ -246,9 +252,12 @@ const memoryGameCommand: Cmd = {
                                 })
                             )
                             await requestMessage.edit({
-                                content: `${
-                                    playerTurn === 0 ? interaction.user : opponent.user
-                                } Nice match!`,
+                                embeds: [
+                                    (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                    .setColor(0x00ff00)
+                                    .setTitle('Memory Game Match')
+                                    .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} Nice match!`)
+                                ],
                                 components: grid
                             })
                         } else {
@@ -281,17 +290,30 @@ const memoryGameCommand: Cmd = {
                                 })
                             )
                             await requestMessage.edit({
-                                content: `${
-                                    playerTurn === 0 ? interaction.user : opponent.user
-                                } Not quite...`,
+                                embeds: [
+                                    (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                    .setColor(0xff0000)
+                                    .setTitle('Memory Game Match')
+                                    .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} Not quite...`)
+                                ],
                                 components: grid
                             })
                         }
                         if (foundPairs.length === 10) {
-                            const numberUserFoundPairs = foundPairs.filter(s => s[0].id === interaction.user.id)
-                            const numberOpponentFoundPairs = foundPairs.filter(s => s[0].id === opponent.user.id)
-                            if (numberUserFoundPairs.length === numberOpponentFoundPairs.length) {
-                                requestMessage.edit(`${Formatters.bold('Draw!')}\nYou both found the same amount of pairs of numbers, good game!\nBoth of you will gain **\`125\` experience points**.`)
+                            const userFoundPairs = foundPairs.filter(s => s[0].id === interaction.user.id)
+                            const opponentFoundPairs = foundPairs.filter(s => s[0].id === opponent.user.id)
+                            if (userFoundPairs.length === opponentFoundPairs.length) {
+                                requestMessage.edit({
+                                    embeds: [
+                                        (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                        .setColor(0x00ff00)
+                                        .setTitle('Memory Game Match - Draw!')
+                                        .setDescription(`Congratulations, you both drew!\n\nYou will both gain **\`75\` experience points**.`)
+                                        .setFooter({
+                                            text: `Both players matched 5 pairs of numbers.`
+                                        })
+                                    ]
+                                })
                                 LevelModel.increment({
                                     xp: 125
                                 }, {
@@ -307,20 +329,48 @@ const memoryGameCommand: Cmd = {
                                     }
                                 })
                             }
-                            else return await requestMessage.edit(`${Formatters.bold('We have a winner!')}\nCongratulations ${
-                                numberUserFoundPairs.length > numberOpponentFoundPairs.length
-                                ? interaction.user
-                                : opponent.user
-                            }, you won the game! You matched ${Formatters.bold(`${
-                                numberUserFoundPairs.length > numberOpponentFoundPairs.length
-                                ? Formatters.inlineCode(String(numberUserFoundPairs.length))
-                                : Formatters.inlineCode(String(numberOpponentFoundPairs.length))
-                            } pairs`)} of numbers.\nYou will gain **${Formatters.inlineCode(String((numberUserFoundPairs.length > numberOpponentFoundPairs.length) ? numberUserFoundPairs.length * 25 : numberOpponentFoundPairs.length * 25))} experience points**.`)
+                            else return await requestMessage.edit({
+                                embeds: [
+                                    (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                    .setColor(0x00ff00)
+                                    .setTitle('Memory Game Match - Winner!')
+                                    .setDescription(`Congratulations ${
+                                        userFoundPairs.length > opponentFoundPairs.length
+                                        ? interaction.user
+                                        : opponent.user
+                                    }, you won the game!\n\nYou will gain **${
+                                        inlineCode(
+                                            userFoundPairs.length > opponentFoundPairs.length
+                                            ? String(userFoundPairs.length * 25)
+                                            : String(opponentFoundPairs.length * 25)
+                                        )
+                                    } experience points**.`)
+                                    .setFields([
+                                        {
+                                            name: `${pluralise(userFoundPairs.length, 'pair')} found by starting player`,
+                                            value: userFoundPairs
+                                                .map((r, i) => `${inlineCode(bold(String(i + 1)))} ${inlineCode(String(r[1]))} and ${inlineCode(String(r[2]))}`)
+                                                .join('\n'),
+                                            inline: true
+                                        },
+                                        {
+                                            name: `${pluralise(userFoundPairs.length, 'pair')} found by opponent`,
+                                            value: opponentFoundPairs
+                                                .map((r, i) => `${inlineCode(bold(String(i + 1)))} ${inlineCode(String(r[1]))} and ${inlineCode(String(r[2]))}`)
+                                                .join('\n'),
+                                            inline: true
+                                        }
+                                    ])
+                                    .setFooter({
+                                        text: `The winner matched ${userFoundPairs.length > opponentFoundPairs.length ? userFoundPairs.length : opponentFoundPairs.length} pairs of numbers.`
+                                    })
+                                ]
+                            })
                             LevelModel.increment({
-                                xp: (numberUserFoundPairs.length > numberOpponentFoundPairs.length ? numberUserFoundPairs.length : numberOpponentFoundPairs.length) * 25
+                                xp: (userFoundPairs.length > opponentFoundPairs.length ? userFoundPairs.length : opponentFoundPairs.length) * 25
                             }, {
                                 where: {
-                                    id: (numberUserFoundPairs.length > numberOpponentFoundPairs.length ? interaction.user : opponent.user).id
+                                    id: (userFoundPairs.length > opponentFoundPairs.length ? interaction.user : opponent.user).id
                                 }
                             })
                         } else {
@@ -355,10 +405,12 @@ const memoryGameCommand: Cmd = {
                                 opponentChoices = []
                                 playerTurn = (playerTurn === 0) ? 1 : 0
                                 return await requestMessage.edit({
-                                    content: `${
-                                        playerTurn === 0 ? interaction.user : opponent.user
-                                    } It is now your turn, please select two cards.`,
-                                    embeds: [],
+                                    embeds: [
+                                        (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
+                                        .setColor(0x00ffff)
+                                        .setTitle('Memory Game Match')
+                                        .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('2')} cards`)}.`)
+                                    ],
                                     components: grid
                                 })
                             }, 1875)
@@ -381,7 +433,7 @@ const memoryGameCommand: Cmd = {
                     ],
                     components: [
                         new ActionRowBuilder<ButtonBuilder>()
-                        .addComponents(yesButton.setDisabled(true), noButton.setDisabled(true))
+                        .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                     ]
                 })
             }

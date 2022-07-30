@@ -1,10 +1,10 @@
-import { Client, Formatters, Guild, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ApplicationCommand, ClientApplication, ApplicationCommandPermissionType, User } from "discord.js"
+import { Client, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ClientApplication, ApplicationCommandPermissionType, User, bold, underscore, EmbedBuilder, inlineCode } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel } from "./database"
+import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand } from "./commands/command-exports"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel } from "./database"
 
 const commands: Cmd[] = [
     rankCommand,
@@ -15,6 +15,7 @@ const commands: Cmd[] = [
     tttCommand,
     gtwCommand,
     memoryGameCommand,
+    reportCommand
 ]
 
 const privateCommands: Cmd[] = [
@@ -82,7 +83,12 @@ client.on('interactionCreate', async (interaction): Promise<any> => {
         })
 
         if (isBlacklist) return await interaction.reply({
-            content: `${Formatters.bold(Formatters.underscore('You are blacklisted from using this bot.'))}\n\n⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`,
+            embeds: [
+                new EmbedBuilder()
+                .setTitle(underscore('You are blacklisted from using this bot.'))
+                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                .setColor(0x000000)
+            ],
             ephemeral: true
         })
 
@@ -116,7 +122,17 @@ client.on('messageCreate', async (message) => {
             xp: -50 * (lvl.lvl + 1),
             lvl: 1
         })
-        message.channel.send(`Congratulations ${message.author}, you have levelled up to ${Formatters.bold(`Level ${lvl.lvl}`)}!`)
+        message.channel.send({
+            embeds: [
+                new EmbedBuilder()
+                .setTitle('Level Up!')
+                .setDescription(`🎉 **Congratulations ${message.author.id}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
+                .setColor((await RankCardModel.findOne({ where: { id: message.author.id }}))?.colour ?? 0x00ffff)
+                .setFooter({
+                    text: `Use the /rank command to view your rank or customise your rank card, or the /leaderboard command to see how you compete against other users.`
+                })
+            ]
+        })
     }
 })
 
