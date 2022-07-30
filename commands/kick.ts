@@ -1,5 +1,5 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, Formatters, GuildMember, PermissionsBitField } from "discord.js"
-import { ordinalNumber } from "../util"
+import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField } from "discord.js"
+import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
 const kickCommand: Cmd = {
@@ -23,38 +23,69 @@ const kickCommand: Cmd = {
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
         // Input
-        const member = (<ChatInputCommandInteraction<"cached">>interaction).options.getMember('member')
-        const reason = (<ChatInputCommandInteraction<"cached">>interaction).options.getString('reason')
+        const member = interaction.options.getMember('member')
+        const reason = interaction.options.getString('reason')
+
+        // Avoid repetition
+        const botMember = <GuildMember>interaction.guild.members.me
 
         // Check if the member is in the server
         if (!member) return await interaction.reply({
-            content: 'Cannot find that member.',
+            embeds: [
+                new EmbedBuilder()
+                .setAuthor({
+                    name: `${interaction.user.tag} (${interaction.user.id})`,
+                    iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                })
+                .setTitle(`${inlineCode('/kick')} - Member not found`)
+                .setDescription(`Couldn't find that member.`)
+                .setColor(0xff0000)
+            ],
             ephemeral: true
         })
 
         // Check if the bot's highest role is higher than the member's highest
         if (member.roles.highest.position >= (<GuildMember>interaction.guild.members.me).roles.highest.position) {
             const memberRolePos = member.roles.highest.position
-            const botRolePos = (<GuildMember>interaction.guild.members.me).roles.highest.position
+            const botRolePos = botMember.roles.highest.position
             const numRoles = interaction.guild.roles.cache.size - 1
             return await interaction.reply({
-                content: `I cannot kick ${
-                    Formatters.bold(member.user.tag)
-                } (${
-                    Formatters.inlineCode(member.id)
-                }) because their highest role (${
-                    Formatters.inlineCode(member.roles.highest.name)
-                }, ${
-                    numRoles - memberRolePos === 0 ? 'highest role' : `${
-                        Formatters.inlineCode(ordinalNumber(numRoles - memberRolePos))
-                    } highest role`
-                }) is higher than or the same as my highest role (${
-                    Formatters.inlineCode((<GuildMember>interaction.guild.members.me).roles.highest.name)
-                }, ${
-                    memberRolePos === botRolePos 
-                    ? 'same role' 
-                    : `${memberRolePos - botRolePos} role(s) higher`
-                }).`,
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(`${inlineCode('/kick')} - Role Hierarchy`)
+                    .setDescription(`Unable to kick member. Member's highest permission (${
+                        bold(member.roles.highest.name)
+                    } ${
+                        inlineCode(member.roles.highest.id)
+                    }, ${
+                        numRoles - memberRolePos === 0 
+                        ? bold('highest role')
+                        : bold(`${
+                            inlineCode(ordinalNumber(numRoles - memberRolePos))
+                        } highest role`)
+                    }) is ${
+                        memberRolePos === botRolePos
+                        ? bold('the same role as')
+                        : bold(`${inlineCode(
+                            pluralise(memberRolePos - botRolePos, 'role')
+                        )}`)
+                    } higher than my highest role (${
+                        bold(botMember.roles.highest.name)
+                    } ${
+                        inlineCode(botMember.roles.highest.id)
+                    }, ${
+                        numRoles - memberRolePos === 0 
+                        ? bold('highest role')
+                        : bold(`${
+                            inlineCode(ordinalNumber(numRoles - memberRolePos))
+                        } highest role`)
+                    }).`)
+                    .setColor(0xff0000)
+                ],
                 ephemeral: true
             })
         }
@@ -63,63 +94,146 @@ const kickCommand: Cmd = {
         const perms = new PermissionsBitField('KickMembers').toArray()
 
         if (
-            !perms.every(perm => (<GuildMember>interaction.guild.members.me).permissions.has(perm))
+            !perms.every(perm => botMember.permissions.has(perm))
         ) {
+            const missingPerms = perms.filter(p => !botMember.permissions.has(p))
             return await interaction.reply({
-                content: `Bot is missing permissions.\nThis command requires the bot to have the ${
-                    perms
-                    .map(
-                        s => Formatters.inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
-                    )
-                } permission(s). The bot is missing ${
-                    Formatters.bold('this permission')
-                }.`
+                embeds: [
+                    new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(`${inlineCode('/kick')} - Missing Permissions`)
+                    .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
+                        bold(
+                            `${commaList(
+                                perms
+                                .map(
+                                    s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                )
+                            )} ${
+                                pluralise(perms.length, 'permissions')
+                            }`
+                        )
+                    }.\nThe bot has the ${
+                        bold(
+                            `${commaList(
+                                perms
+                                .filter(
+                                    p => !missingPerms.includes(p)
+                                )
+                                .map(
+                                    s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                )
+                            )} ${
+                                pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
+                            }`
+                        )
+                    }, however is __missing__ the ${
+                        bold(
+                            `${commaList(
+                                missingPerms
+                                .map(
+                                    s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                )
+                            )} ${
+                                pluralise(missingPerms.length, 'permissions')
+                            }`
+                        )
+                    }.`)
+                    .setColor(0xff0000)
+                ],
+                ephemeral: true
             })
         }
 
-        // Check if the member is kickable apart from any other conditions
+        // Check if the member is manageable apart from any other conditions
         // This will stop the bot from throwing errors when it kicks the member afterwards
         if (!member.kickable) return await interaction.reply({
-            content: 'This member is unkickable.',
+            embeds: [
+                new EmbedBuilder()
+                .setAuthor({
+                    name: `${interaction.user.tag} (${interaction.user.id})`,
+                    iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                })
+                .setTitle(`${inlineCode('/kick')} - Member unkickable`)
+                .setDescription(`Member unkickable.\nCannot kick this member, reason unknown.`)
+                .setColor(0xff0000)
+            ],
             ephemeral: true
         })
 
         // Directly message the member and reply, if it doesn't work the bot will inform, and kick anyways
-        member.send(`You have been kicked from ${
-            Formatters.bold(interaction.guild.name)
-        } ${
-            reason 
-            ? `with reason ${Formatters.bold(reason)}` 
-            : 'without a reason'
-        }.`)
+        member.send({
+            embeds: [
+                new EmbedBuilder()
+                .setColor(0xff7700)
+                .setTitle('Kick')
+                .setDescription(`You have been kicked from ${bold(interaction.guild.name)}.`)
+                .addFields([
+                    {
+                        name: 'Reason',
+                        value: reason
+                            ? reason
+                            : inlineCode(italic('No reason provided'))
+                    }
+                ])
+            ]
+        })
         .then(async () => {
             await interaction.reply({
-                content: `Successfully kicked ${
-                    Formatters.bold(member.user.tag)
-                } (${
-                    Formatters.inlineCode(member.id)
-                }) from the server ${
-                    reason
-                    ? `with reason ${Formatters.bold(reason)}`
-                    : 'without a reason'
-                }.`
+                content: 'Kick successful. Member has been messaged.',
+                embeds: [
+                    EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                    .setColor(0x00ff00)
+                    .setTitle('Kick Successful')
+                    .setDescription(`Successfully kicked ${
+                        bold(member.user.tag)
+                    } (${member.user.id}) from ${
+                        bold(interaction.guild.name)  
+                    } ${
+                        reason
+                        ? `with reason ${bold(reason)}`
+                        : 'without a reason'
+                    }.`)
+                    .setAuthor(null)
+                    .setFields([])
+                ]
             })
         })
         .catch(async () => {
             await interaction.reply({
-                content: `Successfully kicked ${
-                    Formatters.bold(member.user.tag)
-                } (${
-                    Formatters.inlineCode(member.id)
-                }) from the server ${
-                    reason
-                    ? `with reason ${Formatters.bold(reason)}`
-                    : 'without a reason'
-                }. I could not DM them.`
+                content: 'Kick successful. Couldn\'t send the member a message.',
+                embeds: [
+                    EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                    .setColor(0x00ff00)
+                    .setTitle('Kick Successful')
+                    .setDescription(`Successfully kicked ${
+                        bold(member.user.tag)
+                    } (${member.user.id}) from ${
+                        bold(interaction.guild.name)
+                    } ${
+                        reason
+                        ? `with reason ${bold(reason)}`
+                        : 'without a reason'
+                    }.`)
+                    .setAuthor(null)
+                    .setFields([])
+                ]
             })
         })
         .finally(async () => {
-            await member.kick(`Kicked by ${interaction.user.tag} (${interaction.user.id}) ${reason ? `with reason ${reason}` : 'without a reason'}`)
+            await member.kick(`Kicked by ${
+                    interaction.user.tag
+                } (${
+                    interaction.user.id
+                }) ${
+                    reason 
+                    ? `with reason ${reason}` 
+                    : 'without a reason'
+                }.`
+            )
         })
     }
 }
