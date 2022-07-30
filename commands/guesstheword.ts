@@ -18,8 +18,8 @@ const gtwCommand: Cmd = {
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
         const wordOrSentence = interaction.options.getString('word-or-sentence', true).replace(/\s+/, () => ' ')
 
-        if (wordOrSentence.length < 3) return await interaction.reply({
-            content: `String must be at least 3 characters long. String length is ${bold(wordOrSentence.length.toString())}.`,
+        if (wordOrSentence.length < 2) return await interaction.reply({
+            content: 'String must be at least 2 characters long.',
             ephemeral: true
         })
 
