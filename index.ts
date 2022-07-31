@@ -58,20 +58,7 @@ client.on('ready', async () => {
             privateCommands.map(p => p.data),
             '1000073833551769600'
         )
-    ).forEach((cmd) => {
-        if (cmd.permissions) {
-            cmd.permissions.set({
-                permissions: [
-                    {
-                        id: (<User>(<ClientApplication>client.application).owner).id,
-                        type: ApplicationCommandPermissionType.User,
-                        permission: true
-                    }
-                ],
-                token: process.env.TOKEN as string
-            })
-        }
-    });
+    )
 })
 
 client.on('interactionCreate', async (interaction): Promise<any> => {
