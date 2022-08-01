@@ -113,7 +113,7 @@ client.on('messageCreate', async (message) => {
             embeds: [
                 new EmbedBuilder()
                 .setTitle('Level Up!')
-                .setDescription(`🎉 **Congratulations ${message.author.id}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
+                .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
                 .setColor(/* (await RankCardModel.findOne({ where: { id: message.author.id }}))?.colour ?? */ /* RESOLVING ISSUE */ 0x00ffff)
                 .setFooter({
                     text: `Use the /rank command to view your rank or customise your rank card, or the /leaderboard command to see how you compete against other users.`
