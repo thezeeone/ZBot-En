@@ -30,20 +30,46 @@ const leaderboardCommand: Cmd = {
         const option = interaction.options.getString('display') as 'global' | 'local'
 
         const leaderboard = await LevelModel.findAll()
-        const userPosition = leaderboard
-        .filter(
-            async (model) => {
-                try {
-                    await interaction.client.users.fetch(model.id)
-                    return model
-                } catch (error) {
-                    return undefined
-                }
-            }
+        const userPosition = (await Promise.all(
+            leaderboard
+                .filter(
+                    async (model) => {
+                        try {
+                            await interaction.client.users.fetch(model.id);
+                            return model;
+                        } catch (error) {
+                            return undefined;
+                        }
+                    }
+                )
+                .filter(i => i !== undefined)
+                .map(i => i.id)
+            )
         )
-        .filter(i => i !== undefined)
-        .map(i => i.id)
         .indexOf(interaction.user.id) + 1
+
+        console.log(
+            (await Promise.all(
+                leaderboard
+                    .filter(
+                        async (model) => {
+                            try {
+                                await interaction.client.users.fetch(model.id);
+                                return model;
+                            } catch (error) {
+                                return undefined;
+                            }
+                        }
+                    )
+                    .filter(i => i !== undefined)
+                    .map(i => i.id)
+                )
+            )
+        )
+
+        console.log(
+            userPosition
+        )
 
         if (option === 'global') {
             const globalLeaderboard = (
