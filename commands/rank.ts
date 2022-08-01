@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode } from "discord.js";
 import { Cmd } from "./command-exports";
-import { LevelModel, RankCardModel } from "../database";
+import { LevelModel/*, RankCardModel */ } from "../database";
 import { ordinalNumber } from "../util";
 
 const rankCommand: Cmd = {
@@ -33,31 +33,31 @@ const rankCommand: Cmd = {
                     }
                 ]
             },
-            {
-                name: 'customise',
-                description: 'Customise your own rank card',
-                type: ApplicationCommandOptionType.SubcommandGroup,
-                options: [
-                    {
-                        name: 'set-colour',
-                        description: 'Set the colour of your rank card',
-                        type: ApplicationCommandOptionType.Subcommand,
-                        options: [
-                            {
-                                name: 'colour',
-                                description: 'Accepted formats, #XXXXXX, #XXX, XXXXXX, XXX, 0xXXXXXX, 0xXXX (X is one of 0-9 or A-F or a-f)',
-                                type: ApplicationCommandOptionType.String,
-                                required: true
-                            }
-                        ]
-                    },
-                    {
-                        name: 'remove-colour',
-                        description: 'Remove the colour of your rank card (default is #00FFFF)',
-                        type: ApplicationCommandOptionType.Subcommand
-                    }
-                ]
-            }
+            // {
+            //     name: 'customise',
+            //     description: 'Customise your own rank card',
+            //     type: ApplicationCommandOptionType.SubcommandGroup,
+            //     options: [
+            //         {
+            //             name: 'set-colour',
+            //             description: 'Set the colour of your rank card',
+            //             type: ApplicationCommandOptionType.Subcommand,
+            //             options: [
+            //                 {
+            //                     name: 'colour',
+            //                     description: 'Accepted formats, #XXXXXX, #XXX, XXXXXX, XXX, 0xXXXXXX, 0xXXX (X is one of 0-9 or A-F or a-f)',
+            //                     type: ApplicationCommandOptionType.String,
+            //                     required: true
+            //                 }
+            //             ]
+            //         },
+            //         {
+            //             name: 'remove-colour',
+            //             description: 'Remove the colour of your rank card (default is #00FFFF)',
+            //             type: ApplicationCommandOptionType.Subcommand
+            //         }
+            //     ]
+            // }
         ]
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
@@ -87,11 +87,13 @@ const rankCommand: Cmd = {
                         }
                     })
     
-                    const userCustomisationOptions = await RankCardModel.findOne({
-                        where: {
-                            id: interaction.user.id
-                        }
-                    })
+                    // RESOLVING ISSUE
+                    // https://github.com/Zahid556/ZBot-En/issues/11
+                    // const userCustomisationOptions = await RankCardModel.findOne({
+                    //     where: {
+                    //         id: interaction.user.id
+                    //     }
+                    // })
     
                     if (!userRankCard) {
                         return await interaction.reply({
@@ -109,7 +111,7 @@ const rankCommand: Cmd = {
                         return await interaction.reply({
                             embeds: [
                                 new EmbedBuilder()
-                                .setColor(userCustomisationOptions?.colour ?? 0x00ffff)
+                                .setColor(/* userCustomisationOptions?.colour ?? */ 0x00ffff)
                                 .setTitle('My Rank Card')
                                 .setThumbnail(interaction.user.displayAvatarURL({ forceStatic: false }))
                                 .setDescription(`You currently rank as ${
@@ -166,11 +168,13 @@ const rankCommand: Cmd = {
                         }
                     })
     
-                    const userCustomisationOptions = await RankCardModel.findOne({
-                        where: {
-                            id: user.id
-                        }
-                    })
+                    // RESOLVING ISSUE
+                    // https://github.com/Zahid556/ZBot-En/issues/11
+                    // const userCustomisationOptions = await RankCardModel.findOne({
+                    //     where: {
+                    //         id: user.id
+                    //     }
+                    // })
     
                     if (!userRankCard) {
                         return await interaction.reply({
@@ -188,7 +192,7 @@ const rankCommand: Cmd = {
                         return await interaction.reply({
                             embeds: [
                                 new EmbedBuilder()
-                                .setColor(userCustomisationOptions?.colour ?? 0x00ffff)
+                                .setColor(/* userCustomisationOptions?.colour ?? */ /* RESOLVING ISSUE */ 0x00ffff)
                                 .setTitle(`Rank Card for ${inlineCode(user.tag)} (${inlineCode(user.id)})`)
                                 .setThumbnail(interaction.user.displayAvatarURL({ forceStatic: false }))
                                 .setDescription(`${bold(user.tag)} (${inlineCode(user.id)}) currently ranks as ${
@@ -232,11 +236,13 @@ const rankCommand: Cmd = {
                     }
                 })
 
-                const userCustomisationOptions = await RankCardModel.findOne({
-                    where: {
-                        id: interaction.user.id
-                    }
-                })
+                // RESOLVING ISSUE
+                // https://github.com/Zahid556/ZBot-En
+                // const userCustomisationOptions = await RankCardModel.findOne({
+                //     where: {
+                //         id: interaction.user.id
+                //     }
+                // })
 
                 const localLeaderboard = (await LevelModel.findAll())
                 .filter(r => interaction.guild.members.cache.has(r.id))
@@ -265,7 +271,7 @@ const rankCommand: Cmd = {
                     return await interaction.reply({
                         embeds: [
                             new EmbedBuilder()
-                            .setColor(userCustomisationOptions?.colour ?? 0x00ffff)
+                            .setColor(/* userCustomisationOptions?.colour ?? */ /* RESOLVING ISSUE */ 0x00ffff)
                             .setTitle('My Rank Card')
                             .setThumbnail(interaction.user.displayAvatarURL({ forceStatic: false }))
                             .setDescription(`You currently rank as ${
@@ -308,7 +314,9 @@ const rankCommand: Cmd = {
         } else {
             const sc = interaction.options.getSubcommand(true) as "set-colour" | "remove-colour"
             if (sc === "set-colour") {
-                const userRankCard = await LevelModel.findOne({
+                // RESOLVING ISSUE
+                // https://github.com/Zahid556/ZBot-En/issues/11
+                /* const userRankCard = await LevelModel.findOne({
                     where: {
                         id: interaction.user.id
                     }
@@ -410,8 +418,11 @@ const rankCommand: Cmd = {
                         ])
                     ]
                 })
+                */
             } else {
-                const userRankCard = await LevelModel.findOne({
+                // RESOLVING ISSUE
+                // https://github.com/Zahid556/ZBot-En/issues/11
+                /* const userRankCard = await LevelModel.findOne({
                     where: {
                         id: interaction.user.id
                     }
@@ -510,12 +521,10 @@ const rankCommand: Cmd = {
                             }
                         ])
                     ]
-                })
+                }) */
             }
         }
     }
 }
 
-export { 
-    rankCommand
-}
+export { rankCommand }
