@@ -9,9 +9,13 @@
  * @param {boolean} [capitalise] Whether to capitalise or not
  * @returns {string} The ordinal number, as a string 
  */
- function ordinalNumber(num: number, capitalise?: boolean): string {
+function ordinalNumber(num: number, capitalise?: boolean): string {
     if ([1, 2, 3].includes(num % 10) && Math.floor((num % 100) / 10) === 1) return `${num}${capitalise ? 'TH' : 'th'}`
-    else return `${num}${(capitalise ? ['ST', 'ND', 'RD'] : ['st', 'nd', 'rd'])[num % 10 - 1]}`
+    else return `${num}${
+        num % 10 < 4 && num % 10 !== 0
+        ? (capitalise ? ['ST', 'ND', 'RD'] : ['st', 'nd', 'rd'])[num % 10 - 1]
+        : (capitalise ? 'TH' : 'th')
+    }`
 }
 
 /**
