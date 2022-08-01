@@ -4,7 +4,7 @@ import { blacklistCommand } from "./commands/blacklist"
 config()
 
 import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel, RankCardModel } from "./database"
+import { sequelize, LevelModel, BlacklistModel, /* RankCardModel */ /* RESOLVING ISSUE */ } from "./database"
 
 const commands: Cmd[] = [
     rankCommand,
@@ -114,7 +114,7 @@ client.on('messageCreate', async (message) => {
                 new EmbedBuilder()
                 .setTitle('Level Up!')
                 .setDescription(`🎉 **Congratulations ${message.author.id}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
-                .setColor((await RankCardModel.findOne({ where: { id: message.author.id }}))?.colour ?? 0x00ffff)
+                .setColor(/* (await RankCardModel.findOne({ where: { id: message.author.id }}))?.colour ?? */ /* RESOLVING ISSUE */ 0x00ffff)
                 .setFooter({
                     text: `Use the /rank command to view your rank or customise your rank card, or the /leaderboard command to see how you compete against other users.`
                 })
