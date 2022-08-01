@@ -18,6 +18,7 @@ import { gtwCommand } from "./guesstheword";
 import { memoryGameCommand } from "./memorygame";
 import { blacklistCommand } from "./blacklist";
 import { reportCommand } from "./reportproblem";
+import { playCommand } from "./play";
 
 export {
     Cmd,
@@ -31,5 +32,6 @@ export {
     gtwCommand,
     memoryGameCommand,
     blacklistCommand,
+    playCommand,
     reportCommand
 }
