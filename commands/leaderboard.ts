@@ -43,33 +43,19 @@ const leaderboardCommand: Cmd = {
                     }
                 )
                 .filter(i => i !== undefined)
+                .sort((l1, l2) => {
+                    if (l1.lvl > l2.lvl) return -1
+                    else if (l1.lvl < l2.lvl) return 1
+                    else {
+                        if (l1.xp > l2.xp) return -1
+                        else if (l1.xp < l2.xp) return 1
+                        else return 0
+                    }
+                })
                 .map(i => i.id)
             )
         )
         .indexOf(interaction.user.id) + 1
-
-        console.log(
-            (await Promise.all(
-                leaderboard
-                    .filter(
-                        async (model) => {
-                            try {
-                                await interaction.client.users.fetch(model.id);
-                                return model;
-                            } catch (error) {
-                                return undefined;
-                            }
-                        }
-                    )
-                    .filter(i => i !== undefined)
-                    .map(i => i.id)
-                )
-            )
-        )
-
-        console.log(
-            userPosition
-        )
 
         if (option === 'global') {
             const globalLeaderboard = (
