@@ -16,10 +16,12 @@ interface BlacklistModel extends Model<InferAttributes<BlacklistModel>, InferCre
     id: string
 }
 
-interface RankCardModel extends Model<InferAttributes<RankCardModel>, InferCreationAttributes<RankCardModel>> {
-    id: string,
-    colour: number
-}
+// RESOLVING ISSUE
+// https://github.com/Zahid556/ZBot-En/issues/11
+// interface RankCardModel extends Model<InferAttributes<RankCardModel>, InferCreationAttributes<RankCardModel>> {
+//     id: string,
+//     colour: number
+// }
 
 const LevelModel = sequelize.define<LevelModel>('Levels', {
     id: {
@@ -30,16 +32,18 @@ const LevelModel = sequelize.define<LevelModel>('Levels', {
     lvl: DataTypes.INTEGER
 })
 
-const RankCardModel = sequelize.define<RankCardModel>('RankCards', {
-    id: {
-        primaryKey: true,
-        type: DataTypes.NUMBER
-    },
-    colour: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0x00ffff
-    }
-})
+// RESOLVING ISSUE
+// https://github.com/Zahid556/ZBot-En/issues/11
+// const RankCardModel = sequelize.define<RankCardModel>('RankCards', {
+//     id: {
+//         primaryKey: true,
+//         type: DataTypes.NUMBER <-- THIS LINE WAS WHAT WAS CAUSING THE ERROR
+//     },
+//     colour: {
+//         type: DataTypes.INTEGER,
+//         defaultValue: 0x00ffff
+//     }
+// })
 
 const BlacklistModel = sequelize.define<BlacklistModel>('Blacklists', {
     id: {
@@ -52,5 +56,5 @@ export {
     sequelize,
     LevelModel,
     BlacklistModel,
-    RankCardModel
+    /* RankCardModel */ // RESOLVING ISSUE
 }
