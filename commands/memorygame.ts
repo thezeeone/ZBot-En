@@ -177,6 +177,7 @@ const memoryGameCommand: Cmd = {
                         )
 
                         await requestMessage.edit({
+                            content: '',
                             embeds: [
                                 (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
                                 .setColor(0x00ffff)
@@ -252,6 +253,7 @@ const memoryGameCommand: Cmd = {
                                 })
                             )
                             await requestMessage.edit({
+                                content: '',
                                 embeds: [
                                     (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
                                     .setColor(0x00ff00)
@@ -290,6 +292,7 @@ const memoryGameCommand: Cmd = {
                                 })
                             )
                             await requestMessage.edit({
+                                content: '',
                                 embeds: [
                                     (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
                                     .setColor(0xff0000)
@@ -304,6 +307,7 @@ const memoryGameCommand: Cmd = {
                             const opponentFoundPairs = foundPairs.filter(s => s[0].id === opponent.user.id)
                             if (userFoundPairs.length === opponentFoundPairs.length) {
                                 requestMessage.edit({
+                                    content: '',
                                     embeds: [
                                         (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
                                         .setColor(0x00ff00)
@@ -330,6 +334,7 @@ const memoryGameCommand: Cmd = {
                                 })
                             }
                             else return await requestMessage.edit({
+                                content: '',
                                 embeds: [
                                     (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
                                     .setColor(0x00ff00)
@@ -405,11 +410,12 @@ const memoryGameCommand: Cmd = {
                                 opponentChoices = []
                                 playerTurn = (playerTurn === 0) ? 1 : 0
                                 return await requestMessage.edit({
+                                    content: '',
                                     embeds: [
                                         (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
                                         .setColor(0x00ffff)
                                         .setTitle('Memory Game Match')
-                                        .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('2')} cards`)}.`)
+                                        .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('1 more')} card`)}.`)
                                     ],
                                     components: grid
                                 })
