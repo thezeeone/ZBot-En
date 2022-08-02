@@ -176,7 +176,7 @@ const kickCommand: Cmd = {
                         name: 'Reason',
                         value: reason
                             ? reason
-                            : inlineCode(italic('No reason provided'))
+                            : italic(inlineCode('No reason provided'))
                     }
                 ])
             ]
