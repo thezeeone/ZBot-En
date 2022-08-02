@@ -182,7 +182,7 @@ const banCommand: Cmd = {
                             name: 'Reason',
                             value: reason
                                 ? reason
-                                : inlineCode(italic('No reason provided'))
+                                : italic(inlineCode('No reason provided'))
                         }
                     ])
                 ]
@@ -412,7 +412,7 @@ const banCommand: Cmd = {
                             name: 'Reason',
                             value: reason
                                 ? reason
-                                : inlineCode(italic('No reason provided'))
+                                : italic(inlineCode('No reason provided'))
                         }
                     ])
                 ]
