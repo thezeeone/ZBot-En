@@ -196,7 +196,7 @@ const banCommand: Cmd = {
                         .setTitle('Unban Successful')
                         .setDescription(`Successfully unbanned ${
                             bold(user.tag)
-                        } (${user.id}) from ${
+                        } (${inlineCode(user.id)}) from ${
                             bold(interaction.guild.name)  
                         } ${
                             reason
@@ -217,7 +217,7 @@ const banCommand: Cmd = {
                         .setTitle('Unban Successful')
                         .setDescription(`Successfully unbanned ${
                             bold(user.tag)
-                        } (${user.id}) from ${
+                        } (${inlineCode(user.id)}) from ${
                             bold(interaction.guild.name)
                         } ${
                             reason
@@ -426,7 +426,7 @@ const banCommand: Cmd = {
                         .setTitle('Ban Successful')
                         .setDescription(`Successfully banned ${
                             bold(user.tag)
-                        } (${user.id}) from ${
+                        } (${inlineCode(user.id)}) from ${
                             bold(interaction.guild.name)  
                         } ${
                             reason
@@ -451,7 +451,7 @@ const banCommand: Cmd = {
                         .setTitle('Ban Successful')
                         .setDescription(`Successfully banned ${
                             bold(user.tag)
-                        } (${user.id}) from ${
+                        } (${inlineCode(user.id)}) from ${
                             bold(interaction.guild.name)
                         } ${
                             reason
