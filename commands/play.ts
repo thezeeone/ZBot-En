@@ -162,7 +162,7 @@ const playCommand: Cmd = {
 
         const createConnection = joinVoiceChannel({
             guildId: interaction.guild.id,
-            channelId: interaction.guild.id,
+            channelId: (<VoiceChannel>interaction.member.voice.channel).id,
             adapterCreator: interaction.guild.voiceAdapterCreator
         })
 
