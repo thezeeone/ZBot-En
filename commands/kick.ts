@@ -190,7 +190,7 @@ const kickCommand: Cmd = {
                     .setTitle('Kick Successful')
                     .setDescription(`Successfully kicked ${
                         bold(member.user.tag)
-                    } (${member.user.id}) from ${
+                    } (${inlineCode(member.user.id)}) from ${
                         bold(interaction.guild.name)  
                     } ${
                         reason
@@ -211,7 +211,7 @@ const kickCommand: Cmd = {
                     .setTitle('Kick Successful')
                     .setDescription(`Successfully kicked ${
                         bold(member.user.tag)
-                    } (${member.user.id}) from ${
+                    } (${inlineCode(member.user.id)}) from ${
                         bold(interaction.guild.name)
                     } ${
                         reason
