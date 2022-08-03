@@ -78,7 +78,7 @@ const gtwCommand: Cmd = {
                     setTimeout(() => rpl.delete(), 750)
                 } else if (incorrectCharacters.includes(letter)) {
                     const rpl = await msg.reply( 
-                        'This letter is already one of the correct letters!'
+                        'This letter is already one of the incorrect letters!'
                     )
                     setTimeout(() => rpl.delete(), 750)  
                 } else if (wordOrSentence.includes(letter)) {
