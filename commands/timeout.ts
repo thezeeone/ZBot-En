@@ -312,7 +312,7 @@ const timeoutCommand: Cmd = {
                             name: 'Reason',
                             value: reason
                                 ? reason
-                                : inlineCode(italic('No reason provided')),
+                                : italic(inlineCode('No reason provided')),
                             inline: true
                         },
                         {
@@ -344,7 +344,7 @@ const timeoutCommand: Cmd = {
             })
 
             confirmationCollector.on('collect', async (button): Promise<any> => {
-                if (button.user.id !== interaction.user.id) return await interaction.reply({
+                if (button.user.id !== interaction.user.id) return await button.reply({
                     content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
                     ephemeral: true
                 })
@@ -359,7 +359,7 @@ const timeoutCommand: Cmd = {
                             .setTitle('Timeout Successful')
                             .setDescription(`Successfully timed out ${
                                 bold(member.user.tag)
-                            } (${member.user.id}) for a duration of ${bold(
+                            } (${inlineCode(member.user.id)}) for a duration of ${bold(
                                 commaList(
                                     [daysString, hoursString, minutesString, secondsString].filter(r => !r.startsWith('0'))
                                 )
@@ -390,7 +390,7 @@ const timeoutCommand: Cmd = {
                                     name: 'Reason',
                                     value: reason
                                         ? reason
-                                        : inlineCode(italic('No reason provided')),
+                                        : italic(inlineCode('No reason provided')),
                                     inline: true
                                 },
                                 {
@@ -411,7 +411,7 @@ const timeoutCommand: Cmd = {
                         ]
                     })
                     .then(async () => {
-                        await interaction.reply({
+                        await button.reply({
                             content: 'Timeout successful. Member has been messaged.',
                             embeds: [
                                 EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
@@ -419,7 +419,7 @@ const timeoutCommand: Cmd = {
                                 .setTitle('Timeout Successful')
                                 .setDescription(`Successfully timed out ${
                                     bold(member.user.tag)
-                                } (${member.user.id}) for a duration of ${bold(
+                                } (${inlineCode(member.user.id)}) for a duration of ${bold(
                                     commaList(
                                         [daysString, hoursString, minutesString, secondsString].filter(r => !r.startsWith('0'))
                                     )
@@ -434,7 +434,7 @@ const timeoutCommand: Cmd = {
                         })
                     })
                     .catch(async () => {
-                        await interaction.reply({
+                        await button.reply({
                             content: 'Timeout successful. Couldn\'t send the member a message.',
                             embeds: [
                                 EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
@@ -442,7 +442,7 @@ const timeoutCommand: Cmd = {
                                 .setTitle('Timeout Successful')
                                 .setDescription(`Successfully timed out ${
                                     bold(member.user.tag)
-                                } (${member.user.id}) for a duration of ${bold(
+                                } (${inlineCode(member.user.id)}) for a duration of ${bold(
                                     commaList(
                                         [daysString, hoursString, minutesString, secondsString].filter(r => !r.startsWith('0'))
                                     )
@@ -472,7 +472,7 @@ const timeoutCommand: Cmd = {
                             EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
                             .setColor(0xff0000)
                             .setTitle('Timeout Cancelled')
-                            .setDescription(`Request to timeout ${bold(member.user.tag)} (${bold(member.user.id)}) has been cancelled.`)
+                            .setDescription(`Request to timeout ${bold(member.user.tag)} (${inlineCode(member.user.id)}) has been cancelled.`)
                             .setAuthor(null)
                             .setFields([])
                         ]
@@ -666,11 +666,11 @@ const timeoutCommand: Cmd = {
             ] = [
                 new ButtonBuilder()
                 .setCustomId('yes')
-                .setStyle(ButtonStyle.Danger)
+                .setStyle(ButtonStyle.Success)
                 .setLabel('Yes'),
                 new ButtonBuilder()
                 .setCustomId('no')
-                .setStyle(ButtonStyle.Success)
+                .setStyle(ButtonStyle.Danger)
                 .setLabel('No')
             ]
 
@@ -695,7 +695,7 @@ const timeoutCommand: Cmd = {
                             name: 'Reason',
                             value: reason
                                 ? reason
-                                : inlineCode(italic('No reason provided')),
+                                : italic(inlineCode('No reason provided')),
                             inline: false
                         },
                     ])
@@ -713,7 +713,7 @@ const timeoutCommand: Cmd = {
             })
 
             confirmationCollector.on('collect', async (button): Promise<any> => {
-                if (button.user.id !== interaction.user.id) return await interaction.reply({
+                if (button.user.id !== interaction.user.id) return await button.reply({
                     content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
                     ephemeral: true
                 })
@@ -728,7 +728,7 @@ const timeoutCommand: Cmd = {
                             .setTitle('Timeout Removal Successful')
                             .setDescription(`Successfully removed the timeout for ${
                                 bold(member.user.tag)
-                            } (${member.user.id}) ${
+                            } (${inlineCode(member.user.id)}) ${
                                 reason
                                 ? `with reason ${bold(reason)}`
                                 : 'without a reason'
@@ -748,13 +748,13 @@ const timeoutCommand: Cmd = {
                                     name: 'Reason',
                                     value: reason
                                         ? reason
-                                        : inlineCode(italic('No reason provided'))
+                                        : italic(inlineCode('No reason provided'))
                                 }
                             ])
                         ]
                     })
                     .then(async () => {
-                        await interaction.reply({
+                        await button.reply({
                             content: 'Timeout removal successful. Member has been messaged.',
                             embeds: [
                                 EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
@@ -762,7 +762,7 @@ const timeoutCommand: Cmd = {
                                 .setTitle('Timeout Removal Successful')
                                 .setDescription(`Successfully removed the timeout from ${
                                     bold(member.user.tag)
-                                } (${member.user.id}) ${
+                                } (${inlineCode(member.user.id)}) ${
                                     reason
                                     ? `with reason ${bold(reason)}`
                                     : 'without a reason'
@@ -773,7 +773,7 @@ const timeoutCommand: Cmd = {
                         })
                     })
                     .catch(async () => {
-                        await interaction.reply({
+                        await button.reply({
                             content: 'Timeout removal successful. Couldn\'t send the member a message.',
                             embeds: [
                                 EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
@@ -781,7 +781,7 @@ const timeoutCommand: Cmd = {
                                 .setTitle('Timeout Removal Successful')
                                 .setDescription(`Successfully removed the timeout from ${
                                     bold(member.user.tag)
-                                } (${member.user.id}) ${
+                                } (${inlineCode(member.user.id)}) ${
                                     reason
                                     ? `with reason ${bold(reason)}`
                                     : 'without a reason'
