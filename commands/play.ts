@@ -39,39 +39,17 @@ const playCommand: Cmd = {
                     {
                         name: 'Examples of valid URL links',
                         value: [
-                            'https://www.youtube.com/watch?v=DFYRQ_zQ-gk&feature=featured',
-                            'https://www.youtube.com/watch?v=DFYRQ_zQ-gk',
-                            'http://www.youtube.com/watch?v=DFYRQ_zQ-gk',
                             'www.youtube.com/watch?v=DFYRQ_zQ-gk',
-                            'https://youtube.com/watch?v=DFYRQ_zQ-gk',
-                            'http://youtube.com/watch?v=DFYRQ_zQ-gk',
                             'youtube.com/watch?v=DFYRQ_zQ-gk',
-                            'https://m.youtube.com/watch?v=DFYRQ_zQ-gk',
-                            'http://m.youtube.com/watch?v=DFYRQ_zQ-gk',
                             'm.youtube.com/watch?v=DFYRQ_zQ-gk',
-                            'https://www.youtube.com/v/DFYRQ_zQ-gk?fs=1&hl=en_US',
-                            'http://www.youtube.com/v/DFYRQ_zQ-gk?fs=1&hl=en_US',
                             'www.youtube.com/v/DFYRQ_zQ-gk?fs=1&hl=en_US',
                             'youtube.com/v/DFYRQ_zQ-gk?fs=1&hl=en_US',
-                            'https://www.youtube.com/embed/DFYRQ_zQ-gk?autoplay=1',
-                            'https://www.youtube.com/embed/DFYRQ_zQ-gk',
-                            'http://www.youtube.com/embed/DFYRQ_zQ-gk',
                             'www.youtube.com/embed/DFYRQ_zQ-gk',
-                            'https://youtube.com/embed/DFYRQ_zQ-gk',
-                            'http://youtube.com/embed/DFYRQ_zQ-gk',
                             'youtube.com/embed/DFYRQ_zQ-gk',
-                            'https://www.youtube-nocookie.com/embed/DFYRQ_zQ-gk?autoplay=1',
-                            'https://www.youtube-nocookie.com/embed/DFYRQ_zQ-gk',
-                            'http://www.youtube-nocookie.com/embed/DFYRQ_zQ-gk',
                             'www.youtube-nocookie.com/embed/DFYRQ_zQ-gk',
-                            'https://youtube-nocookie.com/embed/DFYRQ_zQ-gk',
-                            'http://youtube-nocookie.com/embed/DFYRQ_zQ-gk',
                             'youtube-nocookie.com/embed/DFYRQ_zQ-gk',
-                            'https://youtu.be/DFYRQ_zQ-gk?t=120',
-                            'https://youtu.be/DFYRQ_zQ-gk',
-                            'http://youtu.be/DFYRQ_zQ-gk',
                             'youtu.be/DFYRQ_zQ-gk',
-                        ].map(s => inlineCode(s)).join('\n')
+                        ].map(s => inlineCode(s)).join('\n') + '\n\n*`http://` and `https://` links are also valid.*'
                     }
                 )
             ]
@@ -87,7 +65,7 @@ const playCommand: Cmd = {
                 .setColor(0xff0000)
                 .setTitle('`/play` - Existing connection')
                 .setDescription(`This bot is already playing audio in ${
-                    (<VoiceChannel>botMember.voice.channel).toString()
+                    (<VoiceChannel>botMember.voice.channel)?.toString() || '**a channel that cannot be determined**.'
                 }`)
             ]
         })
@@ -160,11 +138,13 @@ const playCommand: Cmd = {
             })
         }
 
-        const createConnection = joinVoiceChannel({
+        const newConnection = joinVoiceChannel({
             guildId: interaction.guild.id,
             channelId: (<VoiceChannel>interaction.member.voice.channel).id,
             adapterCreator: interaction.guild.voiceAdapterCreator
         })
+
+        botMember.voice.setDeaf(false)
 
         await interaction.reply({
             embeds: [
@@ -175,53 +155,66 @@ const playCommand: Cmd = {
             ]
         })
 
-        createConnection.on(VoiceConnectionStatus.Ready, async () => {
+        const downloadedVideo = ytdl(link, { quality: 'highestaudio', highWaterMark: 1048576 * 64, dlChunkSize: 0 })
+
+        downloadedVideo.on('error', async (error) => {
+            console.log(`Error while downloading ${link} in guild ${interaction.guild.name} (${interaction.guild.id})`, error)
+            await interaction.channel?.send({
+                embeds: [
+                    new EmbedBuilder()
+                    .setColor(0xff7700)
+                    .setTitle(`Video failed to download`)
+                    .setDescription(`Video failed to download. Disconnecting from ${memberChannel.toString()}.`)
+                ]
+            })
+            newConnection.destroy()
+        })
+    
+        const audioResource = createAudioResource(downloadedVideo)
+
+        const audioPlayer = createAudioPlayer()
+        
+        audioPlayer.play(audioResource)
+
+        newConnection.subscribe(audioPlayer)
+        
+        audioPlayer.on(AudioPlayerStatus.Playing, async () => {
             await interaction.editReply({
                 embeds: [
                     EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                    .setTitle('Ready to Play Audio')
-                    .setDescription(`The bot is ready to play audio in ${memberChannel.toString()}!`)
-                    .setColor(0x00ff00)
+                    .setTitle('Playing Audio')
+                    .setDescription(`Playing audio in ${memberChannel.toString()}!`)
+                    .setColor(0x00ffff)
                 ]
-            })
-
-            const audioPlayer = createAudioPlayer()
-
-            ytdl(link)
-                .pipe(createWriteStream(`./ytfiles/${videoId}.mp3`))
-
-            const videoInfo = await ytdl.getInfo(link)
-
-            const audioResource = createAudioResource(join(__dirname, `./ytfiles/${videoId}.mp3`), { inlineVolume: true })
-            audioResource.volume?.setVolume(1)
-
-            console.log(videoInfo)
-
-            audioPlayer.on(AudioPlayerStatus.Playing, async () => {
-                await interaction.editReply({
-                    embeds: [
-                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                        .setTitle('Playing Audio')
-                        .setDescription(`Playing audio in ${memberChannel.toString()}!`)
-                        .setColor(0x00ffff)
-                    ]
-                })
-            })
-
-            audioPlayer.on(AudioPlayerStatus.Idle, async () => {
-                createConnection.destroy()
-                await interaction.channel?.send({
-                    embeds: [
-                        new EmbedBuilder()
-                        .setColor(0xff7700)
-                        .setTitle(`Audio Finished`)
-                        .setDescription(`The audio has finished. Disconnecting from ${memberChannel.toString()}.`)
-                    ]
-                })
             })
         })
 
-        createConnection.on(VoiceConnectionStatus.Disconnected, async () => {
+        audioPlayer.on(AudioPlayerStatus.Idle, async () => {
+            newConnection.destroy()
+            await interaction.channel?.send({
+                embeds: [
+                    new EmbedBuilder()
+                    .setColor(0xff7700)
+                    .setTitle(`Audio Finished`)
+                    .setDescription(`The audio has finished. Disconnecting from ${memberChannel.toString()}.`)
+                ]
+            })
+        })
+
+        audioPlayer.on('error', async (error) => {
+            console.error(`Error while playing audio ${link} in guild ${interaction.guild.name} ${interaction.guild.id}:`, error)
+            await interaction.channel?.send({
+                embeds: [
+                    new EmbedBuilder()
+                    .setColor(0xff7700)
+                    .setTitle(`Player Failed`)
+                    .setDescription(`An error occured with the player. Disconnecting from ${memberChannel.toString()}.`)
+                ]
+            })
+            newConnection.destroy()
+        })
+
+        newConnection.on(VoiceConnectionStatus.Disconnected, async () => {
             await interaction.editReply({
                 embeds: [
                     EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
@@ -231,8 +224,8 @@ const playCommand: Cmd = {
                 ]
             })
             Promise.race([
-                entersState(createConnection, VoiceConnectionStatus.Signalling, 10000),
-                entersState(createConnection, VoiceConnectionStatus.Connecting, 10000)
+                entersState(newConnection, VoiceConnectionStatus.Signalling, 10000),
+                entersState(newConnection, VoiceConnectionStatus.Connecting, 10000)
             ])
             .then(async () => {
                 await interaction.editReply({
@@ -245,7 +238,7 @@ const playCommand: Cmd = {
                 })
             })
             .catch(async () => {
-                createConnection.destroy()
+                newConnection.destroy()
                 await interaction.editReply({
                     embeds: [
                         EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
@@ -254,17 +247,6 @@ const playCommand: Cmd = {
                         .setColor(0xff0000)
                     ]
                 })
-            })
-        })
-
-        createConnection.on(VoiceConnectionStatus.Destroyed, async () => {
-            await interaction.editReply({
-                embeds: [
-                    EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                    .setTitle('Connection Destroyed')
-                    .setColor(0xff0000)
-                    .setDescription(`Connection to ${memberChannel.toString()} has been manually destroyed, try again.`)
-                ]
             })
         })
     }
