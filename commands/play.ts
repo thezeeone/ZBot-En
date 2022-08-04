@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { createWriteStream } from "fs";
 import { AudioPlayerStatus, createAudioPlayer, createAudioResource, entersState, getVoiceConnection, joinVoiceChannel, VoiceConnectionStatus,  } from "@discordjs/voice";
 import { VoiceChannel, GuildMember } from "discord.js";
-import { commaList, pluralise } from "../util";
+import { commaList, pluralise, timeFormat } from "../util";
 
 const playCommand: Cmd = {
     data: {
@@ -155,7 +155,7 @@ const playCommand: Cmd = {
             ]
         })
 
-        const downloadedVideo = ytdl(link, { quality: 'highestaudio', highWaterMark: 1048576 * 64, dlChunkSize: 0 })
+        const downloadedVideo = ytdl(link)
 
         downloadedVideo.on('error', async (error) => {
             console.log(`Error while downloading ${link} in guild ${interaction.guild.name} (${interaction.guild.id})`, error)
@@ -178,14 +178,30 @@ const playCommand: Cmd = {
 
         newConnection.subscribe(audioPlayer)
         
-        audioPlayer.on(AudioPlayerStatus.Playing, async () => {
-            await interaction.editReply({
-                embeds: [
-                    EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                    .setTitle('Playing Audio')
-                    .setDescription(`Playing audio in ${memberChannel.toString()}!`)
-                    .setColor(0x00ffff)
-                ]
+        downloadedVideo.on('info', (info) => {
+            const duration = timeFormat(info.videoDetails.lengthSeconds)
+            audioPlayer.on(AudioPlayerStatus.Playing, async () => {
+                await interaction.editReply({
+                    embeds: [
+                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle('Playing Audio')
+                        .setDescription(`${interaction.user} Now playing song ${bold(`[${
+                            info.videoDetails.title
+                        }](${
+                            link
+                        })`)} by ${bold(`[${
+                            info.videoDetails.author.name
+                        }](${
+                            info.videoDetails.author.channel_url
+                        })`)} (${inlineCode(`${duration}`)}) in ${memberChannel.toString()}!`)
+                        .setThumbnail(info.videoDetails.thumbnails[0])
+                        .setColor(0x00ffff)
+                    ]
+                })
             })
         })
 
