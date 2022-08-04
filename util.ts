@@ -181,8 +181,35 @@ function commaList(list: string[]): string {
     }
 }
 
+/**
+  * Take a string or number literal and convert it to a time format.
+  * @param {string | number} s The time
+  * @returns {string} The formatted time
+*/
+function timeFormat(s: string | number): string {
+  return [
+    Math.floor(Number(s) / 3600),
+    Math.floor(Number(s) / 60) % 60,
+    Math.floor(Number(s)) % 60
+  ]
+  .map((v, i, a) => {
+    switch(i) {
+      case a.length - 1:
+        return String(v).padStart(2, '0')
+      default:
+        return `${String(v).padStart(2, '0')}:`
+    }
+  })
+  .map((v, i) => {
+    if (i === 0 && Number(v.replace(/:/g, '')) === 0) return ''
+    else return v
+  })
+  .join('')
+}
+
 export {
     ordinalNumber,
     pluralise,
-    commaList
+    commaList,
+    timeFormat
 }
