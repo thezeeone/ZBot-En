@@ -198,7 +198,6 @@ const playCommand: Cmd = {
                         }](${
                             info.videoDetails.author.channel_url
                         })`)} (${inlineCode(`${duration}`)}) in ${memberChannel.toString()}!`)
-                        .setThumbnail(info.videoDetails.thumbnails[0])
                         .setColor(0x00ffff)
                     ]
                 })
