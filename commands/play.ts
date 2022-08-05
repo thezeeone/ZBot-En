@@ -222,7 +222,7 @@ const playCommand: Cmd = {
                     .setColor(0x00ffff)
                 ]
             })
-            playNext(interaction.guild, serverQueue.songs[0], memberChannel as VoiceChannel, interaction)
+            if (serverQueue.songs.length === 1) playNext(interaction.guild, serverQueue.songs[0], memberChannel as VoiceChannel, interaction)
         }
 
         newConnection.on(VoiceConnectionStatus.Disconnected, async () => {
