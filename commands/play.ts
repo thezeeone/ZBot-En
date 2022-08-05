@@ -53,21 +53,6 @@ const playCommand: Cmd = {
             ]
         })
 
-        const botMember = <GuildMember>interaction.guild.members.me
-
-        const currentConnection = getVoiceConnection(interaction.guild.id)
-
-        if (currentConnection) return await interaction.reply({
-            embeds: [
-                new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle('`/play` - Existing connection')
-                .setDescription(`This bot is already playing audio in ${
-                    (<VoiceChannel>botMember.voice.channel)?.toString() || '**a channel that cannot be determined**.'
-                }`)
-            ]
-        })
-
         const memberChannel = interaction.member.voice?.channel
 
         if (!memberChannel) return await interaction.reply({
@@ -79,11 +64,13 @@ const playCommand: Cmd = {
             ]
         })
 
+        const botMember = <GuildMember>interaction.guild.members.me
+
         const perms = new PermissionsBitField(['Connect', 'Speak']).toArray()
 
         if (
             !perms.every(perm => botMember.permissions.has(perm))
-            ) {
+        ) {
             const missingPerms = perms.filter(p => !botMember.permissions.has(p))
             return await interaction.reply({
                 embeds: [
@@ -142,22 +129,22 @@ const playCommand: Cmd = {
 
         const songConstruct: SongInfo = {
             title: songInfo.videoDetails.title,
-            url: songInfo.videoDetails.video_url,
+            url: songInfo.videoDetails.video_url || link,
             author: songInfo.videoDetails.author.name,
             authorChannelUrl: songInfo.videoDetails.author.channel_url,
             duration: Number(songInfo.videoDetails.lengthSeconds),
-            thumbnail: songInfo.videoDetails.thumbnail.thumbnails[0].url,
+            thumbnail: songInfo.videoDetails.thumbnails[0].url,
             suggestedBy: interaction.user,
             playing: false
         }
+        
+        const newConnection = joinVoiceChannel({
+            guildId: interaction.guild.id,
+            channelId: memberChannel.id,
+            adapterCreator: interaction.guild.voiceAdapterCreator
+        })
 
         if (!serverQueue) {
-            const newConnection = joinVoiceChannel({
-                guildId: interaction.guild.id,
-                channelId: (<VoiceChannel>interaction.member.voice.channel).id,
-                adapterCreator: interaction.guild.voiceAdapterCreator
-            })
-
             const queueConstruct: QueueConstruct = {
                 songs: [],
                 textChannel: interaction.channel as TextChannel,
@@ -168,8 +155,6 @@ const playCommand: Cmd = {
             queueConstruct.songs.push(songConstruct)
 
             queue.set(interaction.guild.id, queueConstruct)
-    
-            botMember.voice.setDeaf(false)
     
             await interaction.reply({
                 embeds: [
@@ -195,89 +180,26 @@ const playCommand: Cmd = {
                 queueConstruct.songs = []
             })
         
-            const audioResource = createAudioResource(downloadedVideo)
-    
             const audioPlayer = createAudioPlayer()
             
             newConnection.subscribe(audioPlayer)
-
-            audioPlayer.play(audioResource)
     
             queueConstruct.songs[0].playing = false
-    
-            audioPlayer.on(AudioPlayerStatus.Idle, async () => {
-                    queueConstruct.songs.shift()
-                if (queueConstruct.songs.length) {
-                    playNext(interaction.guild, queueConstruct.songs[0], memberChannel as VoiceChannel, interaction)
-                } else {
-                    newConnection.destroy()
-                    await interaction.channel?.send({
-                        embeds: [
-                            new EmbedBuilder()
-                            .setColor(0xff7700)
-                            .setTitle(`Audio Finished`)
-                            .setDescription(`The audio has finished. Disconnecting from ${memberChannel.toString()}.`)
-                        ]
-                    })
-                }
-            })
-    
-            audioPlayer.on('error', async (error) => {
-                console.error(`Error while playing audio ${link} in guild ${interaction.guild.name} ${interaction.guild.id}:`, error)
-                await interaction.channel?.send({
-                    embeds: [
-                        new EmbedBuilder()
-                        .setColor(0xff7700)
-                        .setTitle(`Player Failed`)
-                        .setDescription(`An error occured with the player. Disconnecting from ${memberChannel.toString()}.\n\nServer queue has been cleared.`)
-                    ]
-                })
-                queueConstruct.songs = []
-                newConnection.destroy()
-            })
-    
-            newConnection.on(VoiceConnectionStatus.Disconnected, async () => {
+
+            newConnection.on(VoiceConnectionStatus.Ready, async () => {
                 await interaction.editReply({
                     embeds: [
                         EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                        .setTitle('Re-connection attempt')
-                        .setDescription(`The connection to ${memberChannel.toString()} was cut off, I am attempting to re-connect so please give me 10 seconds...`)
-                        .setColor(0xffff00)
+                        .setTitle('Connection to VC successful')
+                        .setDescription(`Connected to ${memberChannel.toString()} successfully!`)
+                        .setColor(0x00ff00)
                     ]
                 })
-                Promise.race([
-                    entersState(newConnection, VoiceConnectionStatus.Signalling, 10000),
-                    entersState(newConnection, VoiceConnectionStatus.Connecting, 10000)
-                ])
-                .then(async () => {
-                    await interaction.editReply({
-                        embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                            .setTitle('Successful Re-connection')
-                            .setDescription(`I have successfully re-connected to ${memberChannel.toString()}!`)
-                            .setColor(0x00ff00)
-                        ]
-                    })
-                })
-                .catch(async () => {
-                    await interaction.editReply({
-                        embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                            .setTitle('Re-connection Attempt Failed')
-                            .setDescription(`Attempt to re-connect to ${memberChannel.toString()} failed... try again.`)
-                            .setColor(0xff0000)
-                        ]
-                    })
-                    try {
-                        newConnection.destroy()
-                    } catch (error) {
-                        return
-                    }
-                })
+                playNext(interaction.guild, queueConstruct.songs[0], memberChannel as VoiceChannel, interaction)
             })
         } else {
             serverQueue.songs.push(songConstruct)
-            return await interaction.reply({
+            await interaction.reply({
                 content: interaction.user.toString(),
                 embeds: [
                     new EmbedBuilder()
@@ -286,7 +208,7 @@ const playCommand: Cmd = {
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
                     .setTitle('Added song to queue')
-                    .setDescription(`Added song ${bold(`[${
+                    .setDescription(`Added ${bold(`[${
                         songConstruct.title
                     }](${
                         link
@@ -300,23 +222,72 @@ const playCommand: Cmd = {
                     .setColor(0x00ffff)
                 ]
             })
+            playNext(interaction.guild, serverQueue.songs[0], memberChannel as VoiceChannel, interaction)
         }
+
+        newConnection.on(VoiceConnectionStatus.Disconnected, async () => {
+            await interaction.editReply({
+                embeds: [
+                    EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                    .setTitle('Re-connection attempt')
+                    .setDescription(`The connection to ${memberChannel.toString()} was cut off, I am attempting to re-connect so please give me 10 seconds...`)
+                    .setColor(0xffff00)
+                ]
+            })
+            Promise.race([
+                entersState(newConnection, VoiceConnectionStatus.Signalling, 10000),
+                entersState(newConnection, VoiceConnectionStatus.Connecting, 10000)
+            ])
+            .then(async () => {
+                await interaction.editReply({
+                    embeds: [
+                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                        .setTitle('Successful Re-connection')
+                        .setDescription(`I have successfully re-connected to ${memberChannel.toString()}!`)
+                        .setColor(0x00ff00)
+                    ]
+                })
+            })
+            .catch(async () => {
+                await interaction.editReply({
+                    embeds: [
+                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                        .setTitle('Re-connection Attempt Failed')
+                        .setDescription(`Attempt to re-connect to ${memberChannel.toString()} failed... try again.`)
+                        .setColor(0xff0000)
+                    ]
+                })
+                try {
+                    newConnection.destroy()
+                } catch (error) {
+                    return
+                }
+            })
+        })
     }
 }
 
 function playNext(guild: Guild | string, song: SongInfo, voiceChannel: VoiceChannel, interaction: ChatInputCommandInteraction) {
     const serverQueue = queue.get(typeof guild === 'string' ? guild : guild.id);
+
+    if (!serverQueue) return
  
     const downloadVid = ytdl(song.url);
 
-    const player = (serverQueue?.connection?.state as VoiceConnectionReadyState).subscription?.player
-    
-    // @ts-ignore
-    player?.play(downloadVid)
+    const connection = serverQueue.connection
 
-    if (serverQueue) serverQueue.songs[0].playing = true
+    if (!connection) return
 
-    player?.on(AudioPlayerStatus.Playing, async () => {
+    const player = (connection.state as VoiceConnectionReadyState)?.subscription?.player
+
+    if (!player) return
+
+    const audioResource = createAudioResource(downloadVid)
+
+    player.play(audioResource)
+
+    serverQueue.songs[0].playing = true
+    player.on(AudioPlayerStatus.Playing, async () => {
         await interaction.channel?.send({
             content: song.suggestedBy.toString(),
             embeds: [
@@ -339,8 +310,39 @@ function playNext(guild: Guild | string, song: SongInfo, voiceChannel: VoiceChan
             ]
         })
     })
+
+    player.on(AudioPlayerStatus.Idle, async () => {
+        serverQueue.songs.shift()
+        if (serverQueue.songs.length) {
+            playNext(interaction.guild as Guild, serverQueue.songs[0], voiceChannel as VoiceChannel, interaction)
+        } else {
+            queue.delete((interaction.guild as Guild).id)
+            serverQueue.connection?.destroy()
+            await interaction.channel?.send({
+                embeds: [
+                    new EmbedBuilder()
+                    .setColor(0xff7700)
+                    .setTitle(`Audio Finished`)
+                    .setDescription(`The audio has finished. Disconnecting from ${voiceChannel.toString()}.`)
+                ]
+            })
+        }
+    })
+    
+    player.on('error', async (error) => {
+        await interaction.channel?.send({
+            embeds: [
+                new EmbedBuilder()
+                .setColor(0xff7700)
+                .setTitle(`Player Failed`)
+                .setDescription(`An error occured with the player. Disconnecting from ${voiceChannel.toString()}.\n\nServer queue has been cleared.`)
+            ]
+        })
+        queue.delete((interaction.guild as Guild).id)
+        serverQueue.connection?.destroy()
+    })
 }
 
 export {
-  playCommand
+    playCommand
 }
