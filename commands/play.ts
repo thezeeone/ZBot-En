@@ -206,8 +206,8 @@ const playCommand: Cmd = {
             queueConstruct.songs[0].playing = false
     
             audioPlayer.on(AudioPlayerStatus.Idle, async () => {
-                if (queueConstruct.songs.length) {
                     queueConstruct.songs.shift()
+                if (queueConstruct.songs.length) {
                     playNext(interaction.guild, queueConstruct.songs[0], memberChannel as VoiceChannel, interaction)
                 } else {
                     newConnection.destroy()
