@@ -1,10 +1,8 @@
 import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode, PermissionsBitField } from "discord.js";
-import { Cmd } from "./command-exports";
+import { Cmd, queue } from "./command-exports";
 // @ts-ignore
 // --esModuleInterop
 import ytdl = require('ytdl-core')
-import { join } from "node:path";
-import { createWriteStream } from "fs";
 import { AudioPlayerStatus, createAudioPlayer, createAudioResource, entersState, getVoiceConnection, joinVoiceChannel, VoiceConnectionStatus,  } from "@discordjs/voice";
 import { VoiceChannel, GuildMember } from "discord.js";
 import { commaList, pluralise, timeFormat } from "../util";
@@ -158,7 +156,7 @@ const playCommand: Cmd = {
         const downloadedVideo = ytdl(link)
 
         downloadedVideo.on('error', async (error) => {
-            console.log(`Error while downloading ${link} in guild ${interaction.guild.name} (${interaction.guild.id})`, error)
+            console.log(`[ZBot-En] Error while downloading ${link} in guild ${interaction.guild.name} (${interaction.guild.id})`, error)
             await interaction.channel?.send({
                 embeds: [
                     new EmbedBuilder()
@@ -167,7 +165,6 @@ const playCommand: Cmd = {
                     .setDescription(`Video failed to download. Disconnecting from ${memberChannel.toString()}.`)
                 ]
             })
-            newConnection.destroy()
         })
     
         const audioResource = createAudioResource(downloadedVideo)
@@ -253,7 +250,6 @@ const playCommand: Cmd = {
                 })
             })
             .catch(async () => {
-                newConnection.destroy()
                 await interaction.editReply({
                     embeds: [
                         EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
@@ -262,6 +258,11 @@ const playCommand: Cmd = {
                         .setColor(0xff0000)
                     ]
                 })
+                try {
+                    newConnection.destroy()
+                } catch (error) {
+                    return
+                }
             })
         })
     }
