@@ -1,4 +1,4 @@
-import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, UserResolvable } from "discord.js";
+import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, GuildResolvable, TextBasedChannelResolvable, User } from "discord.js";
 
 interface Cmd {
     data: ApplicationCommandData,
@@ -6,7 +6,25 @@ interface Cmd {
     execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">): any
 }
 
-const queue = new Collection<UserResolvable, string>()
+interface QueueConstruct {
+    textChannel: TextBasedChannelResolvable,
+    voiceChannel: TextBasedChannelResolvable,
+    connection: VoiceConnection | null,
+    songs: SongInfo[]
+}
+
+interface SongInfo { 
+    url: string,
+    title: string,
+    author: string,
+    authorChannelUrl: string
+    duration: number,
+    thumbnail: string,
+    suggestedBy: User,
+    playing: boolean
+}
+
+const queue = new Map<GuildResolvable, QueueConstruct>()
 
 import { rankCommand } from "./rank";
 import { leaderboardCommand } from "./leaderboard";
@@ -19,10 +37,13 @@ import { memoryGameCommand } from "./memorygame";
 import { blacklistCommand } from "./blacklist";
 import { reportCommand } from "./reportproblem";
 import { playCommand } from "./play";
+import { VoiceConnection } from "@discordjs/voice";
 
 export {
     Cmd,
     queue,
+    QueueConstruct,
+    SongInfo,
     rankCommand,
     leaderboardCommand,
     timeoutCommand,
