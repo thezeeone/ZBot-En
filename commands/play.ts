@@ -322,17 +322,22 @@ function playNext(guild: Guild | string, song: SongInfo, voiceChannel: VoiceChan
         serverQueue.songs.shift()
         if (serverQueue.songs.length) {
             playNext(interaction.guild as Guild, serverQueue.songs[0], voiceChannel as VoiceChannel, interaction)
+            return
         } else {
             queue.delete((interaction.guild as Guild).id)
-            serverQueue.connection?.destroy()
-            await interaction.channel?.send({
-                embeds: [
-                    new EmbedBuilder()
-                    .setColor(0xff7700)
-                    .setTitle(`Audio Finished`)
-                    .setDescription(`The audio has finished. Disconnecting from ${voiceChannel.toString()}.`)
-                ]
-            })
+            try {
+                serverQueue.connection?.destroy()
+                await interaction.channel?.send({
+                    embeds: [
+                        new EmbedBuilder()
+                        .setColor(0xff7700)
+                        .setTitle(`Audio Finished`)
+                        .setDescription(`The audio has finished. Disconnecting from ${voiceChannel.toString()}.`)
+                    ]
+                })
+            } catch (error) {
+                return
+            }
         }
     })
     
