@@ -10,7 +10,8 @@ interface QueueConstruct {
     textChannel: TextBasedChannelResolvable,
     voiceChannel: TextBasedChannelResolvable,
     connection: VoiceConnection | null,
-    songs: SongInfo[]
+    songs: SongInfo[],
+    recursive: boolean
 }
 
 interface SongInfo { 
