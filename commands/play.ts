@@ -150,6 +150,7 @@ const playCommand: Cmd = {
                 textChannel: interaction.channel as TextChannel,
                 voiceChannel: memberChannel as VoiceChannel,
                 connection: newConnection,
+                recursive: false
             }
 
             queueConstruct.songs.push(songConstruct)
@@ -196,6 +197,7 @@ const playCommand: Cmd = {
                     ]
                 })
                 playNext(interaction.guild, queueConstruct.songs[0], memberChannel as VoiceChannel, interaction)
+                queueConstruct.recursive = true
             })
         } else {
             serverQueue.songs.push(songConstruct)
@@ -222,7 +224,12 @@ const playCommand: Cmd = {
                     .setColor(0x00ffff)
                 ]
             })
-            if (serverQueue.songs.length === 1) playNext(interaction.guild, serverQueue.songs[0], memberChannel as VoiceChannel, interaction)
+            if (serverQueue.songs.length === 1) {
+                if (!serverQueue.recursive) {
+                    playNext(interaction.guild, serverQueue.songs[0], memberChannel as VoiceChannel, interaction)
+                    serverQueue.recursive = true
+                }
+            }
         }
 
         newConnection.on(VoiceConnectionStatus.Disconnected, async () => {
@@ -330,6 +337,7 @@ function playNext(guild: Guild | string, song: SongInfo, voiceChannel: VoiceChan
     })
     
     player.on('error', async (error) => {
+        console.log(error)
         await interaction.channel?.send({
             embeds: [
                 new EmbedBuilder()
@@ -339,7 +347,11 @@ function playNext(guild: Guild | string, song: SongInfo, voiceChannel: VoiceChan
             ]
         })
         queue.delete((interaction.guild as Guild).id)
-        serverQueue.connection?.destroy()
+        try {
+            serverQueue.connection?.destroy()
+        } catch (error) {
+            return
+        }
     })
 }
 
