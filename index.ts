@@ -3,7 +3,7 @@ import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, playCommand, reportCommand } from "./commands/command-exports"
+import { Cmd, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand } from "./commands/command-exports"
 import { sequelize, LevelModel, BlacklistModel, /* RankCardModel */ /* RESOLVING ISSUE */ } from "./database"
 
 const commands: Cmd[] = [
@@ -15,7 +15,6 @@ const commands: Cmd[] = [
     tttCommand,
     gtwCommand,
     memoryGameCommand,
-    playCommand,
     reportCommand
 ]
 
