@@ -37,7 +37,7 @@ const kickCommand: Cmd = {
                     name: `${interaction.user.tag} (${interaction.user.id})`,
                     iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                 })
-                .setTitle(`${inlineCode('/kick')} - Member not found`)
+                .setTitle(`Member not found`)
                 .setDescription(`Couldn't find that member.`)
                 .setColor(0xff0000)
             ],
@@ -56,7 +56,7 @@ const kickCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/kick')} - Role Hierarchy`)
+                    .setTitle(`Role Hierarchy`)
                     .setDescription(`Unable to kick member. Member's highest permission (${
                         bold(member.roles.highest.name)
                     } ${
@@ -104,7 +104,7 @@ const kickCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/kick')} - Missing Permissions`)
+                    .setTitle(`Missing Permissions`)
                     .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
                         bold(
                             `${commaList(
@@ -157,7 +157,7 @@ const kickCommand: Cmd = {
                     name: `${interaction.user.tag} (${interaction.user.id})`,
                     iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                 })
-                .setTitle(`${inlineCode('/kick')} - Member unkickable`)
+                .setTitle(`Member unkickable`)
                 .setDescription(`Member unkickable.\nCannot kick this member, reason unknown.`)
                 .setColor(0xff0000)
             ],
