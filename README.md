@@ -33,9 +33,9 @@ Keep your server alive with a level system that encourages members to talk and u
 #### **Slash Commands**
 - `/rank`               **Rank** \- Check your rank and customise your rank card! *(Displays **level**, **experience points** and **number of experience points required to reach the next level** in a nice embed)*
 - `/leaderboard`        **Leaderboard** \- Check the leaderboard, local or global.
-#### **Ticket System**
+### **Ticket System**
 *Coming soon!*
-#### **Economy System**
+### **Economy System**
 *In the distant future...*
 
 ## Resources
