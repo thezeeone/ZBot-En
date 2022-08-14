@@ -2,9 +2,9 @@ import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputComm
 
 interface Cmd {
     data: ApplicationCommandData,
-    permissions?: ApplicationCommandPermissionType[],
     execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">): any
 }
+
 import { rankCommand } from "./rank";
 import { leaderboardCommand } from "./leaderboard";
 import { timeoutCommand } from "./timeout";
@@ -15,7 +15,9 @@ import { gtwCommand } from "./guesstheword";
 import { memoryGameCommand } from "./memorygame";
 import { blacklistCommand } from "./blacklist";
 import { reportCommand } from "./reportproblem";
-import { VoiceConnection } from "@discordjs/voice";
+import { pingCommand } from "./ping"
+import { slowmodeCommand } from "./slowmode";
+import { helpCommand } from "./help";
 
 export {
     Cmd,
@@ -28,5 +30,8 @@ export {
     gtwCommand,
     memoryGameCommand,
     blacklistCommand,
-    reportCommand
+    reportCommand,
+    pingCommand,
+    slowmodeCommand,
+    helpCommand
 }
