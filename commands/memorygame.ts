@@ -80,6 +80,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
             .setColor(0xff0000)
             .setTitle('Memory Game - Request Rejected')
             .setDescription(`${opponent.user} rejected the request, too bad.`)
+            // @ts-ignore
             .setFooter({ text: null })
             return await requestMessage.edit({
                 embeds: [confirmationEmbed],
@@ -435,6 +436,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                     .setColor(0xff0000)
                     .setTitle('Memory Game - No Response Received')
                     .setDescription('A response wasn\'t received in time.')
+                    // @ts-ignore
                     .setFooter({ text: null })
                 ],
                 components: [
@@ -442,12 +444,11 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                     .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                 ]
             })
-        }
-    })
-
-}
+            }
+        })
+    }
 }
 
 export {
-memoryGameCommand
+    memoryGameCommand
 }
