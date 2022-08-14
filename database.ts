@@ -33,7 +33,7 @@ const LevelModel = sequelize.define<LevelModel>('Levels', {
 const RankCardModel = sequelize.define<RankCardModel>('RankCards', {
     id: {
         primaryKey: true,
-        type: DataTypes.NUMBER <-- THIS LINE WAS WHAT WAS CAUSING THE ERROR
+        type: DataTypes.NUMBER
     },
     colour: {
         type: DataTypes.INTEGER,
