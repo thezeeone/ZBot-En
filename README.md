@@ -1,7 +1,7 @@
 # ZBot-En
 *هذه هي النسخة الإنجليزية لهذا الآلة. للنسخة العربية، [انقر على هذا الرابط](https://github.com/Zahid556/ZBot-Ar).*
 
-*Esta es la versión inglesda de este bot. Para la versión español, [haz click en este enlace](https://www.youtube.com/watch?v=eOkTvqRAmHM).*
+*Esta es la versión inglesa de este bot. Para la versión española, [haz click en este enlace](https://www.yout-ube.com/watch?v=BT9h5ifR1tY).*
 
 The official GitHub repository for ZBot, a multi-purpose bot you can use in your server. (English)
 [Discord Server](https://discord.gg/6tkn6m5g52)
@@ -21,14 +21,22 @@ Access all of this bot's slash commands with the click of the forward slash key 
     - `/timeout`        **Timeout** \- Timeout and untimeout members. (Upto 28 days)
     - `/kick`           **Kick** \- Get rid of a member if they're being a menacing rule-breaker
     - `/ban`            **Ban** \- Slam the judge's banhammer on any member who shall leave!
-- **Music commands** to play music in voice chat:
-    *Coming soon!*
+    - `/slowmode`       **Slowmode** \- Display or change the slowmode of certain channels
+- **Other commands** for more info:
+    - `/ping`           **Latency** \- How fast can this bot respond?
+    - `/report-problem` **Report** \- Is there an issue with the bot? This command will give you links to help!
+    - `/help`           **Help** \- Get a list of the bot's commands and systems
 ### Level System
 Keep your server alive with a level system that encourages members to talk and use this bot!
 - **Experience points** for members who __send messages__, when they hit a certain level they level up. The __more you talk__, the __**higher** your level__, the __**higher** your rank__ in the leaderboard, local and global.
+*We are planning on giving this a use*
 #### **Slash Commands**
 - `/rank`               **Rank** \- Check your rank and customise your rank card! *(Displays **level**, **experience points** and **number of experience points required to reach the next level** in a nice embed)*
 - `/leaderboard`        **Leaderboard** \- Check the leaderboard, local or global.
+#### **Ticket System**
+*Coming soon!*
+#### **Economy System**
+*In the distant future...*
 
 ## Resources
 ### Core
@@ -58,14 +66,6 @@ This bot uses discord.js and TypeScript.
 - **pg** *for PostgreSQL*, powerful, open-sourced object-relational database system with over 30 years development.
     - [Official website](https://www.postgresql.org/)
     - [Download PostgreSQL](https://www.postgresql.org/download/)
-### Voice (other than @discordjs/voice)
-- **ytdl-core**, a download for YouTube videos.
-    - [NPM package](https://www.npmjs.com/package/ytdl-core)
-    - [GitHub Repository](https://github.com/fent/node-ytdl-core)
-- **ffmpeg-static**, to install FFmpeg via npm, allowing you to play a range of media, example mp3.
-    - [NPM package](https://www.npmjs.com/package/ffmpeg-static)
-- **libsodium-wrappers**, an encryption package often used with @discordjs/voice
-    - [NPM package](https://www.npmjs.com/package/libsodium-wrappers)
 ### Other packages
 - **dotenv**, if you want to keep sensitive information safe from anyone when publishing your files in public.
     - [NPM package](https://www.npmjs.com/package/dotenv)
