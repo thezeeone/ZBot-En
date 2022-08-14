@@ -28,7 +28,7 @@ const blacklistCommand: Cmd = {
 					name: `${interaction.user.tag} (${interaction.user.id})`,
 					iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
 				})
-				.setTitle(`${inlineCode('/blacklist')} - User not found`)
+				.setTitle(`User not found`)
 				.setDescription(`Not a valid user!`)
 				.setColor(0xff0000)
 			],
@@ -50,7 +50,7 @@ const blacklistCommand: Cmd = {
 				})
 				.setDescription(`This user, ${bold(user.tag)} (${inlineCode(user.id)}), is already blacklisted, and is therefore permanently banned from using this bot.`)
 				.setColor(0xff0000)
-				.setTitle(`${inlineCode('/blacklist')} - User already blacklisted`)
+				.setTitle(`User already blacklisted`)
 			],
 			ephemeral: true
 		})
