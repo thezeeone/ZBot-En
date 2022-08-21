@@ -44,7 +44,7 @@ const pingCommand: Cmd = {
                             Math.floor(
                                 (sent.createdTimestamp - interaction.createdTimestamp) / 100
                             ) / 10
-                        ) <= 1.25
+                        ) <= 0.75
                         ? `${(
                             Math.floor(
                                 (sent.createdTimestamp - interaction.createdTimestamp) / 100
@@ -55,11 +55,11 @@ const pingCommand: Cmd = {
                                 Math.floor(
                                     (sent.createdTimestamp - interaction.createdTimestamp) / 100
                                 ) / 10
-                            ) > 1.25 && (
+                            ) > 0.75 && (
                                 Math.floor(
                                     (sent.createdTimestamp - interaction.createdTimestamp) / 100
                                 ) / 10
-                            ) <= 2.5
+                            ) <= 1.25
                             ? `${(
                                 Math.floor(
                                     (sent.createdTimestamp - interaction.createdTimestamp) / 100
@@ -74,7 +74,7 @@ const pingCommand: Cmd = {
                     }`
                 })
                 .setColor(
-                    Math.floor((sent.createdTimestamp - interaction.createdTimestamp) / 100) / 10 >= 2.5
+                    Math.floor((sent.createdTimestamp - interaction.createdTimestamp) / 100) / 10 >= 1.25
                     ? 0xff0000
                     : [
                         0x00ff00,
@@ -95,7 +95,7 @@ const pingCommand: Cmd = {
                                         (sent.createdTimestamp - interaction.createdTimestamp) / 100
                                     ) / 10
                                 )
-                            ) / 2.5 * 10
+                            ) / 1.25 * 10
                         ) >= 10
                         ? 9
                         : Math.round(
@@ -105,7 +105,7 @@ const pingCommand: Cmd = {
                                         (sent.createdTimestamp - interaction.createdTimestamp) / 100
                                     ) / 10
                                 )
-                            ) / 2.5 * 10
+                            ) / 1.25 * 10
                         ) 
                     ]
                 )
