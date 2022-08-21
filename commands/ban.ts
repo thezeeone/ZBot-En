@@ -126,24 +126,32 @@ const banCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(perms.length, 'permissions')
+                                    perms.length === 1
+                                    ? 'permission'
+                                    : 'permission'
                                 }`
                             )
-                        }.\nThe bot ${perms.length ? `has the ${
-                            bold(
-                                `${commaList(
-                                    perms
-                                    .filter(
-                                        p => !missingPerms.includes(p)
-                                    )
-                                    .map(
-                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
-                                    )
-                                )} ${
-                                    pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
-                                }`
-                            )
-                        }, however` : 'doesn\'t have any of the required permissions, and'} is __missing__ the ${
+                        }.\nThe bot ${
+                            missingPerms.length 
+                            ? 'doesn\'t have any of the required permissions, and'
+                            : `has the ${
+                                bold(
+                                    `${commaList(
+                                        perms
+                                        .filter(
+                                            p => !missingPerms.includes(p)
+                                        )
+                                        .map(
+                                            s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        )
+                                    )} ${
+                                        perms.filter(p => !missingPerms.includes(p)).length === 1
+                                        ? 'permission'
+                                        : 'permissions'
+                                    }`
+                                )
+                            }, however`
+                        } is __missing__ the ${
                             bold(
                                 `${commaList(
                                     missingPerms
@@ -151,7 +159,9 @@ const banCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(missingPerms.length, 'permissions')
+                                    missingPerms.length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }.`)
@@ -389,6 +399,180 @@ const banCommand: Cmd = {
             const userAsMember = interaction.guild.members.cache.get(user.id)
             const days = interaction.options.getInteger('clear') || 0
             
+            
+            // Required permissions
+            const perms = new PermissionsBitField('BanMembers').toArray()
+
+            if (
+                !perms.every(perm => botMember.permissions.has(perm))
+            ) {
+                const missingPerms = perms.filter(p => !botMember.permissions.has(p))
+                return await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle(`Missing Permissions`)
+                        .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
+                            bold(
+                                `${commaList(
+                                    perms
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    pluralise(perms.length, 'permissions')
+                                }`
+                            )
+                        }.\nThe bot ${
+                            missingPerms.length 
+                            ? 'doesn\'t have any of the required permissions, and'
+                            : `has the ${
+                                bold(
+                                    `${commaList(
+                                        perms
+                                        .filter(
+                                            p => !missingPerms.includes(p)
+                                        )
+                                        .map(
+                                            s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                        )
+                                    )} ${
+                                        perms.filter(p => !missingPerms.includes(p)).length === 1
+                                        ? 'permission'
+                                        : 'permissions'
+                                    }`
+                                )
+                            }, however`
+                        } is __missing__ the ${
+                            bold(
+                                `${commaList(
+                                    missingPerms
+                                    .map(
+                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
+                                    )
+                                )} ${
+                                    missingPerms.length === 1
+                                    ? 'permission'
+                                    : 'permissions'
+                                }`
+                            )
+                        }.`)
+                        .setColor(0xff0000)
+                    ],
+                    ephemeral: true
+                })
+            }    
+
+            if (userAsMember) {
+                // Check if the bot's highest role is higher than the member's highest, IF the member is in the server
+                if (userAsMember.roles.highest.position >= botMember.roles.highest.position) {
+                    const memberRolePos = userAsMember.roles.highest.position
+                    const botRolePos = botMember.roles.highest.position
+                    const numRoles = interaction.guild.roles.cache.size - 1
+                    return await interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setAuthor({
+                                name: `${interaction.user.tag} (${interaction.user.id})`,
+                                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                            })
+                            .setTitle(`Role Hierarchy`)
+                            .setDescription(`Unable to ban member. Member's highest role (${
+                                bold(userAsMember.roles.highest.name)
+                            } ${
+                                inlineCode(userAsMember.roles.highest.id)
+                            }, ${
+                                numRoles - memberRolePos === 0 
+                                ? bold('highest role')
+                                : bold(`${
+                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
+                                } highest role`)
+                            }) is ${
+                                memberRolePos === botRolePos
+                                ? bold('the same role as')
+                                : bold(`${inlineCode(
+                                    pluralise(memberRolePos - botRolePos, 'role')
+                                )} higher than`)
+                            } my highest role (${
+                                bold(botMember.roles.highest.name)
+                            } ${
+                                inlineCode(botMember.roles.highest.id)
+                            }, ${
+                                numRoles - memberRolePos === 0 
+                                ? bold('highest role')
+                                : bold(`${
+                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
+                                } highest role`)
+                            }).`)
+                            .setColor(0xff0000)
+                        ],
+                        ephemeral: true
+                    })
+                } else if (userAsMember.roles.highest.position >= interaction.member.roles.highest.position) {
+                    const memberRolePos = userAsMember.roles.highest.position
+                    const commandMemberRolePos = interaction.member.roles.highest.position
+                    const numRoles = interaction.guild.roles.cache.size - 1
+                    return await interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setAuthor({
+                                name: `${interaction.user.tag} (${interaction.user.id})`,
+                                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                            })
+                            .setTitle(`Role Hierarchy`)
+                            .setDescription(`Ban forbidden. Member's highest role (${
+                                bold(userAsMember.roles.highest.name)
+                            } ${
+                                inlineCode(userAsMember.roles.highest.id)
+                            }, ${
+                                numRoles - memberRolePos === 0 
+                                ? bold('highest role')
+                                : bold(`${
+                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
+                                } highest role`)
+                            }) is ${
+                                memberRolePos === commandMemberRolePos
+                                ? bold('the same role as')
+                                : bold(`${inlineCode(
+                                    pluralise(memberRolePos - commandMemberRolePos, 'role')
+                                )} higher than`)
+                            } your highest role (${
+                                bold(interaction.member.roles.highest.name)
+                            } ${
+                                inlineCode(interaction.member.roles.highest.id)
+                            }, ${
+                                numRoles - memberRolePos === 0 
+                                ? bold('highest role')
+                                : bold(`${
+                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
+                                } highest role`)
+                            }).`)
+                            .setColor(0xff0000)
+                        ],
+                        ephemeral: true
+                    })
+                }
+                
+                // Check if the member is bannable apart from any other conditions
+                // This will stop the bot from throwing errors when it bans the member afterwards
+                if (!userAsMember.bannable) return await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle(`Member unbannable`)
+                        .setDescription('This member cannot be unbanned. Reason unknown.')
+                        .setColor(0xff0000)
+                    ],
+                    ephemeral: true
+                })
+            }
+
             // Check if the user exists
             if (!user) return await interaction.reply({ 
                 embeds: [
@@ -418,127 +602,7 @@ const banCommand: Cmd = {
                 ephemeral: true
             })
 
-            if (userAsMember) {
-                // Check if the bot's highest role is higher than the member's highest, IF the member is in the server
-                if (userAsMember.roles.highest.position >= botMember.roles.highest.position) {
-                    const memberRolePos = userAsMember.roles.highest.position
-                    const botRolePos = botMember.roles.highest.position
-                    const numRoles = interaction.guild.roles.cache.size - 1
-                    return await interaction.reply({
-                        embeds: [
-                            new EmbedBuilder()
-                            .setAuthor({
-                                name: `${interaction.user.tag} (${interaction.user.id})`,
-                                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
-                            })
-                            .setTitle(`Role Hierarchy`)
-                            .setDescription(`Unable to ban member. Member's highest permission (${
-                                bold(userAsMember.roles.highest.name)
-                            } ${
-                                inlineCode(userAsMember.roles.highest.id)
-                            }, ${
-                                numRoles - memberRolePos === 0 
-                                ? bold('highest role')
-                                : bold(`${
-                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
-                                } highest role`)
-                            }) is ${
-                                memberRolePos === botRolePos
-                                ? bold('the same role as')
-                                : bold(`${inlineCode(
-                                    pluralise(memberRolePos - botRolePos, 'role')
-                                )}`)
-                            } higher than my highest role (${
-                                bold(botMember.roles.highest.name)
-                            } ${
-                                inlineCode(botMember.roles.highest.id)
-                            }, ${
-                                numRoles - memberRolePos === 0 
-                                ? bold('highest role')
-                                : bold(`${
-                                    inlineCode(ordinalNumber(numRoles - memberRolePos))
-                                } highest role`)
-                            }).`)
-                            .setColor(0xff0000)
-                        ],
-                        ephemeral: true
-                    })
-                }
-
-                // Check if the member is bannable apart from any other conditions
-                // This will stop the bot from throwing errors when it bans the member afterwards
-                if (!userAsMember.bannable) return await interaction.reply({
-                    embeds: [
-                        new EmbedBuilder()
-                        .setAuthor({
-                            name: `${interaction.user.tag} (${interaction.user.id})`,
-                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
-                        })
-                        .setTitle(`Member unbannable`)
-                        .setDescription('This member cannot be unbanned. Reason unknown.')
-                        .setColor(0xff0000)
-                    ],
-                    ephemeral: true
-                })
-            }
             
-            // Required permissions
-            const perms = new PermissionsBitField('BanMembers').toArray()
-
-            if (
-                !perms.every(perm => botMember.permissions.has(perm))
-            ) {
-                const missingPerms = perms.filter(p => !botMember.permissions.has(p))
-                return await interaction.reply({
-                    embeds: [
-                        new EmbedBuilder()
-                        .setAuthor({
-                            name: `${interaction.user.tag} (${interaction.user.id})`,
-                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
-                        })
-                        .setTitle(`Missing Permissions`)
-                        .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
-                            bold(
-                                `${commaList(
-                                    perms
-                                    .map(
-                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
-                                    )
-                                )} ${
-                                    pluralise(perms.length, 'permissions')
-                                }`
-                            )
-                        }.\nThe bot ${perms.length ? `has the ${
-                            bold(
-                                `${commaList(
-                                    perms
-                                    .filter(
-                                        p => !missingPerms.includes(p)
-                                    )
-                                    .map(
-                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
-                                    )
-                                )} ${
-                                    pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
-                                }`
-                            )
-                        }, however` : 'doesn\'t have any of the required permissions, and'} is __missing__ the ${
-                            bold(
-                                `${commaList(
-                                    missingPerms
-                                    .map(
-                                        s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
-                                    )
-                                )} ${
-                                    pluralise(missingPerms.length, 'permissions')
-                                }`
-                            )
-                        }.`)
-                        .setColor(0xff0000)
-                    ],
-                    ephemeral: true
-                })
-            }    
 
             const [
                 yesButton,
@@ -588,7 +652,6 @@ const banCommand: Cmd = {
 
             const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
                 componentType: ComponentType.Button,
-                maxComponents: 1,
                 time: 120000
             })
 
@@ -608,7 +671,7 @@ const banCommand: Cmd = {
                         embeds: [
                             EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
                             .setColor(0x00ff00)
-                            .setTitle('Ban Successful')
+                            .setTitle('Successful Ban')
                             .setDescription(`Successfully banned ${
                                 bold(user.tag)
                             } (${inlineCode(user.id)}) ${
@@ -727,7 +790,8 @@ const banCommand: Cmd = {
             })
 
             confirmationCollector.on('end', async (collected): Promise<any> => {
-                if (!collected.size) {
+                if (collected.size) return
+                else {
                     const original = await interaction.fetchReply()
                     yesButton.setDisabled(true)
                     noButton.setDisabled(true)
