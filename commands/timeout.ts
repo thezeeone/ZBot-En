@@ -95,7 +95,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/timeout set')} - Member not found`)
+                    .setTitle(`Member not found`)
                     .setDescription(`Couldn't find that member.`)
                     .setColor(0xff0000)
                 ],
@@ -116,7 +116,7 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${inlineCode('/timeout set')} - Role Hierarchy`)
+                        .setTitle(`Role Hierarchy`)
                         .setDescription(`Unable to timeout member. Member's highest permission (${
                             bold(member.roles.highest.name)
                         } ${
@@ -132,11 +132,54 @@ const timeoutCommand: Cmd = {
                             ? bold('the same role as')
                             : bold(`${inlineCode(
                                 pluralise(memberRolePos - botRolePos, 'role')
-                            )}`)
-                        } higher than my highest role (${
+                            )} higher than`)
+                        } my highest role (${
                             bold(botMember.roles.highest.name)
                         } ${
                             inlineCode(botMember.roles.highest.id)
+                        }, ${
+                            numRoles - memberRolePos === 0 
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            } highest role`)
+                        }).`)
+                        .setColor(0xff0000)
+                    ],
+                    ephemeral: true
+                })
+            } else if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                const memberRolePos = member.roles.highest.position
+                const commandMemberRolePos = interaction.member.roles.highest.position
+                const numRoles = interaction.guild.roles.cache.size - 1
+                return await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle(`Role Hierarchy`)
+                        .setDescription(`Timeout forbidden. Member's highest role (${
+                            bold(member.roles.highest.name)
+                        } ${
+                            inlineCode(member.roles.highest.id)
+                        }, ${
+                            numRoles - memberRolePos === 0 
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            } highest role`)
+                        }) is ${
+                            memberRolePos === commandMemberRolePos
+                            ? bold('the same role as')
+                            : bold(`${inlineCode(
+                                pluralise(memberRolePos - commandMemberRolePos, 'role')
+                            )} higher than`)
+                        } your highest role (${
+                            bold(interaction.member.roles.highest.name)
+                        } ${
+                            inlineCode(interaction.member.roles.highest.id)
                         }, ${
                             numRoles - memberRolePos === 0 
                             ? bold('highest role')
@@ -164,7 +207,7 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${inlineCode('/timeout set')} - Missing Permissions`)
+                        .setTitle(`Missing Permissions`)
                         .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
                             bold(
                                 `${commaList(
@@ -173,7 +216,9 @@ const timeoutCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(perms.length, 'permissions')
+                                    perms.length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }.\nThe bot has the ${
@@ -198,7 +243,9 @@ const timeoutCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(missingPerms.length, 'permissions')
+                                    missingPerms.length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }.`)
@@ -217,7 +264,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/timeout set')} - Member unmoderatable`)
+                    .setTitle(`Member unmoderatable`)
                     .setDescription(`Member unmoderatable.\nCannot timeout this member, reason unknown.`)
                     .setColor(0xff0000)
                 ],
@@ -257,7 +304,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/timeout set')} - Invalid duration`)
+                    .setTitle(`Invalid duration`)
                     .setDescription('A duration must be provided.')
                     .setColor(0xff0000)
                 ],
@@ -317,7 +364,7 @@ const timeoutCommand: Cmd = {
                         },
                         {
                             name: 'End of timeout',
-                            value: time(
+                            value: `${time(
                                 Math.floor(
                                     Date.now() / 1000
                                 ) + (
@@ -326,7 +373,16 @@ const timeoutCommand: Cmd = {
                                     + hours * 60 * 60
                                     + days * 24 * 60 * 60
                                     )
-                                , 'D'),
+                                , 'D')} ${time(
+                                Math.floor(
+                                    Date.now() / 1000
+                                ) + (
+                                    seconds
+                                    + minutes * 60
+                                    + hours * 60 * 60
+                                    + days * 24 * 60 * 60
+                                    )
+                                , 'T')}`,
                             inline: true
                         }
                     ])
@@ -339,7 +395,6 @@ const timeoutCommand: Cmd = {
 
             const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
                 componentType: ComponentType.Button,
-                maxComponents: 1,
                 time: 120000
             })
 
@@ -477,10 +532,7 @@ const timeoutCommand: Cmd = {
                             .setFields([])
                         ]
                     })
-                    button.reply({
-                        content: 'You cancelled the timeout.',
-                        ephemeral: true
-                    })
+                    button.reply('You cancelled the timeout.')
                 }
             })
 
@@ -518,7 +570,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/timeout remove')} - Member not found`)
+                    .setTitle(`Member not found`)
                     .setDescription(`Couldn't find that member.`)
                     .setColor(0xff0000)
                 ],
@@ -537,7 +589,7 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${inlineCode('/timeout remove')} - Role Hierarchy`)
+                        .setTitle(`Role Hierarchy`)
                         .setDescription(`Unable to remove timeout from member. Member's highest permission (${
                             bold(member.roles.highest.name)
                         } ${
@@ -553,11 +605,54 @@ const timeoutCommand: Cmd = {
                             ? bold('the same role as')
                             : bold(`${inlineCode(
                                 pluralise(memberRolePos - botRolePos, 'role')
-                            )}`)
-                        } higher than my highest role (${
+                            )} higher than`)
+                        } your highest role (${
                             bold(botMember.roles.highest.name)
                         } ${
                             inlineCode(botMember.roles.highest.id)
+                        }, ${
+                            numRoles - memberRolePos === 0 
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            } highest role`)
+                        }).`)
+                        .setColor(0xff0000)
+                    ],
+                    ephemeral: true
+                })
+            } else if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                const memberRolePos = member.roles.highest.position
+                const commandMemberRolePos = interaction.member.roles.highest.position
+                const numRoles = interaction.guild.roles.cache.size - 1
+                return await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                        .setAuthor({
+                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        })
+                        .setTitle(`Role Hierarchy`)
+                        .setDescription(`Timeout forbidden. Member's highest role (${
+                            bold(member.roles.highest.name)
+                        } ${
+                            inlineCode(member.roles.highest.id)
+                        }, ${
+                            numRoles - memberRolePos === 0 
+                            ? bold('highest role')
+                            : bold(`${
+                                inlineCode(ordinalNumber(numRoles - memberRolePos))
+                            } highest role`)
+                        }) is ${
+                            memberRolePos === commandMemberRolePos
+                            ? bold('the same role as')
+                            : bold(`${inlineCode(
+                                pluralise(memberRolePos - commandMemberRolePos, 'role')
+                            )} higher than`)
+                        } your highest role (${
+                            bold(interaction.member.roles.highest.name)
+                        } ${
+                            inlineCode(interaction.member.roles.highest.id)
                         }, ${
                             numRoles - memberRolePos === 0 
                             ? bold('highest role')
@@ -585,7 +680,7 @@ const timeoutCommand: Cmd = {
                             name: `${interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
-                        .setTitle(`${inlineCode('/timeout remove')} - Missing Permissions`)
+                        .setTitle(`Missing Permissions`)
                         .setDescription(`Bot is missing permissions.\nThis command requires the bot to have the ${
                             bold(
                                 `${commaList(
@@ -594,7 +689,9 @@ const timeoutCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(perms.length, 'permissions')
+                                    perms.length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }.\nThe bot has the ${
@@ -608,7 +705,9 @@ const timeoutCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
+                                    perms.filter(p => !missingPerms.includes(p)).length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }, however is __missing__ the ${
@@ -619,7 +718,9 @@ const timeoutCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(missingPerms.length, 'permissions')
+                                    missingPerms.length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }.`)
@@ -638,7 +739,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/timeout set')} - Member unmoderatable`)
+                    .setTitle(`Member unmoderatable`)
                     .setDescription(`Member unmoderatable.\nCannot remove the timeout for this member, reason unknown.`)
                     .setColor(0xff0000)
                 ],
@@ -653,7 +754,7 @@ const timeoutCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setTitle(`${inlineCode('/timeout remove')} - Member isn't timed out`)
+                    .setTitle(`Member isn't timed out`)
                     .setDescription(`Member is not in time out.\nCannot remove the timeout for this member, this command only works on members who are already timed out.`)
                     .setColor(0xff0000)
                 ],
@@ -708,7 +809,6 @@ const timeoutCommand: Cmd = {
 
             const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
                 componentType: ComponentType.Button,
-                maxComponents: 1,
                 time: 120000
             })
 
@@ -812,10 +912,7 @@ const timeoutCommand: Cmd = {
                             .setFields([])
                         ]
                     })
-                    interaction.followUp({
-                        content: 'You cancelled the timeout removal.',
-                        ephemeral: true
-                    })
+                    button.followUp('You cancelled the timeout removal.')
                 }
             })
 
