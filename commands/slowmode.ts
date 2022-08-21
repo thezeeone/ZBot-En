@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember } from "discord.js"
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember, TextChannel } from "discord.js"
 import { commaList, pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
@@ -77,10 +77,10 @@ const slowmodeCommand: Cmd = {
                     .setTitle('Channel Slowmode')
                     .setDescription(
                         channelSm
-                        ? `The slowmode for this text channel is ${bold(
+                        ? `The slowmode for ${channel.id === (interaction.channel as TextChannel).id ? 'this text channel' : channel.toString()} is ${bold(
                             commaList([hours, minutes, seconds].filter(s => !s.startsWith('0')))
                         )}.`
-                        : "This channel doesn't have slowmode."
+                        : `${channel.id === (interaction.channel as TextChannel).id ? 'This channel' : channel.toString()} doesn't have slowmode.`
                     )
                 ]
             })
@@ -109,7 +109,9 @@ const slowmodeCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(perms.length, 'permissions')
+                                    perms.length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }.\nThe bot has the ${
@@ -123,7 +125,9 @@ const slowmodeCommand: Cmd = {
                                         s => inlineCode((s.match(/[A-Z][a-z]+/g) as RegExpMatchArray).join(' '))
                                     )
                                 )} ${
-                                    pluralise(perms.filter(p => !missingPerms.includes(p)).length, 'permissions')
+                                    perms.filter(p => !missingPerms.includes(p)).length === 1
+                                    ? 'permission'
+                                    : 'permissions'
                                 }`
                             )
                         }, however is __missing__ the ${
@@ -189,7 +193,7 @@ const slowmodeCommand: Cmd = {
                         new EmbedBuilder()
                         .setColor(0x00ff00)
                         .setTitle('Set New Channel Slowmode')
-                        .setDescription(`Set the slowmode of the channel.`)
+                        .setDescription(`Successfully changed the slowmode of ${channel.id === (interaction.channel as TextChannel).id ? 'this channel' : channel.toString()}.`)
                         .addFields([
                             {
                                 name: 'Old',
@@ -218,7 +222,7 @@ const slowmodeCommand: Cmd = {
                         new EmbedBuilder()
                         .setColor(0xff0000)
                         .setTitle('Failed to Set Channel Slowmode')
-                        .setDescription(`Failed to set the slowmode for the channel. Reason unknown.`)
+                        .setDescription(`Failed to set the slowmode for ${(interaction.channel as TextChannel).id === channel.id ? 'the channel' : channel.toString()}. Reason unknown.`)
                     ]
                 })
             })
