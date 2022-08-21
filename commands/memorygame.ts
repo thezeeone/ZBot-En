@@ -17,7 +17,20 @@ data: {
     ]
 },
 async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
-    const opponent = interaction.options.getMember('opponent') as GuildMember
+    const opponent = interaction.options.getMember('opponent')
+    if (!opponent) return await interaction.reply({
+        embeds: [
+            new EmbedBuilder()
+            .setAuthor({
+                name: `${interaction.user.tag} (${interaction.user.id})`,
+                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+            })
+            .setTitle(`Member not found`)
+            .setDescription(`Couldn't find that member.`)
+            .setColor(0xff0000)
+        ],
+        ephemeral: true
+    })
     let playerTurn: 0 | 1 = 0 as 0 | 1
     let opponentChoices: number[] = []
 
@@ -37,7 +50,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
         italic(`A response is required ${time(Math.floor(Date.now() / 1000 + 91), 'R')}.`)
     }`)
     .setFooter({
-        text: `${interaction.user.username} will start first.`
+        text: `${interaction.user.username} will start first, and is currently playing.`
     })
 
     const acceptButton = new ButtonBuilder()
@@ -104,7 +117,12 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                 numArr.splice(numArr.indexOf(numArr[randomNum]), 1)
             } while (numArr.length !== 0)
     
-            let foundPairs: Array<[User, number, number]> = []
+            let foundPairs: Array<{
+                user: User, 
+                customId1: number, 
+                customId2: number, 
+                numberFound: number
+            }> = []
     
             let grid: ActionRowBuilder<ButtonBuilder>[] = [
                 new ActionRowBuilder<ButtonBuilder>(),
@@ -130,6 +148,8 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                     .setColor(0x00ffff)
                     .setTitle('Memory Game Match')
                     .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('2')} cards`)}.`)
+                    // @ts-ignore
+                    .setFooter({ text: null })
                 ],
                 content: bold('Let the game begin!'),
                 components: grid
@@ -155,20 +175,20 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                             (grid[rindex].components as ButtonBuilder[]).map((btn, bindex) => {
                                 return btn
                                 .setDisabled(opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                    (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex 
+                                    (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex) 
                                 ) 
                                 ? true 
                                 : false)
                                 .setStyle(
                                     foundPairs.some(
-                                        (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                        (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                     )
                                     ? ButtonStyle.Success
                                     : (opponentChoices.includes(rindex * 5 + bindex) ? ButtonStyle.Primary : ButtonStyle.Secondary)
                                 )
                                 .setLabel(
                                     opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                        (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                        (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                     )
                                     ? String(numArrRandomisedCopy[rindex * 5 + bindex]) 
                                     : '\u200b'
@@ -188,7 +208,12 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                         components: grid
                     })
 
-                    return await collectedBtn.reply({ content: `Select **\`1\` more** card.`, ephemeral: true })
+                    return await collectedBtn.reply({ 
+                        content: `Select **\`1\` more** card.`,
+                        fetchReply: true
+                    }).then((rpl) => {
+                        setTimeout(() => rpl.delete(), 1000)
+                    })
                 } else if (opponentChoices.length === 2) {
                     grid = grid.map(
                         (_, rindex) => new ActionRowBuilder<ButtonBuilder>({ components:
@@ -196,21 +221,21 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                                 return btn
                                 .setDisabled(
                                     opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                        (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                        (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                     )
                                     ? true 
                                     : false
                                 )
                                 .setStyle(
                                     foundPairs.some(
-                                        (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                        (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                     )
                                     ? ButtonStyle.Success
                                     : (opponentChoices.includes(rindex * 5 + bindex) ? ButtonStyle.Primary : ButtonStyle.Secondary)
                                 )
                                 .setLabel(
                                     opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                        (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                        (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                     )
                                     ? String(numArrRandomisedCopy[rindex * 5 + bindex]) 
                                     : '\u200b'
@@ -221,31 +246,41 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
 
                     if (
                         opponentChoices
-                        .map(choice => (grid[Math.floor(choice / 5)].components[choice % 5] as ButtonBuilder).data.label)
-                        .every((s, _, arr) => s as string === arr[0] as string)
+                        .map(choice => (grid[Math.floor(choice / 5)].components[choice % 5] as ButtonBuilder).data.label as string)
+                        .every((s, _, arr) => s === arr[0])
                     ) {
-                        foundPairs.push([playerTurn === 0 ? interaction.user : opponent.user, opponentChoices[0], opponentChoices[1]])
-                        await collectedBtn.reply({ content: 'Nice match!', ephemeral: true });
+                        foundPairs.push({
+                            user: playerTurn === 0 ? interaction.user : opponent.user,
+                            customId1: opponentChoices[0],
+                            customId2: opponentChoices[1],
+                            numberFound: Number((grid[Math.floor((opponentChoices[0] || opponentChoices[1]) / 5)].components[(opponentChoices[0] || opponentChoices[1]) % 5] as ButtonBuilder).data.label)
+                        })
+                        await collectedBtn.reply({ 
+                            content: 'Nice match!', 
+                            fetchReply: true 
+                        }).then((rpl) => {
+                            setTimeout(() => rpl.delete(), 500)
+                        });
                         grid = grid.map(
                             (_, rindex) => new ActionRowBuilder<ButtonBuilder>({ components: (grid[rindex].components as ButtonBuilder[]).map((btn, bindex) => {
                                 return btn
                                     .setDisabled(
                                         opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                            (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                            (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                         )
                                         ? true 
                                         : false
                                     )
                                     .setStyle(
                                         foundPairs.some(
-                                            (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                            (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                         )
                                         ? ButtonStyle.Success
                                         : (opponentChoices.includes(rindex * 5 + bindex) ? ButtonStyle.Primary : ButtonStyle.Secondary)
                                     )
                                     .setLabel(
                                         opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                            (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                            (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                         )
                                         ? String(numArrRandomisedCopy[rindex * 5 + bindex]) 
                                         : '\u200b'
@@ -264,27 +299,32 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                             components: grid
                         })
                     } else {
-                        await collectedBtn.reply({ content: 'Not quite...', ephemeral: true });
+                        await collectedBtn.reply({ 
+                            content: 'Not quite...', 
+                            fetchReply: true
+                        }).then((rpl) => {
+                            setTimeout(() => rpl.delete(), 500)
+                        });
                         grid = grid.map(
                             (_, rindex) => new ActionRowBuilder<ButtonBuilder>({ components: (grid[rindex].components as ButtonBuilder[]).map((btn, bindex) => {
                                 return btn
                                     .setDisabled(
                                         opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                            (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                            (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                         )
                                         ? true 
                                         : false
                                     )
                                     .setStyle(
                                         foundPairs.some(
-                                            (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                            (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                         )
                                         ? ButtonStyle.Success
                                         : (opponentChoices.includes(rindex * 5 + bindex) ? ButtonStyle.Danger : ButtonStyle.Secondary)
                                     )
                                     .setLabel(
                                         opponentChoices.includes(rindex * 5 + bindex) || foundPairs.some(
-                                            (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                            (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                         )
                                         ? String(numArrRandomisedCopy[rindex * 5 + bindex]) 
                                         : '\u200b'
@@ -304,8 +344,8 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                         })
                     }
                     if (foundPairs.length === 10) {
-                        const userFoundPairs = foundPairs.filter(s => s[0].id === interaction.user.id)
-                        const opponentFoundPairs = foundPairs.filter(s => s[0].id === opponent.user.id)
+                        const userFoundPairs = foundPairs.filter(s => s.user.id === interaction.user.id)
+                        const opponentFoundPairs = foundPairs.filter(s => s.user.id === opponent.user.id)
                         if (userFoundPairs.length === opponentFoundPairs.length) {
                             requestMessage.edit({
                                 content: '',
@@ -333,8 +373,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                                     id: opponent.user.id
                                 }
                             })
-                        }
-                        else return await requestMessage.edit({
+                        } else return await requestMessage.edit({
                             content: '',
                             embeds: [
                                 (EmbedBuilder.from((await interaction.fetchReply()).embeds[0]))
@@ -355,14 +394,14 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                                     {
                                         name: `${pluralise(userFoundPairs.length, 'pair')} found by starting player`,
                                         value: userFoundPairs
-                                        .map((r, i) => `${bold(inlineCode(String(i + 1)))} ${inlineCode(String(grid[Math.floor( r[1] / 3 )][ r[1] % 3 ].label))} و${inlineCode(String(grid[Math.floor( r[2] / 3 )][ r[2] % 3 ].label))}`)
+                                        .map((r, i) => `${bold(inlineCode(String(i + 1)))} ${inlineCode(String(r.numberFound))} and ${inlineCode(String(r.numberFound))}`)
                                             .join('\n'),
                                         inline: true
                                     },
                                     {
                                         name: `${pluralise(opponentFoundPairs.length, 'pair')} found by opponent`,
                                         value: opponentFoundPairs
-                                        .map((r, i) => `${bold(inlineCode(String(i + 1)))} ${inlineCode(String(grid[Math.floor( r[1] / 3 )][ r[1] % 3 ].label))} و${inlineCode(String(grid[Math.floor( r[2] / 3 )][ r[2] % 3 ].label))}`)
+                                        .map((r, i) => `${bold(inlineCode(String(i + 1)))} ${inlineCode(String(r.numberFound))} and ${inlineCode(String(r.numberFound))}`)
                                             .join('\n'),
                                         inline: true
                                     }
@@ -386,21 +425,21 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                                     return btn
                                         .setDisabled(
                                             foundPairs.some(
-                                                (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                                (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                             )
                                             ? true 
                                             : false
                                         )
                                         .setStyle(
                                             foundPairs.some(
-                                                (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                                (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                             )
                                             ? ButtonStyle.Success
                                             : ButtonStyle.Secondary
                                         )
                                         .setLabel(
                                             foundPairs.some(
-                                                (n) => n[1] === rindex * 5 + bindex || n[2] === rindex * 5 + bindex
+                                                (n) => (n.customId1 === rindex * 5 + bindex) || (n.customId2 === rindex * 5 + bindex)
                                             )
                                             ? String(numArrRandomisedCopy[rindex * 5 + bindex]) 
                                             : '\u200b'
@@ -420,7 +459,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                                 ],
                                 components: grid
                             })
-                        }, 1875)
+                        }, 750)
                     }
                 }
             })
