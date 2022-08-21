@@ -70,15 +70,37 @@ const rankCommand: Cmd = {
                 const user = interaction.options.getUser('user', true)
 
                 const localLeaderboard = (await LevelModel.findAll())
-                .filter(r => interaction.guild.members.cache.has(r.id))
+                .filter(async r => {
+                    try { await interaction.guild.members.fetch(r.id) }
+                    catch (error) { return undefined }
+                })
+                .filter(notEmpty)
+                .sort((l1, l2) => {
+                    if (l1.lvl > l2.lvl) return -1
+                    else if (l1.lvl < l2.lvl) return 1
+                    else {
+                        if (l1.xp > l2.xp) return -1
+                        else if (l1.xp < l2.xp) return 1
+                        else return 0
+                    }
+                })
                 .map(s => s.id)
 
                 const globalLeaderboard = (await LevelModel.findAll())
+                .sort((l1, l2) => {
+                    if (l1.lvl > l2.lvl) return -1
+                    else if (l1.lvl < l2.lvl) return 1
+                    else {
+                        if (l1.xp > l2.xp) return -1
+                        else if (l1.xp < l2.xp) return 1
+                        else return 0
+                    }
+                })
                 .map(s => s.id)
 
-                const userLocalPosition = localLeaderboard.indexOf(interaction.user.id) + 1
+                const userLocalPosition = localLeaderboard.indexOf(interaction.user.id)
 
-                const userGlobalPosition = globalLeaderboard.indexOf(interaction.user.id) + 1
+                const userGlobalPosition = globalLeaderboard.indexOf(interaction.user.id)
                 
                 if (user.id === interaction.user.id) {
                     const userRankCard = await LevelModel.findOne({
@@ -151,14 +173,32 @@ const rankCommand: Cmd = {
                 } else {
                     const localLeaderboard = (await LevelModel.findAll())
                     .filter(r => interaction.guild.members.cache.has(r.id))
+                    .sort((l1, l2) => {
+                        if (l1.lvl > l2.lvl) return -1
+                        else if (l1.lvl < l2.lvl) return 1
+                        else {
+                            if (l1.xp > l2.xp) return -1
+                            else if (l1.xp < l2.xp) return 1
+                            else return 0
+                        }
+                    })
                     .map(s => s.id)
 
                     const globalLeaderboard = (await LevelModel.findAll())
+                    .sort((l1, l2) => {
+                        if (l1.lvl > l2.lvl) return -1
+                        else if (l1.lvl < l2.lvl) return 1
+                        else {
+                            if (l1.xp > l2.xp) return -1
+                            else if (l1.xp < l2.xp) return 1
+                            else return 0
+                        }
+                    })
                     .map(s => s.id)
 
-                    const userLocalPosition = localLeaderboard.indexOf(user.id) + 1
+                    const userLocalPosition = localLeaderboard.indexOf(user.id)
 
-                    const userGlobalPosition = globalLeaderboard.indexOf(user.id) + 1
+                    const userGlobalPosition = globalLeaderboard.indexOf(user.id)
                 
                     const userRankCard = await LevelModel.findOne({
                         where: {
@@ -190,7 +230,7 @@ const rankCommand: Cmd = {
                                 new EmbedBuilder()
                                 .setColor(userCustomisationOptions?.colour ?? 0x00ffff)
                                 .setTitle(`Rank Card for ${inlineCode(user.tag)} (${inlineCode(user.id)})`)
-                                .setThumbnail(interaction.user.displayAvatarURL({ forceStatic: false }))
+                                .setThumbnail(user.displayAvatarURL({ forceStatic: false }))
                                 .setDescription(`${bold(user.tag)} (${inlineCode(user.id)}) currently ranks as ${
                                     userLocalPosition < 4
                                     ? bold(['🥇 top', '🥈 second highest', '🥉 third highest'][userLocalPosition])
@@ -240,14 +280,32 @@ const rankCommand: Cmd = {
 
                 const localLeaderboard = (await LevelModel.findAll())
                 .filter(r => interaction.guild.members.cache.has(r.id))
+                .sort((l1, l2) => {
+                    if (l1.lvl > l2.lvl) return -1
+                    else if (l1.lvl < l2.lvl) return 1
+                    else {
+                        if (l1.xp > l2.xp) return -1
+                        else if (l1.xp < l2.xp) return 1
+                        else return 0
+                    }
+                })
                 .map(s => s.id)
 
                 const globalLeaderboard = (await LevelModel.findAll())
+                .sort((l1, l2) => {
+                    if (l1.lvl > l2.lvl) return -1
+                    else if (l1.lvl < l2.lvl) return 1
+                    else {
+                        if (l1.xp > l2.xp) return -1
+                        else if (l1.xp < l2.xp) return 1
+                        else return 0
+                    }
+                })
                 .map(s => s.id)
 
-                const userLocalPosition = localLeaderboard.indexOf(interaction.user.id) + 1
+                const userLocalPosition = localLeaderboard.indexOf(interaction.user.id)
 
-                const userGlobalPosition = globalLeaderboard.indexOf(interaction.user.id) + 1
+                const userGlobalPosition = globalLeaderboard.indexOf(interaction.user.id)
 
                 if (!userRankCard) {
                     return await interaction.reply({
@@ -514,6 +572,10 @@ const rankCommand: Cmd = {
             }
         }
     }
+}
+
+function notEmpty<T>(value: T | null | undefined): value is T {
+    return value !== undefined && value !== null
 }
 
 export { rankCommand }
