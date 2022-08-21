@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ClientApplication, ApplicationCommandPermissionType, User, bold, underscore, EmbedBuilder, inlineCode } from "discord.js"
+import { Client, GatewayIntentBits, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
@@ -107,6 +107,14 @@ client.on('messageCreate', async (message) => {
         lvl: 0
     })).increment({ xp: 5 })
 
+    const levelRoles = [
+        '1010283999425462323', '1010243115346559068', '1010243118232260618', '1010243121189228614',
+        '1010243123001163806', '1010243125983314020', '1010243128495702057', '1010243130840338622',
+        '1010243133960880260', '1010243135575699507', '1010243139262488627', '1010243141686808577',
+        '1010243144593453127', '1010243147395252225', '1010243150079610950', '1010243153439248505',
+        '1010243155918069780', '1010243159084769362', '1010243161286783186', '1010243165283942471'
+    ]
+
     if (lvl.xp > (lvl.lvl + 1) * 50) {
         await lvl.increment({
             xp: -50 * (lvl.lvl + 1),
@@ -124,6 +132,22 @@ client.on('messageCreate', async (message) => {
             ]
         })
     }
+
+    (<Guild>message.client.guilds.cache.get('1000073833551769600'))
+    .members.fetch(message.author.id)
+    .then((member: GuildMember) => {
+        if (lvl.lvl >= 100 && !member.roles.cache.has(levelRoles[0])) member.roles.add(levelRoles[0])
+        else if (lvl.lvl < 5) member.roles.remove(levelRoles)
+        else {
+            member.roles.remove(
+                levelRoles.filter((r, i) => i !== (20 - Math.floor(lvl.lvl / 5)) && member.roles.cache.has(r))
+            )
+            member.roles.add(
+                levelRoles[20 - Math.floor(lvl.lvl / 5)]
+            )
+        }
+    })
+    .catch(() => null)
 })
 
 client.login(process.env.TOKEN)
