@@ -39,7 +39,7 @@ const helpCommand: Cmd = {
                     },
                     {
                         name: 'Slash Commands (`/`) - Other',
-                        value: '`/report` Is there an issue? Use this command to get links that could help you'
+                        value: '`/report-problem` Is there an issue? Use this command to get links that could help you'
                     },
                     {
                         name: 'Systems - Level System',
@@ -47,11 +47,11 @@ const helpCommand: Cmd = {
                         + '\n**Explanation**\nFor every message a member sends in a channel the bot is in, the member gets 5 experience points. Playing mini-games can give you large rewards, which can get in the hundreds! We are adding to this system to make it beneficial.'
                     },
                     {
-                        name: 'Systems - Ticket System',
+                        name: 'Systems - Economy System',
                         value: italic('Coming soon!')
                     },
                     {
-                        name: 'Systems - Economy System',
+                        name: 'Systems - Ticket System',
                         value: italic('In the distant future...')
                     }
                 ])
