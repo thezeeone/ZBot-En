@@ -55,12 +55,12 @@ const blacklistCommand: Cmd = {
 			ephemeral: true
 		})
 		
-		const enEmbed = new EmbedBuilder()
+		const embed = new EmbedBuilder()
 		.setTitle('Blacklist')
 		.setColor(0xf00)
 		.setDescription(`This is a message in regards to your permission to use this bot.\n\n⛔ **__You have been blacklisted by the owner from using this bot.__**\n\nThis means you are **__permanently__ banned** from interacting with this bot in any way or form; you **__cannot__** **use this bot's slash commands**, **interact with the bot's message components**, or **gain any more level or experience points from this bot**, and **your rank card will be removed entirely**.\n\nOther members however will still be able to use commands on you, for example, to ban you.\n\n**__Unfair?__ Either join our official Discord server, [ZBot Server (En)](https://discord.gg/6tkn6m5g52), for a reason as to why you've been blacklisted, or message the owner, ${inlineCode(interaction.user.tag)} (${inlineCode(interaction.user.id)}), for a further discussion.**`)
 		user.send({
-			embeds: [enEmbed]
+			embeds: [embed]
 		})
 		.then(async () => {
 			return await interaction.reply({
