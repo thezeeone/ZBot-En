@@ -1,0 +1,1 @@
+Yo, baka boi, the pet shop and corner shop are still in development and their code blocks should be comments for now, dont mess it up, soon i will send new code.
