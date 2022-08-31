@@ -18,6 +18,10 @@ import { reportCommand } from "./reportproblem";
 import { pingCommand } from "./ping"
 import { slowmodeCommand } from "./slowmode";
 import { helpCommand } from "./help";
+import { balanceCommand } from "./balance";
+import { depositCommand } from "./deposit";
+import { withdrawCommand } from "./withdraw";
+import { giveCommand } from "./givecoins";
 
 export {
     Cmd,
@@ -33,5 +37,15 @@ export {
     reportCommand,
     pingCommand,
     slowmodeCommand,
-    helpCommand
+    helpCommand,
+    serverInfoCommand,
+    inviteCommand,
+    updatesCommand,
+    userInfoCommand,
+    exchangeCommand,
+    memberInfoCommand,
+    balanceCommand,
+    depositCommand,
+    withdrawCommand,
+    giveCommand
 }
