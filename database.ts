@@ -21,6 +21,12 @@ interface RankCardModel extends Model<InferAttributes<RankCardModel>, InferCreat
     colour: number
 }
 
+interface WelcomeMessageEditorModel extends Model<InferAttributes<WelcomeMessageEditorModel>, InferCreationAttributes<WelcomeMessageEditorModel>> {
+    id: string,
+    message?: string,
+    embeds?: APIEmbed
+}
+
 const LevelModel = sequelize.define<LevelModel>('Levels', {
     id: {
         primaryKey: true,
