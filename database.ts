@@ -54,9 +54,25 @@ const BlacklistModel = sequelize.define<BlacklistModel>('Blacklists', {
     }
 })
 
+const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('WMEditors', {
+    id: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    },
+    message: {
+        type: DataTypes.STRING,
+        defaultValue: ''
+    },
+    embeds: {
+        type: DataTypes.ARRAY(DataTypes.JSON),
+        defaultValue: []
+    }
+})
+
 export {
     sequelize,
     LevelModel,
     BlacklistModel,
-    RankCardModel
+    RankCardModel,
+    WelcomeMessageEditorModel
 }
