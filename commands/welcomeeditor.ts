@@ -109,6 +109,16 @@ const welcomeEditorCommand: Cmd = {
 
             collector.on('end', async (collected) => {
                 if (collected.size) {
+                    if (collected.some(c => c.customId === 'cancel')) return
+                    const serverSystem = await WelcomeMessageEditorModel.findOne({
+                        where: {
+                            id: interaction.guild.id
+                        }
+                    }) || await WelcomeMessageEditorModel.create({
+                        id: interaction.guild.id,
+                        enabled: false
+                    })
+
                     const embed = new EmbedBuilder()
                     .setColor(0x00ffff)
                     .setTitle('Welcome Message Editor')
@@ -116,7 +126,7 @@ const welcomeEditorCommand: Cmd = {
                         name: `${interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
-                    .setDescription('Welcome to the Welcome Message Editor! This is the editor where you can edit the welcome message, manage settings and enable/disable the system. Use the buttons below to modify your welcome system.\n\n⚠ **Note: this is an experimental feature and may break while in use.**')
+                    .setDescription('Welcome to the Welcome Message Editor! This is the editor where you can edit the welcome message, manage settings and enable/disable the system. Use the buttons below to modify your welcome system. You can always discard your settings, save them or modify them later.\n\n⚠ **Note: this is an experimental feature and may break while in use.**')
                     .addFields([
                         {
                             name: 'Syntax',
@@ -126,7 +136,7 @@ const welcomeEditorCommand: Cmd = {
                                 { syntax: '{user.id}', desc: 'Display the user\'s ID' },
                                 { syntax: '{user.tag}', desc: 'Dislay the user\'s full tag' },
                                 { syntax: '{user.mention}', desc: 'Mention the user' },
-                                { syntax: '{user.createdAt[`short-time` | `long time` | `short date` | `long date` | `short date-time` | `long date-time`, `relative`]}', desc: 'The creation date of the user. The `[]` brackets are optional and can be omitted, and will default to `long date-time` format. If the brackets are provided, you must provide one of the formats. eg `{user.createdAt[long date-time]}`' },
+                                { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user. The `[]` brackets are optional and can be omitted, and will default to `long date-time` format. If the brackets are provided, you must provide one of the formats. eg `{user.createdAt[long date-time]}`' },
                                 { syntax: '{server.name}', desc: 'Display the server name' },
                                 { syntax: '{server.description}', desc: 'Display the server description' },
                                 { syntax: '{server.memberCount[`before` | `after`]}', desc: 'Display the server\'s member count (the `[]` brackets are optional and can be omitted, but if adding them, then use `[before]` to display the count before the member joined, or `[after]` after that)' },
@@ -137,7 +147,7 @@ const welcomeEditorCommand: Cmd = {
                             name: 'Examples',
                             value: [
                                 { syntax: '{user.username}', ex: 'ZBot' },
-                                { syntax: '{user.discrimintaor}', ex: '9348' },
+                                { syntax: '{user.discriminator}', ex: '9348' },
                                 { syntax: '{user.id}', ex: '956596792542257192' },
                                 { syntax: '{user.tag}', ex: 'ZBot#9348' },
                                 { syntax: '{user.mention}', ex: '<@956596792542257192>' },
@@ -154,8 +164,61 @@ const welcomeEditorCommand: Cmd = {
                         }
                     ])
 
+                    const [
+                        editButton,
+                        channelButton,
+                        previewButton,
+                        saveButton,
+                        discardButton
+                    ] = [
+                        new ButtonBuilder({
+                            customId: 'edit',
+                            label: 'Edit',
+                            style: ButtonStyle.Primary
+                        })
+                        .setDisabled(!serverSystem.enabled),
+                        new ButtonBuilder({
+                            customId: 'channel',
+                            label: 'Channel',
+                            style: ButtonStyle.Primary
+                        })
+                        .setDisabled(!serverSystem.enabled),
+                        new ButtonBuilder({
+                            customId: 'preview',
+                            label: 'Preview',
+                            style: ButtonStyle.Secondary
+                        })
+                        .setDisabled(!serverSystem.enabled),
+                        new ButtonBuilder({
+                            customId: 'save',
+                            label: 'Save Changes',
+                            style: ButtonStyle.Primary
+                        })
+                        .setDisabled(true),
+                        new ButtonBuilder({
+                            customId: 'discard',
+                            label: 'Discard Changes',
+                            style: ButtonStyle.Primary
+                        })
+                        .setDisabled(true)
+                    ]
+
+                    const [
+                        toggleEnableButton
+                    ] = [
+                        new ButtonBuilder()
+                        .setDisabled(serverSystem.enabled)
+                    ]
+
+                    const editorRow = new ActionRowBuilder<ButtonBuilder>({ components: [editButton, channelButton, previewButton, saveButton, discardButton] })
+                    const enablerRow = new ActionRowBuilder<ButtonBuilder>({ components: [toggleEnableButton] })
+
                     const editor = await interaction[interaction.replied ? 'followUp' : 'reply']({
-                        embeds: [embed]
+                        embeds: [embed],
+                        components: [
+                            editorRow,
+                            enablerRow
+                        ]
                     })
                 }
                 else {
