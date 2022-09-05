@@ -15,7 +15,7 @@ const voteCommand: Cmd = {
             },
             {
                 name: 'duration-minutes',
-                description: 'The duration users have to reply (minutes, defaults to 2.5)',
+                description: 'The duration users have to reply (minutes)',
                 type: ApplicationCommandOptionType.Number,
                 minValue: 1,
                 maxValue: 60,
@@ -77,7 +77,7 @@ const voteCommand: Cmd = {
         })
         .setColor(0x00ffff)
         .setTitle('Vote')
-        .setDescription(`Place your vote! ${italic(`Ends ${time(Math.floor(Date.now() / 1000) + (durationM * 60 + durationS))}`)}`)
+        .setDescription(`Place your vote! ${italic(`Ends ${time(Math.floor(Date.now() / 1000) + (durationM * 60 + durationS))} (${bold(time(Math.floor(Date.now() / 1000) + (durationM * 60 + durationS), 'R'))})`)}.`)
         .setFields([
             {
                 name: `${interaction.user.username} is running a vote!`,
@@ -101,6 +101,7 @@ const voteCommand: Cmd = {
         })
 
         const voteMessage = await interaction.reply({
+            content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
             embeds: [embed],
             components: [buttons],
             fetchReply: true
@@ -118,28 +119,31 @@ const voteCommand: Cmd = {
         collector.on('collect', async (btn) => {
             const buttonCustomId = btn.customId
 
-            const choiceVotes = votes.get(buttonCustomId)
+            const choiceVotes = votes.get(options[Number(buttonCustomId) - 1])
 
             if (choiceVotes) {
                 if (choiceVotes?.includes(btn.user.id)) {
                     choiceVotes.splice(choiceVotes.indexOf(btn.user.id), 1)
                     votes.set(buttonCustomId, choiceVotes)
                     await btn.reply({
-                        content: `You have selected the ${inlineCode(buttonCustomId)} option.`,
+                        content: `You have deselected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
                         ephemeral: true
                     })
                 } else {
                     choiceVotes.push(btn.user.id)
                     votes.set(buttonCustomId, choiceVotes)
                     await btn.reply({
-                        content: `You have selected the ${inlineCode(buttonCustomId)} option.`,
+                        content: `You have selected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
                         ephemeral: true
                     })
                 }
-            } else return
+            } else {
+                await btn.reply({ content: 'An error occured.', ephemeral: true })
+                return
+            }
         })
 
-        collector.on('end', (collected) => {
+        collector.on('end', () => {
             embed
             .setTitle('Vote Ended!')
             .setDescription('Here are the results below.')
@@ -150,9 +154,8 @@ const voteCommand: Cmd = {
                 },
                 {
                     name: 'Results',
-                    value: (collected.size && votes.every(s => Boolean(s.length)))
-                    ? 'No results were collected in the time being!'
-                    : votes
+                    value: (votes.some(s => Boolean(s.length)))
+                    ? votes
                     .sort((a, b) => {
                         if (a.length > b.length) return -1
                         else if (a.length < b.length) return 1
@@ -160,14 +163,15 @@ const voteCommand: Cmd = {
                     })
                     .map((r, k) => `${r.length ? bold(pluralise(r.length, 'person', 'people')) : 'Nobody'} selected ${bold(k)}`)
                     .join('\n')
+                    : 'No results were collected in the time being!'
                 }
             ])
 
             const sortedVotes = votes.sort((a, b) => a.length + b.length)
 
-            buttons.components.map((b, i) => b.setStyle(votes.get((b.data as Partial<APIButtonComponentWithCustomId>).custom_id as string)?.length ? (
+            buttons.components.map((b, i) => (votes.some(s => Boolean(s.length))) ? b.setStyle(votes.get(options[Number((b.data as Partial<APIButtonComponentWithCustomId>).custom_id)] as string)?.length ? (
                 sortedVotes[i] === sortedVotes[0] ? ButtonStyle.Success : ButtonStyle.Primary
-            ) : ButtonStyle.Secondary))
+            ) : ButtonStyle.Secondary).setDisabled(true) : b.setDisabled(true).setStyle(ButtonStyle.Secondary))
 
             voteMessage.edit({
                 embeds: [embed],
