@@ -5,7 +5,7 @@ import { Cmd } from "./command-exports"
 const voteCommand: Cmd = {
     data: {
         name: 'vote',
-        description: 'Start a poll for other members! (coming soon!)',
+        description: 'Start a poll for other members!',
         options: [
             {
                 name: 'question',
@@ -101,7 +101,6 @@ const voteCommand: Cmd = {
         })
 
         const voteMessage = await interaction.reply({
-            content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
             embeds: [embed],
             components: [buttons],
             fetchReply: true
