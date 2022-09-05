@@ -1,190 +1,327 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, Collection, time, italic, APIButtonComponentWithCustomId } from "discord.js"
-import { pluralise } from "../util"
-import { Cmd } from "./command-exports"
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, italic, PermissionsBitField, time } from "discord.js";
+import { WelcomeMessageEditorModel } from "../database";
+import { Cmd } from "./command-exports";
 
-const voteCommand: Cmd = {
+const welcomeEditorCommand: Cmd = {
     data: {
-        name: 'vote',
-        description: 'Start a poll for other members! (coming soon!)',
-        options: [
-            {
-                name: 'question',
-                description: 'The question to ask',
-                type: ApplicationCommandOptionType.String,
-                required: true
-            },
-            {
-                name: 'duration-minutes',
-                description: 'The duration users have to reply (minutes)',
-                type: ApplicationCommandOptionType.Number,
-                minValue: 1,
-                maxValue: 60,
-                required: true
-            },
-            {
-                name: 'option-1',
-                description: 'The first option members can vote for',
-                type: ApplicationCommandOptionType.String,
-                required: true
-            },
-            {
-                name: 'option-2',
-                description: 'The second option members can vote for',
-                type: ApplicationCommandOptionType.String,
-                required: true
-            },
-            {
-                name: 'option-3',
-                description: 'The third option members can vote for',
-                type: ApplicationCommandOptionType.String,
-                required: false
-            },
-            {
-                name: 'option-4',
-                description: 'The fourth option members can vote for',
-                type: ApplicationCommandOptionType.String,
-                required: false
-            },
-            {
-                name: 'option-5',
-                description: 'The fifth option members can vote for',
-                type: ApplicationCommandOptionType.String,
-                required: false
-            }
-        ]
+        name: 'welcome',
+        description: 'Set up a welcome system for your server'
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
-        const question = interaction.options.getString('question', true)
-        const [
-            durationM,
-            durationS
-        ] = [
-            Math.floor(interaction.options.getNumber('duration-minutes', true)),
-            Math.floor(interaction.options.getNumber('duration-minutes', true) % 1 * 60)
-        ]
-        const options = [
-            interaction.options.getString('option-1', true),
-            interaction.options.getString('option-2', true),
-            interaction.options.getString('option-3'),
-            interaction.options.getString('option-4'),
-            interaction.options.getString('option-5')
-        ].filter(notEmpty)
-
-        const embed = new EmbedBuilder()
-        .setAuthor({
-            name: `${interaction.user.tag} (${interaction.user.id})`,
-            iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
-        })
-        .setColor(0x00ffff)
-        .setTitle('Vote')
-        .setDescription(`Place your vote! ${italic(`Ends ${time(Math.floor(Date.now() / 1000) + (durationM * 60 + durationS))} (${bold(time(Math.floor(Date.now() / 1000) + (durationM * 60 + durationS), 'R'))})`)}.`)
-        .setFields([
-            {
-                name: `${interaction.user.username} is running a vote!`,
-                value: question
-            },
-            {
-                name: 'Options',
-                value: options.map((r, i) => `${bold(String(i + 1))} ${inlineCode(r)}`).join('\n')
-            }
-        ])
-
-        const buttons = new ActionRowBuilder<ButtonBuilder>({
-            components: options.map(
-                (r, i) => {
-                    return new ButtonBuilder()
-                    .setCustomId(String(i + 1))
-                    .setLabel(r)
-                    .setStyle(ButtonStyle.Primary)
-                }
-            )
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) return await interaction?.reply({
+            content: 'You must have the `Manage Server` permission to be able to set-up a welcome system.',
+            ephemeral: true
         })
 
-        const voteMessage = await interaction.reply({
-            content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
-            embeds: [embed],
-            components: [buttons],
-            fetchReply: true
-        })
-
-        const collector = voteMessage.createMessageComponentCollector({
-            componentType: ComponentType.Button,
-            time: (durationM * 60 + durationS) * 1000
-        })
-
-        const votes = new Collection<string, string[]>()
-
-        options.forEach(s => votes.set(s, []))
-
-        collector.on('collect', async (btn) => {
-            const buttonCustomId = btn.customId
-
-            const choiceVotes = votes.get(options[Number(buttonCustomId) - 1])
-
-            if (choiceVotes) {
-                if (choiceVotes?.includes(btn.user.id)) {
-                    choiceVotes.splice(choiceVotes.indexOf(btn.user.id), 1)
-                    votes.set(buttonCustomId, choiceVotes)
-                    await btn.reply({
-                        content: `You have deselected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
-                        ephemeral: true
-                    })
-                } else {
-                    choiceVotes.push(btn.user.id)
-                    votes.set(buttonCustomId, choiceVotes)
-                    await btn.reply({
-                        content: `You have selected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
-                        ephemeral: true
-                    })
-                }
-            } else {
-                await btn.reply({ content: 'An error occured.', ephemeral: true })
-                return
+        const serverWelcomeSystem = await WelcomeMessageEditorModel.findOne({
+            where: {
+                id: interaction.guild.id
             }
         })
 
-        collector.on('end', () => {
-            embed
-            .setTitle('Vote Ended!')
-            .setDescription('Here are the results below.')
-            .setFields([
+        if (!serverWelcomeSystem) {
+            const reply = await interaction.reply({
+                content: `You don\'t have a welcome system set up. Click the button below to get started.\n\n${
+                    italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 121, 'R')}.`)
+                }`,
+                components: [
+                    new ActionRowBuilder<ButtonBuilder>({
+                        components: [
+                            new ButtonBuilder()
+                            .setStyle(ButtonStyle.Success)
+                            .setLabel('Set up')
+                            .setCustomId('setup'),
+                            new ButtonBuilder()
+                            .setStyle(ButtonStyle.Danger)
+                            .setLabel('Cancel')
+                            .setCustomId('cancel')
+                        ]
+                    })
+                ],
+                fetchReply: true
+            })
+
+            const collector = reply.createMessageComponentCollector({
+               componentType: ComponentType.Button,
+                time: 120000
+            })
+
+            collector.on('collect', async (button) => {
+                if (button.user.id !== interaction.user.id) {
+                    await interaction.reply({
+                        content: 'These buttons are not for you!',
+                        ephemeral: true
+                    })
+                    collector.dispose(button)
+                    return
+                }
+
+                if (button.customId === 'setup') {
+                    button.reply({
+                        content: 'System to be setup.',
+                        ephemeral: true
+                    })
+                    collector.stop()
+                    reply.edit({
+                        content: 'Welcome system to be set up.',
+                        components: []
+                    })
+                } else if (button.customId === 'cancel') {
+                    reply.edit({
+                        content: 'Cancelled.',
+                        components: [
+                            new ActionRowBuilder<ButtonBuilder>({
+                                components: [
+                                    new ButtonBuilder()
+                                    .setStyle(ButtonStyle.Success)
+                                    .setLabel('Set up')
+                                    .setCustomId('setup')
+                                    .setDisabled(true),
+                                    new ButtonBuilder()
+                                    .setStyle(ButtonStyle.Danger)
+                                    .setLabel('Cancel')
+                                    .setCustomId('cancel')
+                                    .setDisabled(true)
+                                ]
+                            })
+                        ]
+                    })
+                    button.reply({
+                        content: 'Cancelled.',
+                        ephemeral: true
+                    })
+                    collector.stop()
+                    return
+                }
+            })
+
+            collector.on('end', async (collected) => {
+                if (collected.size) {
+                    if (collected.some(c => c.customId === 'cancel')) return
+                    const serverSystem = await WelcomeMessageEditorModel.findOne({
+                        where: {
+                            id: interaction.guild.id
+                        }
+                    }) || await WelcomeMessageEditorModel.create({
+                        id: interaction.guild.id,
+                        enabled: false
+                    })
+
+                    const embed = new EmbedBuilder()
+                    .setColor(0x00ffff)
+                    .setTitle('Welcome Message Editor')
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setDescription('Welcome to the Welcome Message Editor! This is the editor where you can edit the welcome message, manage settings and enable/disable the system. Use the buttons below to modify your welcome system. You can always discard your settings, save them or modify them later.\n\n⚠ **Note: this is an experimental feature and may break while in use.**')
+                    .addFields([
+                        {
+                            name: 'Syntax',
+                            value: [
+                                { syntax: '{user.username}', desc: 'Display the user\'s username' },
+                                { syntax: '{user.discriminator}', desc: 'Display the user\'s 4-digit discriminator' },
+                                { syntax: '{user.id}', desc: 'Display the user\'s ID' },
+                                { syntax: '{user.tag}', desc: 'Dislay the user\'s full tag' },
+                                { syntax: '{user.mention}', desc: 'Mention the user' },
+                                { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user. The `[]` brackets are optional and can be omitted, and will default to `long date-time` format. If the brackets are provided, you must provide one of the formats. eg `{user.createdAt[long date-time]}`' },
+                                { syntax: '{server.name}', desc: 'Display the server name' },
+                                { syntax: '{server.description}', desc: 'Display the server description' },
+                                { syntax: '{server.memberCount[`before` | `after`]}', desc: 'Display the server\'s member count (the `[]` brackets are optional and can be omitted, but if adding them, then use `[before]` to display the count before the member joined, or `[after]` after that)' },
+                                { syntax: '{server.id}', desc: 'Display the server ID' }
+                            ].map((s) => `${inlineCode(s.syntax)} ${italic(s.desc)}`).join('\n')
+                        },
+                        {
+                            name: 'Examples',
+                            value: [
+                                { syntax: '{user.username}', ex: 'ZBot' },
+                                { syntax: '{user.discriminator}', ex: '9348' },
+                                { syntax: '{user.id}', ex: '956596792542257192' },
+                                { syntax: '{user.tag}', ex: 'ZBot#9348' },
+                                { syntax: '{user.mention}', ex: '<@956596792542257192>' },
+                                { syntax: '{user.createdAt}', ex: '<t:1648140848>' },
+                                { syntax: '{user.createdAt[relative]}', ex: '<t:1648140848:R>' },
+                                { syntax: '{server.name}', ex: interaction.guild.name },
+                                { syntax: '{server.description}', ex: interaction.guild.description || 'This is a server description!' },
+                                { syntax: '{server.memberCount}', ex: interaction.guild.memberCount },
+                                { syntax: '{server.memberCount[before]}', ex: interaction.guild.memberCount - 1 },
+                                { syntax: '{server.id}', ex: interaction.guild.id }
+                            ]
+                            .map(s => `${inlineCode(s.syntax)} ${s.ex}`)
+                            .join('\n')
+                        }
+                    ])
+
+                    const [
+                        editButton,
+                        channelButton,
+                        previewButton,
+                        saveButton,
+                        discardButton
+                    ] = [
+                        new ButtonBuilder()
+                        .setCustomId('edit')
+                        .setLabel('Edit Welcome Message')
+                        .setStyle(ButtonStyle.Primary)
+                        .setDisabled(!serverSystem.enabled),
+                        new ButtonBuilder()
+                        .setCustomId('channel')
+                        .setLabel('Display or Set Channel')
+                        .setStyle(ButtonStyle.Primary)
+                        .setDisabled(!serverSystem.enabled),
+                        new ButtonBuilder()
+                        .setCustomId('preview')
+                        .setLabel('Preview Welcome Message')
+                        .setStyle(ButtonStyle.Primary)
+                        .setDisabled(!serverSystem.enabled),
+                        new ButtonBuilder()
+                        .setCustomId('save')
+                        .setLabel('Save Changes')
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(true),
+                        new ButtonBuilder()
+                        .setCustomId('discard')
+                        .setLabel('Discard Changes')
+                        .setStyle(ButtonStyle.Danger)
+                        .setDisabled(true)
+                    ]
+
+                    const [
+                        toggleEnableButton
+                    ] = [
+                        new ButtonBuilder()
+                        .setDisabled(serverSystem.enabled)
+                        .setCustomId(serverSystem.enabled ? 'disable' : 'enable')
+                        .setLabel(serverSystem.enabled ? 'Disable Welcome Messages' : 'Enable Welcome Messages')
+                        .setStyle(serverSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+                    ]
+
+                    const editorRow = new ActionRowBuilder<ButtonBuilder>({ components: [editButton, channelButton, previewButton, saveButton, discardButton] })
+                    const enablerRow = new ActionRowBuilder<ButtonBuilder>({ components: [toggleEnableButton] })
+
+                    const editor = await interaction[interaction.replied ? 'followUp' : 'reply']({
+                        embeds: [embed],
+                        components: [
+                            editorRow,
+                            enablerRow
+                        ],
+                        content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                        fetchReply: true
+                    })
+                }
+                else {
+                    reply.edit({
+                        components: [],
+                        content: 'A response wasn\'t received in time.'
+                    })
+                }
+            })
+        } else {
+            const embed = new EmbedBuilder()
+            .setColor(0x00ffff)
+            .setTitle('Welcome Message Editor')
+            .setAuthor({
+                name: `${interaction.user.tag} (${interaction.user.id})`,
+                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+            })
+            .setDescription('Welcome to the Welcome Message Editor! This is the editor where you can edit the welcome message, manage settings and enable/disable the system. Use the buttons below to modify your welcome system. You can always discard your settings, save them or modify them later.\n\n⚠ **Note: this is an experimental feature and may break while in use.**')
+            .addFields([
                 {
-                    name: 'Question Asked',
-                    value: question
+                    name: 'Syntax',
+                    value: [
+                        { syntax: '{user.username}', desc: 'Display the user\'s username' },
+                        { syntax: '{user.discriminator}', desc: 'Display the user\'s 4-digit discriminator' },
+                        { syntax: '{user.id}', desc: 'Display the user\'s ID' },
+                        { syntax: '{user.tag}', desc: 'Dislay the user\'s full tag' },
+                        { syntax: '{user.mention}', desc: 'Mention the user' },
+                        { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user. The `[]` brackets are optional and can be omitted, and will default to `long date-time` format. If the brackets are provided, you must provide one of the formats. eg `{user.createdAt[long date-time]}`' },
+                        { syntax: '{server.name}', desc: 'Display the server name' },
+                        { syntax: '{server.description}', desc: 'Display the server description' },
+                        { syntax: '{server.memberCount[`before` | `after`]}', desc: 'Display the server\'s member count (the `[]` brackets are optional and can be omitted, but if adding them, then use `[before]` to display the count before the member joined, or `[after]` after that)' },
+                        { syntax: '{server.id}', desc: 'Display the server ID' }
+                    ].map((s) => `${inlineCode(s.syntax)} ${italic(s.desc)}`).join('\n')
                 },
                 {
-                    name: 'Results',
-                    value: (votes.some(s => Boolean(s.length)))
-                    ? votes
-                    .sort((a, b) => {
-                        if (a.length > b.length) return -1
-                        else if (a.length < b.length) return 1
-                        else return 0
-                    })
-                    .map((r, k) => `${r.length ? bold(pluralise(r.length, 'person', 'people')) : 'Nobody'} selected ${bold(k)}`)
+                    name: 'Examples',
+                    value: [
+                        { syntax: '{user.username}', ex: 'ZBot' },
+                        { syntax: '{user.discriminator}', ex: '9348' },
+                        { syntax: '{user.id}', ex: '956596792542257192' },
+                        { syntax: '{user.tag}', ex: 'ZBot#9348' },
+                        { syntax: '{user.mention}', ex: '<@956596792542257192>' },
+                        { syntax: '{user.createdAt}', ex: '<t:1648140848>' },
+                        { syntax: '{user.createdAt[relative]}', ex: '<t:1648140848:R>' },
+                        { syntax: '{server.name}', ex: interaction.guild.name },
+                        { syntax: '{server.description}', ex: interaction.guild.description || 'This is a server description!' },
+                        { syntax: '{server.memberCount}', ex: interaction.guild.memberCount },
+                        { syntax: '{server.memberCount[before]}', ex: interaction.guild.memberCount - 1 },
+                        { syntax: '{server.id}', ex: interaction.guild.id }
+                    ]
+                    .map(s => `${inlineCode(s.syntax)} ${s.ex}`)
                     .join('\n')
-                    : 'No results were collected in the time being!'
                 }
             ])
 
-            const sortedVotes = votes.sort((a, b) => a.length + b.length)
+            const [
+                editButton,
+                channelButton,
+                previewButton,
+                saveButton,
+                discardButton
+            ] = [
+                new ButtonBuilder()
+                .setCustomId('edit')
+                .setLabel('Edit Welcome Message')
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(!serverWelcomeSystem.enabled),
+                new ButtonBuilder()
+                .setCustomId('channel')
+                .setLabel('Display or Set Channel')
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(!serverWelcomeSystem.enabled),
+                new ButtonBuilder()
+                .setCustomId('preview')
+                .setLabel('Preview Welcome Message')
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(!serverWelcomeSystem.enabled),
+                new ButtonBuilder()
+                .setCustomId('save')
+                .setLabel('Save Changes')
+                .setStyle(ButtonStyle.Success)
+                .setDisabled(true),
+                new ButtonBuilder()
+                .setCustomId('discard')
+                .setLabel('Discard Changes')
+                .setStyle(ButtonStyle.Danger)
+                .setDisabled(true)
+            ]
 
-            buttons.components.map((b, i) => (votes.some(s => Boolean(s.length))) ? b.setStyle(votes.get(options[Number((b.data as Partial<APIButtonComponentWithCustomId>).custom_id)] as string)?.length ? (
-                sortedVotes[i] === sortedVotes[0] ? ButtonStyle.Success : ButtonStyle.Primary
-            ) : ButtonStyle.Secondary).setDisabled(true) : b.setDisabled(true).setStyle(ButtonStyle.Secondary))
+            const [
+                toggleEnableButton
+            ] = [
+                new ButtonBuilder()
+                .setDisabled(serverWelcomeSystem.enabled)
+                .setCustomId(serverWelcomeSystem.enabled ? 'disable' : 'enable')
+                .setLabel(serverWelcomeSystem.enabled ? 'Disable Welcome Messages' : 'Enable Welcome Messages')
+                .setStyle(serverWelcomeSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            ]
 
-            voteMessage.edit({
+            const editorRow = new ActionRowBuilder<ButtonBuilder>({ components: [editButton, channelButton, previewButton, saveButton, discardButton] })
+            const enablerRow = new ActionRowBuilder<ButtonBuilder>({ components: [toggleEnableButton] })
+
+            const editor = await interaction[interaction.replied ? 'followUp' : 'reply']({
                 embeds: [embed],
-                components: [buttons]
+                components: [
+                    editorRow,
+                    enablerRow
+                ],
+                content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                fetchReply: true
             })
-        })
+        }
     }
 }
 
-function notEmpty<T>(v: T | null | undefined): v is T {
-    return v !== null && v !== undefined
-}
-
 export {
-    voteCommand
+    welcomeEditorCommand
 }
