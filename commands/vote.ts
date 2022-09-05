@@ -137,7 +137,7 @@ const voteCommand: Cmd = {
                         ephemeral: true
                     })
                 }
-                return console.log(votes)
+                return
             } else {
                 await btn.reply({ content: 'An error occured.', ephemeral: true })
                 return
