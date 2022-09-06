@@ -407,47 +407,48 @@ const welcomeEditorCommand: Cmd = {
                         ephemeral: true
                     })
                         return
-                    } else if (btn.customId === "disable") {
-                        editButton.setDisabled(true)
-                        channelButton.setDisabled(true)
-                        previewButton.setDisabled(true)
-                        saveButton.setDisabled(true)
-                        discardButton.setDisabled(true)
-                        toggleEnableButton
-                        .setCustomId('enable')
-                        .setLabel('Enable Welcome Messages')
-                        .setStyle(ButtonStyle.Success)
-                        editor[editor.constructor.name === 'Message' ? 'edit' : 'editReply']({
-                            components: [
-                                editorRow,
-                                enablerRow
-                            ]
-                        })
-                        btn.reply({
-                            content: `Disabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
-                            ephemeral: true
-                        })
-                    } else if (btn.customId === "edit") {
+                } else if (btn.customId === "disable") {
+                    editButton.setDisabled(true)
+                    channelButton.setDisabled(true)
+                    previewButton.setDisabled(true)
+                    saveButton.setDisabled(true)
+                    discardButton.setDisabled(true)
+                    toggleEnableButton
+                    .setCustomId('enable')
+                    .setLabel('Enable Welcome Messages')
+                    .setStyle(ButtonStyle.Success)
+                    editor[editor.constructor.name === 'Message' ? 'edit' : 'editReply']({
+                        components: [
+                            editorRow,
+                            enablerRow
+                        ]
+                    })
+                    btn.reply({
+                        content: `Disabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                        ephemeral: true
+                    })
+                } else if (btn.customId === "edit") {
 
-                    } else if (btn.customId === "channel") {
+                } else if (btn.customId === "channel") {
 
-                    } else if (btn.customId === "preview") {
+                } else if (btn.customId === "preview") {
 
-                    } else if (btn.customId === "save") {
+                } else if (btn.customId === "save") {
 
-                    } else if (btn.customId === "discard") {
+                } else if (btn.customId === "discard") {
 
-                    } else {
-                        await btn.reply({
-                            content: 'Unrecognised button.',
-                            ephemeral: true
-                        })
-                        return
-                    }
-        })
-     }
+                } else {
+                    await btn.reply({
+                        content: 'Unrecognised button.',
+                        ephemeral: true
+                    })
+                    return
+                }
+            })
+        }
+    }
 }
 
 export {
-welcomeEditorCommand
+    welcomeEditorCommand
 }
