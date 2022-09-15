@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, User, ApplicationCommandOptionType, ButtonStyle, GuildMember, ComponentType, ChatInputCommandInteraction, bold, inlineCode, italic, time } from "discord.js"
+import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, User, ApplicationCommandOptionType, ButtonStyle, ComponentType, ChatInputCommandInteraction, bold, inlineCode, italic, time } from "discord.js"
 import { LevelModel } from "../database"
 import { pluralise } from "../util"
 import { Cmd } from "./command-exports"
@@ -94,8 +94,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
             .setColor(0xff0000)
             .setTitle('Memory Game - Request Rejected')
             .setDescription(`${opponent.user} rejected the request, too bad.`)
-            // @ts-ignore
-            .setFooter({ text: '' })
+            .setFooter(null)
             return await requestMessage.edit({
                 embeds: [confirmationEmbed],
                 components: [
@@ -149,8 +148,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                     .setColor(0x00ffff)
                     .setTitle('Memory Game Match')
                     .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('2')} cards`)}.`)
-                    // @ts-ignore
-                    .setFooter({ text: '' })
+                    .setFooter(null)
                 ],
                 content: bold('Let the game begin!'),
                 components: grid
@@ -468,22 +466,24 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
     })
 
     requestCollector.on('end', async (collected): Promise<any> => {
-        if (collected.size) return
-        else {
-            return await requestMessage.edit({
-                embeds: [
-                    confirmationEmbed
-                    .setColor(0xff0000)
-                    .setTitle('Memory Game - No Response Received')
-                    .setDescription('A response wasn\'t received in time.')
-                    // @ts-ignore
-                    .setFooter({ text: '' })
-                ],
-                components: [
-                    new ActionRowBuilder<ButtonBuilder>()
-                    .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
-                ]
-            })
+            if (collected.size) return
+            else {
+                return await requestMessage.edit({
+                    embeds: [
+                        confirmationEmbed
+                        .setColor(0xff0000)
+                        .setTitle('Memory Game - No Response Received')
+                        .setDescription('A response wasn\'t received in time.')
+                        .setFooter(null)
+                    ],
+                    components: [
+                        new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
+                    ]
+                })
+                .catch(async () => {
+                    return await interaction.reply('An error occured with the original message - memory game cancelled.')
+                })
             }
         })
     }

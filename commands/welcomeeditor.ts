@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, italic, PermissionsBitField, time } from "discord.js";
+import { ActionRowBuilder, APIEmbed, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, italic, PermissionsBitField, time } from "discord.js";
 import { WelcomeMessageEditorModel } from "../database";
 import { Cmd } from "./command-exports";
 
@@ -104,8 +104,23 @@ const welcomeEditorCommand: Cmd = {
                         }
                     }) || await WelcomeMessageEditorModel.create({
                         id: interaction.guild.id,
+                        channelId: undefined,
                         enabled: false
                     })
+
+                    let newServerSystem: {
+                        id: string,
+                        channelId?: string,
+                        message?: string,
+                        embeds?: APIEmbed[],
+                        enabled: boolean
+                    } = {
+                        id: serverSystem.id,
+                        channelId: serverSystem.channelId,
+                        message: '',
+                        embeds: [],
+                        enabled: serverSystem.enabled ?? false
+                    }
 
                     const embed = new EmbedBuilder()
                     .setColor(0x00ffff)
@@ -124,10 +139,10 @@ const welcomeEditorCommand: Cmd = {
                                 { syntax: '{user.id}', desc: 'Display the user\'s ID' },
                                 { syntax: '{user.tag}', desc: 'Dislay the user\'s full tag' },
                                 { syntax: '{user.mention}', desc: 'Mention the user' },
-                                { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user. The `[]` brackets are optional and can be omitted, and will default to `long date-time` format. If the brackets are provided, you must provide one of the formats. eg `{user.createdAt[long date-time]}`' },
+                                { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user.' },
                                 { syntax: '{server.name}', desc: 'Display the server name' },
                                 { syntax: '{server.description}', desc: 'Display the server description' },
-                                { syntax: '{server.memberCount[`before` | `after`]}', desc: 'Display the server\'s member count (the `[]` brackets are optional and can be omitted, but if adding them, then use `[before]` to display the count before the member joined, or `[after]` after that)' },
+                                { syntax: '{server.memberCount[before | after]}', desc: 'Display the server\'s member count.' },
                                 { syntax: '{server.id}', desc: 'Display the server ID' }
                             ].map((s) => `${inlineCode(s.syntax)} ${italic(s.desc)}`).join('\n')
                         },
@@ -204,7 +219,7 @@ const welcomeEditorCommand: Cmd = {
                             editorRow,
                             enablerRow
                         ],
-                        content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                        content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
                         fetchReply: true
                     })
 
@@ -230,7 +245,7 @@ const welcomeEditorCommand: Cmd = {
                                 ]
                             })
                             btn.reply({
-                                content: `Enabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                                content: `Enabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
                                 ephemeral: true
                             })
                         return
@@ -251,11 +266,67 @@ const welcomeEditorCommand: Cmd = {
                             ]
                         })
                         btn.reply({
-                            content: `Disabled system messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                            content: `Disabled system messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
                             ephemeral: true
                         })
                     } else if (btn.customId === "edit") {
+                        const cancelButton = new ButtonBuilder()
+                        .setCustomId('cancel')
+                        .setLabel('Cancel Message Edit')
+                        .setStyle(ButtonStyle.Danger)
 
+                        const reply = await btn.reply({
+                            content: `Please type your new message, using the syntax above to help you, and reply to this message for it to be applied. You have 15 minutes to type it up.\n\n*A response is required ${time(Math.floor(Date.now() / 1000) + 900, 'R')}.*`,
+                            components: [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(cancelButton)
+                            ],
+                            fetchReply: true
+                        })
+
+                        const cancelButtonCollector = reply.createMessageComponentCollector({ time: 900000, filter: (interaction) => interaction.customId === 'cancel' })
+
+                        const newMessageCollector = reply.channel.createMessageCollector({
+                            time: 900000
+                        })
+
+                        newMessageCollector.on('collect', (message) => {
+                            message.fetchReference()
+                            .then(async (refMsg) => {
+                                if (refMsg.id !== reply.id) return 
+                                else {
+                                    try {
+                                        await message.reply('This message is the same as your previous message. Edit discarded.')
+                                        newMessageCollector.stop()
+                                        cancelButtonCollector.stop()
+                                    } catch {
+                                        return
+                                    }
+                                }
+                            })
+                            .catch(async (err) => {
+                                console.log(err)
+                                await message.channel.send('An error occured while waiting for the edit message. Edit discarded.')
+                                .catch(() => {return})
+                            })
+                        })
+
+                        cancelButtonCollector.on('collect', async () => {
+                            cancelButton.setDisabled(true)
+                            await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
+                        })
+
+                        newMessageCollector.on('end', async (collected) => {
+                            if (!collected.size) {
+                                await reply.reply('A response wasn\'t received in time.').catch(() => {return})
+                                await reply.edit('A response wasn\'t received in time.').catch(() => {return})
+                            }
+                        })
+
+                        cancelButtonCollector.on('end', async () => {
+                            cancelButton.setDisabled(true)
+                            await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
+                        })
                     } else if (btn.customId === "channel") {
 
                     } else if (btn.customId === "preview") {
@@ -280,6 +351,20 @@ const welcomeEditorCommand: Cmd = {
             }
             })
         } else {
+            let newServerSystem: {
+                id: string,
+                channelId?: string,
+                message?: string,
+                embeds?: APIEmbed[],
+                enabled: boolean
+            } = {
+                id: serverWelcomeSystem.id,
+                channelId: serverWelcomeSystem.channelId,
+                message: '',
+                embeds: [],
+                enabled: serverWelcomeSystem.enabled ?? false
+            }
+
             const embed = new EmbedBuilder()
             .setColor(0x00ffff)
             .setTitle('Welcome Message Editor')
@@ -297,10 +382,10 @@ const welcomeEditorCommand: Cmd = {
                         { syntax: '{user.id}', desc: 'Display the user\'s ID' },
                         { syntax: '{user.tag}', desc: 'Dislay the user\'s full tag' },
                         { syntax: '{user.mention}', desc: 'Mention the user' },
-                        { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user. The `[]` brackets are optional and can be omitted, and will default to `long date-time` format. If the brackets are provided, you must provide one of the formats. eg `{user.createdAt[long date-time]}`' },
+                        { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user.' },
                         { syntax: '{server.name}', desc: 'Display the server name' },
                         { syntax: '{server.description}', desc: 'Display the server description' },
-                        { syntax: '{server.memberCount[`before` | `after`]}', desc: 'Display the server\'s member count (the `[]` brackets are optional and can be omitted, but if adding them, then use `[before]` to display the count before the member joined, or `[after]` after that)' },
+                        { syntax: '{server.memberCount[before | after]}', desc: 'Display the server\'s member count.' },
                         { syntax: '{server.id}', desc: 'Display the server ID' }
                     ].map((s) => `${inlineCode(s.syntax)} ${italic(s.desc)}`).join('\n')
                 },
@@ -383,8 +468,7 @@ const welcomeEditorCommand: Cmd = {
 
             const editorCollector = editor.createMessageComponentCollector({
                 componentType: ComponentType.Button,
-                filter: (interaction) => ['enable', 'disable', 'edit', 'channel', 'preview', 'save', 'discard'].some(s => interaction.customId === s),
-                time: 300000
+                filter: (interaction) => ['enable', 'disable', 'edit', 'channel', 'preview', 'save', 'discard'].some(s => interaction.customId === s) && !interaction.user.bot
             })
 
             editorCollector.on('collect', async (btn) => {
@@ -403,10 +487,10 @@ const welcomeEditorCommand: Cmd = {
                         ]
                     })
                     btn.reply({
-                        content: `Enabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                        content: `Enabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
                         ephemeral: true
                     })
-                        return
+                    return
                 } else if (btn.customId === "disable") {
                     editButton.setDisabled(true)
                     channelButton.setDisabled(true)
@@ -424,11 +508,67 @@ const welcomeEditorCommand: Cmd = {
                         ]
                     })
                     btn.reply({
-                        content: `Disabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).*`,
+                        content: `Disabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
                         ephemeral: true
                     })
                 } else if (btn.customId === "edit") {
+                    const cancelButton = new ButtonBuilder()
+                    .setCustomId('cancel')
+                    .setLabel('Cancel Message Edit')
+                    .setStyle(ButtonStyle.Danger)
 
+                    const reply = await btn.reply({
+                        content: `Please type your new message, using the syntax above to help you, and reply to this message for it to be applied. You have 15 minutes to type it up.\n\n*A response is required ${time(Math.floor(Date.now() / 1000) + 900, 'R')}.*`,
+                        components: [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(cancelButton)
+                        ],
+                        fetchReply: true
+                    })
+
+                    const cancelButtonCollector = reply.createMessageComponentCollector({ time: 900000, filter: (interaction) => interaction.customId === 'cancel' })
+
+                    const newMessageCollector = reply.channel.createMessageCollector({
+                        time: 900000
+                    })
+
+                    newMessageCollector.on('collect', (message) => {
+                        message.fetchReference()
+                        .then(async (refMsg) => {
+                            if (refMsg.id !== reply.id) return 
+                            else {
+                                try {
+                                    await message.reply('This message is the same as your previous message. Edit discarded.')
+                                    newMessageCollector.stop()
+                                    cancelButtonCollector.stop()
+                                } catch {
+                                    return
+                                }
+                            }
+                        })
+                        .catch(async (err) => {
+                            console.log(err)
+                            await message.channel.send('An error occured while waiting for the edit message. Edit discarded.')
+                            .catch(() => {return})
+                        })
+                    })
+
+                    cancelButtonCollector.on('collect', async () => {
+                        cancelButton.setDisabled(true)
+                        await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
+                    })
+
+                    newMessageCollector.on('end', async (collected) => {
+                        if (!collected.size) {
+                            await reply.reply('A response wasn\'t received in time.').catch(() => {return})
+                            await reply.edit('A response wasn\'t received in time.').catch(() => {return})
+                        }
+                    })
+
+                    cancelButtonCollector.on('end', async () => {
+                        cancelButton.setDisabled(true)
+                        await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
+                    })
                 } else if (btn.customId === "channel") {
 
                 } else if (btn.customId === "preview") {

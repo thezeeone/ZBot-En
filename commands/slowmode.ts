@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, italic, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember, TextChannel } from "discord.js"
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember, TextChannel } from "discord.js"
 import { commaList, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -193,7 +193,7 @@ const slowmodeCommand: Cmd = {
             ]
             .map((r, i) => pluralise(r, ["hour", "minute", "second"][i]))
 
-            channel.setRateLimitPerUser(newChannelSm)
+            return channel.setRateLimitPerUser(newChannelSm)
             .then(async () => {
                 await interaction.reply({
                     embeds: [

@@ -23,32 +23,42 @@ const voteCommand: Cmd = {
             },
             {
                 name: 'option-1',
-                description: 'The first option members can vote for',
+                description: 'The first option members can vote for (max len 50)',
                 type: ApplicationCommandOptionType.String,
+                minLength: 1,
+                maxLength: 50,
                 required: true
             },
             {
                 name: 'option-2',
-                description: 'The second option members can vote for',
+                description: 'The second option members can vote for (max len 50)',
                 type: ApplicationCommandOptionType.String,
+                minLength: 1,
+                maxLength: 50,
                 required: true
             },
             {
                 name: 'option-3',
-                description: 'The third option members can vote for',
+                description: 'The third option members can vote for (max len 50)',
                 type: ApplicationCommandOptionType.String,
+                minLength: 1,
+                maxLength: 50,
                 required: false
             },
             {
                 name: 'option-4',
-                description: 'The fourth option members can vote for',
+                description: 'The fourth option members can vote for (max len 50)',
                 type: ApplicationCommandOptionType.String,
+                minLength: 1,
+                maxLength: 50,
                 required: false
             },
             {
                 name: 'option-5',
-                description: 'The fifth option members can vote for',
+                description: 'The fifth option members can vote for (max)',
                 type: ApplicationCommandOptionType.String,
+                minLength: 1,
+                maxLength: 50,
                 required: false
             }
         ]
@@ -125,14 +135,14 @@ const voteCommand: Cmd = {
                     choiceVotes.splice(choiceVotes.indexOf(btn.user.id), 1)
                     votes.set(buttonCustomId, choiceVotes)
                     await btn.reply({
-                        content: `You have deselected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
+                        content: `You have deselected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.`,
                         ephemeral: true
                     })
                 } else {
                     choiceVotes.push(btn.user.id)
                     votes.set(buttonCustomId, choiceVotes)
                     await btn.reply({
-                        content: `You have selected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#22 Vote, question and quiz commands](https://github.com/Zahid556/ZBot-En/issues/22).*`,
+                        content: `You have selected the ${inlineCode(options[Number(buttonCustomId) - 1])} option. You may click this button again if you want to change your mind.`,
                         ephemeral: true
                     })
                 }
@@ -144,46 +154,52 @@ const voteCommand: Cmd = {
         })
 
         collector.on('end', () => {
-            embed
-            .setTitle('Vote Ended!')
-            .setDescription('Here are the results below.')
-            .setFields([
-                {
-                    name: 'Question Asked',
-                    value: question
-                },
-                {
-                    name: 'Results',
-                    value: (votes.some(s => Boolean(s.length)))
-                    ? votes
-                    .sort((a, b) => {
-                        if (a.length > b.length) return -1
-                        else if (a.length < b.length) return 1
-                        else return 0
-                    })
-                    .map((r, k) => isNaN(Number(k)) ? `${r.length ? bold(pluralise(r.length, 'person', 'people')) : 'Nobody'} selected ${bold(k)}` : undefined)
-                    .filter(notEmpty)
-                    .join('\n')
-                    : 'No results were collected in the time being!'
-                }
-            ])
+            try {
+                embed
+                .setTitle('Vote Ended!')
+                .setDescription('Here are the results below.')
+                .setFields([
+                    {
+                        name: 'Question Asked',
+                        value: question
+                    },
+                    {
+                        name: 'Results',
+                        value: (votes.some(s => Boolean(s.length)))
+                        ? votes
+                        .sort((a, b) => {
+                            if (a.length > b.length) return -1
+                            else if (a.length < b.length) return 1
+                            else return 0
+                        })
+                        .map((r, k) => isNaN(Number(k)) ? `${r.length ? bold(pluralise(r.length, 'person', 'people')) : 'Nobody'} selected ${bold(k)}` : undefined)
+                        .filter(notEmpty)
+                        .join('\n')
+                        : 'No results were collected in the time being!'
+                    }
+                ])
 
-            const sortedVotes = votes.sort((a, b) => a.length + b.length)
+                const sortedVotes = votes.sort((a, b) => a.length + b.length)
 
-            buttons.components.map((b, i) => (votes.some(s => Boolean(s.length))) ? b.setStyle(votes.get(options[Number((b.data as Partial<APIButtonComponentWithCustomId>).custom_id)] as string)?.length ? (
-                sortedVotes[i] === sortedVotes[0] ? ButtonStyle.Success : ButtonStyle.Primary
-            ) : ButtonStyle.Secondary).setDisabled(true) : b.setDisabled(true).setStyle(ButtonStyle.Secondary))
+                buttons.components.map((b, i) => (votes.some(s => Boolean(s.length))) ? b.setStyle(votes.get(options[Number((b.data as Partial<APIButtonComponentWithCustomId>).custom_id)] as string)?.length ? (
+                    sortedVotes[i] === sortedVotes[0] ? ButtonStyle.Success : ButtonStyle.Primary
+                ) : ButtonStyle.Secondary).setDisabled(true) : b.setDisabled(true).setStyle(ButtonStyle.Secondary))
 
-            voteMessage.edit({
-                embeds: [embed],
-                components: [buttons]
-            })
+                voteMessage.edit({
+                    embeds: [embed],
+                    components: [buttons]
+                })
+            } catch {
+                voteMessage.delete().catch(async () => {
+                    return await interaction.channel?.send('An error occured with the original message - vote cancelled.')
+                })
+            }
         })
     }
 }
 
 function notEmpty<T>(v: T | null | undefined): v is T {
-    return v !== null && v !== undefined
+    return !!v
 }
 
 export {

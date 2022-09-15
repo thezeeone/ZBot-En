@@ -403,7 +403,11 @@ const banCommand: Cmd = {
                         ],
                         components: [ confirmationRow ]
                     })
-                    return await interaction.followUp('A response wasn\'t received in time.')
+                    try {
+                        await interaction.followUp('A response wasn\'t received in time.')
+                    } catch {
+                        return await interaction.channel?.send('An error occured with the original message - unban cancelled.')
+                    }
                 }
             })
         } else {
@@ -615,9 +619,7 @@ const banCommand: Cmd = {
                     .setColor(0xff0000)
                 ],
                 ephemeral: true
-            })
-
-            
+            })            
 
             const [
                 yesButton,
@@ -831,7 +833,11 @@ const banCommand: Cmd = {
                         ],
                         components: [ confirmationRow ]
                     })
-                    return await interaction.followUp('A response wasn\'t received in time.')
+                    try {
+                        await interaction.followUp('A response wasn\'t received in time.')
+                    } catch {
+                        return await interaction.channel?.send('An error occured with the original message - ban cancelled.')
+                    }
                 }
             })
         }

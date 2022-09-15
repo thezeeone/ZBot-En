@@ -82,8 +82,6 @@ const timeoutCommand: Cmd = {
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
         const sc = interaction.options.getSubcommand(true) as "set" | "remove"
 
-        const botMember = <GuildMember>interaction.guild.members.me
-
         if (sc === "set") {
             const member = interaction.options.getMember("member")
 
@@ -562,7 +560,11 @@ const timeoutCommand: Cmd = {
                             .setFields([])
                         ]
                     })
-                    return await interaction.followUp('A response wasn\'t received in time.')
+                    try {
+                        await interaction.followUp('A response wasn\'t received in time.')
+                    } catch {
+                        return await interaction.channel?.send('An error occured with the original message - timeout cancelled.')
+                    }
                 }
             })
         } else {
@@ -952,7 +954,11 @@ const timeoutCommand: Cmd = {
                         ],
                         components: [ confirmationRow ]
                     })
-                    return await interaction.followUp('A response wasn\'t received in time.')
+                    try {
+                        await interaction.followUp('A response wasn\'t received in time.')
+                    } catch {
+                        return await interaction.channel?.send('An error occured with the original message - timeout cancelled.')
+                    }
                 }
             })
         }

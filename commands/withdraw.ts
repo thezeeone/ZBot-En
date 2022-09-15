@@ -28,19 +28,19 @@ const withdrawCommand: Cmd = {
 
         if (amount > userBalance.bank) return await interaction.reply('How do you withdraw more from your bank than you have?!')
 
-        userBalance.increment({
+        return userBalance.increment({
             wallet: amount,
             bank: -amount
         })
         .then(async () => {
-            return await interaction.reply(`Successfully withdrawn ${bold(`${inlineCode(amount.toString())} Z🪙`)} from your bank.\n${
+            await interaction.reply(`Successfully withdrawn ${bold(`${inlineCode(amount.toString())} Z🪙`)} from your bank.\n${
                 Math.random() < 0.1
                 ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
                 : ''
             }`)
         })
         .catch(async () => {
-            return await interaction.reply('Couldn\'t withdraw money from bank.')
+            await interaction.reply('Couldn\'t withdraw money from bank.')
         })
     }
 }

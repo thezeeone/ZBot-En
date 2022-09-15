@@ -418,7 +418,11 @@ const kickCommand: Cmd = {
                     ],
                     components: [ confirmationRow ]
                 })
-                return await interaction.followUp('A response wasn\'t received in time.')
+                try {
+                    await interaction.followUp('A response wasn\'t received in time.')
+                } catch {
+                    return await interaction.channel?.send('An error occured with the original message - kick cancelled.')
+                }
             }
         })
     }
