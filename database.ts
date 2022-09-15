@@ -1,5 +1,6 @@
 import { Sequelize, Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import { config } from 'dotenv';
+import { APIEmbed } from 'discord.js';
 config()
 
 const sequelize = new Sequelize(process.env.DATABASE_URL as string, {
@@ -23,8 +24,24 @@ interface RankCardModel extends Model<InferAttributes<RankCardModel>, InferCreat
 
 interface WelcomeMessageEditorModel extends Model<InferAttributes<WelcomeMessageEditorModel>, InferCreationAttributes<WelcomeMessageEditorModel>> {
     id: string,
+    channelId?: string,
     message?: string,
-    embeds?: APIEmbed
+    embeds?: APIEmbed,
+    enabled: boolean
+}
+
+interface EconomyModel extends Model<InferAttributes<EconomyModel>, InferCreationAttributes<EconomyModel>> {
+    id: string,
+    bank: number,
+    wallet: number,
+    maxBank: number,
+    maxWallet: number
+}
+
+interface LevelsChannelListModel extends Model<InferAttributes<LevelsChannelListModel>, InferCreationAttributes<LevelsChannelListModel>> {
+    guildId: string,
+    channelId: string,
+    allowed: boolean
 }
 
 const LevelModel = sequelize.define<LevelModel>('Levels', {
@@ -36,10 +53,10 @@ const LevelModel = sequelize.define<LevelModel>('Levels', {
     lvl: DataTypes.INTEGER
 })
 
-const RankCardModel = sequelize.define<RankCardModel>('RankCards', {
+const RankCardModel = sequelize.define<RankCardModel>('CustomisedRankCards', {
     id: {
         primaryKey: true,
-        type: DataTypes.NUMBER
+        type: DataTypes.STRING
     },
     colour: {
         type: DataTypes.INTEGER,
@@ -54,10 +71,43 @@ const BlacklistModel = sequelize.define<BlacklistModel>('Blacklists', {
     }
 })
 
-const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('WMEditors', {
+const LevelsChannelListModel = sequelize.define<LevelsChannelListModel>('LevelsBlacklists', {
+    guildId: DataTypes.STRING,
+    channelId: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    },
+    allowed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false
+    }
+})
+
+const EconomyModel = sequelize.define<EconomyModel>('EconomySystems', {
     id: {
         type: DataTypes.STRING,
         primaryKey: true
+    },
+    wallet: {
+        defaultValue: 0,
+        type: DataTypes.INTEGER
+    },
+    bank: {
+        defaultValue: 0,
+        type: DataTypes.INTEGER
+    },
+    maxBank: DataTypes.INTEGER,
+    maxWallet: DataTypes.INTEGER
+})
+
+const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('PSWelcomeMessageEditors', {
+    id: {
+        type: DataTypes.STRING,
+        primaryKey: true
+    },
+    channelId: {
+        type: DataTypes.STRING,
+        allowNull: true
     },
     message: {
         type: DataTypes.STRING,
@@ -66,7 +116,8 @@ const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('W
     embeds: {
         type: DataTypes.ARRAY(DataTypes.JSON),
         defaultValue: []
-    }
+    },
+    enabled: DataTypes.BOOLEAN
 })
 
 export {
@@ -74,5 +125,7 @@ export {
     LevelModel,
     BlacklistModel,
     RankCardModel,
+    EconomyModel,
+    LevelsChannelListModel,
     WelcomeMessageEditorModel
 }

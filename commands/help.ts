@@ -1,5 +1,5 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ApplicationCommandOptionType, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
-import { Cmd } from "./command-exports";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
+import { Cmd, imageCommand, welcomeEditorCommand } from "./command-exports";
 import {
     banCommand,
     exchangeCommand,
@@ -20,7 +20,9 @@ import {
     balanceCommand,
     withdrawCommand,
     depositCommand,
-    giveCommand
+    giveCommand,
+    channelWLCommand,
+    channelBLCommand
 } from './command-exports'
 
 const helpCommand: Cmd = {
@@ -29,20 +31,6 @@ const helpCommand: Cmd = {
         description: 'Get all info about this bot'
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
-        // const optionTypes = {
-        //     [ApplicationCommandOptionType.Attachment]: 'ATTACHMENT',
-        //     [ApplicationCommandOptionType.Boolean]: 'BOOLEAN',
-        //     [ApplicationCommandOptionType.Channel]: 'CHANNEL',
-        //     [ApplicationCommandOptionType.Integer]: 'INTEGER',
-        //     [ApplicationCommandOptionType.Mentionable]: 'MENTIONABLE',
-        //     [ApplicationCommandOptionType.Number]: 'NUMBER',
-        //     [ApplicationCommandOptionType.Role]: 'ROLE',
-        //     [ApplicationCommandOptionType.String]: 'STRING',
-        //     [ApplicationCommandOptionType.Subcommand]: 'SUBCOMMAND',
-        //     [ApplicationCommandOptionType.SubcommandGroup]: 'SUBCOMMAND GROUP',
-        //     [ApplicationCommandOptionType.User]: 'USER'
-        // }
-
         const groups: Array<{
             name: string,
             embedDescription: string,
@@ -75,7 +63,9 @@ const helpCommand: Cmd = {
                 selectMenuDescription: 'See all commands relating to ZBot level system',
                 commands: [
                     rankCommand.data,
-                    leaderboardCommand.data
+                    leaderboardCommand.data,
+                    channelWLCommand.data,
+                    channelBLCommand.data
                 ]
             },
             {
@@ -122,6 +112,15 @@ const helpCommand: Cmd = {
                     withdrawCommand.data,
                     depositCommand.data,
                     giveCommand.data
+                ]
+            },
+            {
+                name: 'Experimental Commands and Features',
+                embedDescription: `Some of the experimental commands you may come across.\n\n⚠ **Note: these are experimental features and may break while in use.**`,
+                selectMenuDescription: 'View features under testing',
+                commands: [
+                    imageCommand.data,
+                    welcomeEditorCommand.data
                 ]
             },
             {
@@ -404,7 +403,7 @@ const helpCommand: Cmd = {
                                     : i + 2
                                 }. ${g.name}`,
                                 description: g.selectMenuDescription,
-                                value: String(i <= currentPage - 1 ? i + 1 : i + 2)
+                                value: String(i < currentPage - 1 ? i + 1 : i + 2)
                             }
                         })
                     )
@@ -543,6 +542,9 @@ const helpCommand: Cmd = {
                         text: `Page ${currentPage} of ${groups.length} • You can no longer switch between pages or jump to a specific one.`
                     })
                 ]
+            })
+            .catch(() => {
+                return interaction.channel?.send('An error occured with the original message - help pagination cancelled.')
             })
         })
     }

@@ -107,7 +107,8 @@ const exchangeCommand: Cmd = {
                 }) 
                 else await EconomyModel.create({
                     wallet: XPamounts / 2,
-                    maxBank: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
+                    maxBank: (((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) + 3) * 50,
+                    maxWallet: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
                     bank: 0,
                     id: interaction.user.id
                 })
@@ -152,7 +153,7 @@ const exchangeCommand: Cmd = {
                     content: 'Exchange cancelled.',
                     components: [ confirmationRow ]
                 })
-                button.reply(`You cancelled the exchange.\n${
+                return button.reply(`You cancelled the exchange.\n${
                     Math.random() < 0.1
                     ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
                     : ''
@@ -170,9 +171,15 @@ const exchangeCommand: Cmd = {
                     content: 'A response wasn\'t received in time.',
                     components: [ confirmationRow ]
                 })
-                return await interaction.followUp('A response wasn\'t received in time.')
+                try {
+                    await interaction.followUp('A response wasn\'t received in time.')
+                } catch {
+                    return await interaction.channel?.send('An error occured with the original message - exchange cancelled.')
+                }
             }
         })
+
+        return
     }
 }
 

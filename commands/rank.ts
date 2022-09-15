@@ -1,7 +1,8 @@
-import { ApplicationCommandOptionType, italic, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode } from "discord.js";
+import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode } from "discord.js";
 import { Cmd, tipsAndTricks } from "./command-exports";
 import { LevelModel, RankCardModel } from "../database";
 import { ordinalNumber } from "../util";
+const isBoostingTime = Date.now() >= 1663097400000 && Date.now() < (1663097400000 + 3 * 24 * 60 * 60 * 1000)
 
 const rankCommand: Cmd = {
     data: {
@@ -72,7 +73,7 @@ const rankCommand: Cmd = {
                 const localLeaderboard = (await LevelModel.findAll())
                 .filter(async r => {
                     try { await interaction.guild.members.fetch(r.id) }
-                    catch (error) { return undefined }
+                    finally { return undefined }
                 })
                 .filter(notEmpty)
                 .sort((l1, l2) => {
@@ -164,11 +165,7 @@ const rankCommand: Cmd = {
                                         inline: true
                                     }
                                 ])
-                                .setFooter(
-                                    Math.random() < 0.1
-                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                    : null
-                                )
+                                .setFooter((user.id === '744138083372367924' || user.id === '923315540024500304') ? { text: 'This user has boosted ZBot Support Server and thus will get a 50% boost until the boost ends. On top of this, ZBot Support Server has hit 40,000 messages meaning everyone will get a 50% XP boost so this user will now have double the normal XP they have!' } : (isBoostingTime ? { text: 'You will get an automatic 50% XP boost since our official server hit 40,000 messages! This boost will last until Friday, 16th September 2022 20:30 GMT. If we get to 50,000 messages within 3 days, we could get a 75% XP boost added making it 125%!! ' } : null))
                             ]
                         })
                     }
@@ -263,11 +260,7 @@ const rankCommand: Cmd = {
                                         inline: true
                                     }
                                 ])
-                                .setFooter(
-                                    Math.random() < 0.1
-                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                    : null
-                                )
+                                .setFooter((user.id === '744138083372367924' || user.id === '923315540024500304') ? { text: 'This user has boosted ZBot Support Server and thus will get a 50% boost until the boost ends. On top of this, ZBot Support Server has hit 40,000 messages meaning everyone will get a 50% XP boost so this user will now have double the normal XP they have!' } : (isBoostingTime ? { text: 'You will get an automatic 50% XP boost since our official server hit 40,000 messages! This boost will last until Friday, 16th September 2022 20:30 GMT. If we get to 50,000 messages within 3 days, we could get a 75% XP boost added making it 125%!! ' } : null))
                             ]
                         })
                     }
@@ -363,11 +356,7 @@ const rankCommand: Cmd = {
                                     inline: true
                                 }
                             ])
-                            .setFooter(
-                                Math.random() < 0.1
-                                ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                : null
-                            )
+                            .setFooter((interaction.user.id === '744138083372367924' || interaction.user.id === '923315540024500304') ? { text: 'This user has boosted ZBot Support Server and thus will get a 50% boost until the boost ends. On top of this, ZBot Support Server has hit 40,000 messages meaning everyone will get a 50% XP boost so this user will now have double the normal XP they have!' } : (isBoostingTime ? { text: 'You will get an automatic 50% XP boost since our official server hit 40,000 messages! This boost will last until Friday, 16th September 2022 20:30 GMT. If we get to 50,000 messages within 3 days, we could get a 75% XP boost added making it 125%!! ' } : null))
                         ]
                     })
                 }
@@ -480,6 +469,7 @@ const rankCommand: Cmd = {
                                 inline: true
                             }
                         ])
+                        .setFooter((interaction.user.id === '744138083372367924' || interaction.user.id === '923315540024500304') ? { text: 'You have boosted ZBot Support Server and thus will get a 50% boost until the boost ends.' } : null)
                     ]
                 })
             } else {
@@ -542,6 +532,7 @@ const rankCommand: Cmd = {
                                 inline: true
                             }
                         ])
+                        .setFooter((interaction.user.id === '744138083372367924' || interaction.user.id === '923315540024500304') ? { text: 'You have boosted ZBot Support Server and thus will get a 50% boost until the boost ends.' } : null)
                     ]
                 })
             }

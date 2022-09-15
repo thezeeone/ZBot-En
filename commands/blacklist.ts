@@ -82,7 +82,7 @@ const blacklistCommand: Cmd = {
 					.setColor(0x00ff00)
 					.setTitle('Blacklist Successful')
 					.setDescription(`Successfully blacklisted ${bold(user.tag)} (${inlineCode(user.id)}) from using the bot.\n\n⛔**__This user will no longer be able to use this bot or its commands, or gain any experience points from it.__ Commands however can still be used on them.**`)
-				],//,
+				],
 				ephemeral: true
 			})
 		})

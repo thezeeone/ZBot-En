@@ -1,4 +1,4 @@
-import { ButtonBuilder, ActionRowBuilder, ButtonStyle, GuildMember, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time } from "discord.js"
+import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time } from "discord.js"
 import { LevelModel } from "../database"
 import { Cmd } from "./command-exports"
 
@@ -99,14 +99,22 @@ const tttCommand: Cmd = {
         })
 
         requestCollector.on('collect', async (requestBtn): Promise<any> => {
-            if (requestBtn.user.id !== interaction.user.id && requestBtn.user.id !== opponent.user.id) return await requestBtn.reply({
-                content: 'You aren\'t playing this match! Please start a new game with someone to be able to play a match.',
-                ephemeral: true
-            })
-            if (requestBtn.user.id === interaction.user.id) return await requestBtn.reply({ 
-                content: 'Leave it for the other person to reply!',
-                ephemeral: true
-            })
+            if (requestBtn.user.id !== interaction.user.id && requestBtn.user.id !== opponent.user.id) {
+                await requestBtn.reply({
+                    content: 'You aren\'t playing this match! Please start a new game with someone to be able to play a match.',
+                    ephemeral: true
+                })
+                requestCollector.dispose(requestBtn)
+                return
+            }
+            if (requestBtn.user.id === interaction.user.id) {
+                await requestBtn.reply({ 
+                    content: 'Leave it for the other person to reply!',
+                    ephemeral: true
+                })
+                requestCollector.dispose(requestBtn)
+                return 
+            }
             if (requestBtn.customId === 'reject') {
                 await requestBtn.reply({ content: 'You rejected the request.', ephemeral: true })
                 confirmationEmbed
@@ -180,7 +188,7 @@ const tttCommand: Cmd = {
                         .setTitle('Tic-tac-toe Match')
                         .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn.`)
                         .setFooter({
-                            text: `This player is playing as ${playerTurn === 0 ? playerChoice : opponentChoice}`
+                            text: `This player is playing as ${playerTurn === 0 ? playerChoice : opponentChoice}.`
                         })
                     ]
                 })
@@ -358,7 +366,7 @@ const tttCommand: Cmd = {
                                     .setTitle('Tic-tac-toe Match')
                                     .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn.`)
                                     .setFooter({
-                                        text: `This player is playing as ${playerTurn === 0 ? playerChoice : opponentChoice}`
+                                        text: `This player is playing as ${playerTurn === 0 ? playerChoice : opponentChoice}.`
                                     })
                                 ],
                                 components: [
@@ -389,6 +397,9 @@ const tttCommand: Cmd = {
                         new ActionRowBuilder<ButtonBuilder>()
                         .addComponents(acceptButton.setDisabled(true), rejectButton.setDisabled(true))
                     ]
+                })
+                .catch(async () => {
+                    return await interaction.channel?.send('An error occured with the original message - tic-tac-toe cancelled.')
                 })
             }
         })

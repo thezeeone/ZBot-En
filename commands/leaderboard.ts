@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, italic, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode, underscore, User } from "discord.js";
+import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode, underscore, User } from "discord.js";
 import { LevelModel } from "../database";
 import { ordinalNumber } from "../util";
 import { Cmd, tipsAndTricks } from "./command-exports";
@@ -73,20 +73,7 @@ const leaderboardCommand: Cmd = {
                 )
             )
             .filter(notEmpty)
-            const globalSortedLeaderboard = (
-                await Promise.all(
-                    leaderboard
-                    .filter(async (model) => {
-                        try {
-                            await interaction.client.users.fetch(model.id)
-                            return model
-                        } catch (error) {
-                            return undefined
-                        }
-                    })
-                )
-            )
-            .filter(notEmpty)
+            const globalSortedLeaderboard = globalLeaderboard
             .sort((l1, l2) => {
                 if (l1.lvl > l2.lvl) return -1
                 else if (l1.lvl < l2.lvl) return 1

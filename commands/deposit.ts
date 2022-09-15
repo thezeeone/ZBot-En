@@ -28,19 +28,19 @@ const depositCommand: Cmd = {
 
         if (amount > userBalance.wallet) return await interaction.reply('How do you deposit more into your bank than you have?!')
 
-        userBalance.increment({
+        return userBalance.increment({
             wallet: -amount,
             bank: amount
         })
         .then(async () => {
-            return await interaction.reply(`Successfully deposited ${bold(`${inlineCode(amount.toString())} Z🪙`)} into your bank.\n${
+            await interaction.reply(`Successfully deposited ${bold(`${inlineCode(amount.toString())} Z🪙`)} into your bank.\n${
                 Math.random() < 0.1
                 ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
                 : ''
             }`)
         })
         .catch(async () => {
-            return await interaction.reply('Couldn\'t deposit money to bank.')
+            await interaction.reply('Couldn\'t deposit money to bank.')
         })
     }
 }
