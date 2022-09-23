@@ -1,5 +1,5 @@
-import { ButtonBuilder, ActionRowBuilder, ButtonStyle, GuildMember, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time } from "discord.js"
-import { LevelModel } from "../database"
+import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time, underscore } from "discord.js"
+import { BlacklistModel, LevelModel } from "../database"
 import { Cmd } from "./command-exports"
 
 const tttCommand: Cmd = {
@@ -95,18 +95,45 @@ const tttCommand: Cmd = {
 
         const requestCollector = requestMessage.createMessageComponentCollector({
             componentType: ComponentType.Button,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+    
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+
+                if (btn.user.id !== interaction.user.id && btn.user.id !== opponent.user.id) {
+                    await btn.reply({
+                        content: 'You\'re not playing this match! Please start a new game with someone to be able to play a match.',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.user.id === interaction.user.id) {
+                    await btn.reply({
+                        content: 'Leave it for the other person to reply!',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.customId !== 'accept' && btn.customId !== 'reject') return false
+
+                return true
+            },
             time: 120000
         })
 
         requestCollector.on('collect', async (requestBtn): Promise<any> => {
-            if (requestBtn.user.id !== interaction.user.id && requestBtn.user.id !== opponent.user.id) return await requestBtn.reply({
-                content: 'You aren\'t playing this match! Please start a new game with someone to be able to play a match.',
-                ephemeral: true
-            })
-            if (requestBtn.user.id === interaction.user.id) return await requestBtn.reply({ 
-                content: 'Leave it for the other person to reply!',
-                ephemeral: true
-            })
             if (requestBtn.customId === 'reject') {
                 await requestBtn.reply({ content: 'You rejected the request.', ephemeral: true })
                 confirmationEmbed
@@ -185,14 +212,58 @@ const tttCommand: Cmd = {
                     ]
                 })
 
-                const buttonCollector = requestMessage.createMessageComponentCollector({ componentType: ComponentType.Button })
+                const buttonCollector = requestMessage.createMessageComponentCollector({
+                    componentType: ComponentType.Button,
+                    filter: async (btn) => {
+                        const isUserBlacklisted = await BlacklistModel.findOne({
+                            where: {
+                                id: btn.user.id
+                            }
+                        })
+            
+                        if (isUserBlacklisted) {
+                            await btn.reply({
+                                embeds: [
+                                    new EmbedBuilder()
+                                    .setTitle(underscore('You are blacklisted from using this bot.'))
+                                    .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                    .setColor(0x000000)
+                                ]
+                            })
+                            return false
+                        }
+                        
+                        if (btn.user.id !== interaction.user.id && btn.user.id !== opponent.user.id) {
+                            await btn.reply({
+                                content: 'You\'re not playing this match! Please start a new game to be able to play a match.',
+                                ephemeral: true
+                            })
+                            return false
+                        } else {
+                            if (btn.customId === 'cancel') {
+                                if (btn.user.id !== interaction.user.id && btn.user.id !== opponent.user.id) {
+                                    await btn.reply({
+                                        content: 'Only the two people playing can cancel the game.',
+                                        ephemeral: true
+                                    })
+                                    return false
+                                }
+                            } else {
+                                if (btn.user.id !== (playerTurn === 0 ? opponent.user : interaction.user).id) {
+                                    await btn.reply({
+                                        content: 'It\'s not your turn.',
+                                        ephemeral: true
+                                    })
+                                    return false
+                                }
+                            }
+                        }
+
+                        return true
+                    }
+                })
 
                 buttonCollector.on('collect', async (collectedBtn): Promise<any> => {
-                    if (collectedBtn.user.id !== interaction.user.id && collectedBtn.user.id !== opponent.user.id) return await collectedBtn.reply({
-                        content: 'You\'re not playing this match! Please start a new game to be able to play a match.',
-                        ephemeral: true
-                    })
-                    
                     if (collectedBtn.customId === "cancel") {
                         mappedGrid = grid
                         .map((row, rowNum) => {
@@ -224,10 +295,6 @@ const tttCommand: Cmd = {
                             ephemeral: true
                         })
                     } else {
-                        if (collectedBtn.user.id === (playerTurn === 0 ? opponent.user : interaction.user).id) return await collectedBtn.reply({
-                            content: 'It\'s not your turn.',
-                            ephemeral: true
-                        })
                         const position = Number(collectedBtn.customId)
                         grid[
                             Math.floor(position / 3)
@@ -254,12 +321,12 @@ const tttCommand: Cmd = {
                         if (
                             combinations
                             .some(
-                                cb => cb.map(s => grid[Math.floor(s / 3)][s % 3]).every((it, _, arr) => (arr[0] || it) && it === arr[0])
+                                cb => cb.map(s => grid[Math.floor(s / 3)][s % 3]).every((it, _, arr) => (notEmpty(arr[0]) && notEmpty(it)) && it === arr[0])
                             )
                         ) {
                             const combination = combinations
                             .find(
-                                c => c.map(n => grid[Math.floor(n / 3)][n % 3]).every((gs, _, arr) => gs === arr[0])
+                                c => c.map(n => grid[Math.floor(n / 3)][n % 3]).every((gs, _, arr) => (notEmpty(arr[0]) && notEmpty(gs)) && gs === arr[0])
                             ) as [number, number, number]
                             mappedGrid = grid
                             .map((row, rowNum) => {
@@ -394,6 +461,10 @@ const tttCommand: Cmd = {
         })
 
     }
+}
+
+function notEmpty<T>(v: T | null | undefined): v is T {
+    return !!v
 }
 
 export {

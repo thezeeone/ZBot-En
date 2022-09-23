@@ -1,10 +1,10 @@
-import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel } from "discord.js"
+import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, time, TimestampStyles } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel, RankCardModel } from "./database"
+import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, voteCommand, welcomeEditorCommand, channelWLCommand, imageCommand, channelBLCommand } from "./commands/command-exports"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel, WelcomeMessageEditorModel } from "./database"
 import { pluralise } from "./util"
 
 const commands: Cmd[] = [
@@ -29,7 +29,12 @@ const commands: Cmd[] = [
     balanceCommand,
     withdrawCommand,
     depositCommand,
-    giveCommand
+    giveCommand,
+    voteCommand,
+    welcomeEditorCommand,
+    channelWLCommand,
+    channelBLCommand,
+    imageCommand
 ]
 
 const privateCommands: Cmd[] = [
@@ -102,6 +107,83 @@ client.on('ready', async () => {
     setInterval(async () => {
         (client.user as ClientUser).setPresence({ status: 'dnd', activities: customStatuses })
     }, 300000)
+})
+
+client.on('guildMemberAdd', async (member) => {
+    const serverWelcomeSystem = await WelcomeMessageEditorModel.findOne({
+        where: {
+            id: member.guild.id
+        }
+    })
+
+    if (!serverWelcomeSystem) return
+
+    try {
+        const channel = await member.client.channels.fetch(serverWelcomeSystem.channelId || '')
+
+        if (!channel?.isTextBased()) return
+
+        channel?.send({
+            content: serverWelcomeSystem.message 
+            ? serverWelcomeSystem.message
+            .replace(/{user\.username}/ig, member.user.username)
+            .replace(/{user\.discriminator}/ig, member.user.discriminator)
+            .replace(/{user\.id}/ig, member.user.id)
+            .replace(/{user\.mention}/ig, member.user.toString())
+            .replace(/{user\.createdAt(?:\[(short time|long time|short date|long date|short date-time|long date-time|relative)\])?}/ig, (testParam) => {
+                let timeFormat;
+                switch (testParam) {
+                    case 'short time':
+                        timeFormat = TimestampStyles.ShortTime
+                        break
+                    case 'long time':
+                        timeFormat = TimestampStyles.LongTime
+                        break
+                    case 'short date':
+                        timeFormat = TimestampStyles.ShortDate
+                        break
+                    case 'long date':
+                        timeFormat = TimestampStyles.LongDate
+                        break
+                    case 'short date-time':
+                        timeFormat = TimestampStyles.ShortDateTime
+                        break
+                    case 'long date-time':
+                        timeFormat = TimestampStyles.LongDateTime
+                        break
+                    case 'relative':
+                        timeFormat = TimestampStyles.RelativeTime
+                        break
+                    default:
+                        timeFormat = TimestampStyles.ShortDateTime
+                        break
+                }
+                return time(member.user.createdAt, timeFormat)
+            })
+            .replace(/{server\.name}/ig, member.guild.name)
+            .replace(/{server\.description}/ig, member.guild.description || 'no description')
+            .replace(/{server\.memberCount(?:\[(before|after)\])?}/ig, (memberCountBorA) => {
+                let memberCountType: 'before' | 'after';
+                switch (memberCountBorA) {
+                    case 'before':
+                        memberCountType = 'before'
+                        break
+                    case 'after':
+                        memberCountType = 'after'
+                        break
+                    default:
+                        memberCountType = 'after'
+                        break
+                }
+                return memberCountType === 'before' ? (member.guild.memberCount - 1).toString() : (member.guild.memberCount).toString()
+            })
+            .replace(/{server\.id}/ig, member.guild.id)
+            : '',
+            embeds: serverWelcomeSystem.embeds
+        })
+    } catch {
+        return
+    }
 })
 
 client.on('interactionCreate', async (interaction): Promise<any> => {
@@ -282,8 +364,16 @@ client.on('messageCreate', async (message): Promise<any> => {
                 .setColor((await RankCardModel.findOne({ where: { id: message.author.id }}))?.colour ?? 0x00ffff)
                 .setFooter(
                     Math.random() < 0.1
-                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                    : null
+                    ? { text: `${
+                        message.author.id === '744138083372367924' || message.author.id === '923315540024500304'
+                        ? 'This user has a 50% XP boost on top of the existing 75% XP boost, making theirs 125%, until 22nd September 2022 12:30 PM.'
+                        : 'All users have a 75% XP boost until 22nd September 2022 12:30 (PM)!'
+                    } 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
+                    : { text: 
+                        message.author.id === '744138083372367924' || message.author.id === '923315540024500304'
+                        ? 'This user has a 50% XP boost on top of the existing 75% XP boost, making theirs 125%, until 22nd September 2022 12:30 PM.'
+                        : 'All users have a 75% XP boost until 22nd September 2022 12:30 (PM)!'
+                    }
                 )
             ]
         });

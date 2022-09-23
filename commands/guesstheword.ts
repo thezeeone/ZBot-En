@@ -1,6 +1,6 @@
-import { ComponentType, EmbedBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, bold, inlineCode, italic, ButtonBuilder, ButtonStyle, ActionRowBuilder, APIEmbedField, APIButtonComponentWithCustomId } from "discord.js"
+import { ComponentType, EmbedBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, bold, inlineCode, italic, ButtonBuilder, ButtonStyle, ActionRowBuilder, APIButtonComponentWithCustomId, underscore, time } from "discord.js"
 import { Cmd, tipsAndTricks } from "./command-exports"
-import { LevelModel } from "../database"
+import { BlacklistModel, LevelModel } from "../database"
 
 const gtwCommand: Cmd = {
     data: {
@@ -9,20 +9,26 @@ const gtwCommand: Cmd = {
         options: [
             {
                 name: 'word-or-sentence',
-                description: 'The word or sentence',
+                description: 'The word or sentence (min len 5, max len 150)',
                 type: ApplicationCommandOptionType.String,
+                minLength: 5,
+                maxLength: 150,
                 required: true
             },
             {
                 name: 'clue-1',
-                description: 'The first clue users can get',
+                description: 'The first clue users can get (max len 40)',
                 type: ApplicationCommandOptionType.String,
+                minLength: 1,
+                maxLength: 40,
                 required: false
             },
             {
                 name: 'clue-2',
                 description: 'The second clue users can get',
                 type: ApplicationCommandOptionType.String,
+                minLength: 1,
+                maxLength: 40,
                 required: false
             },
             {
@@ -36,13 +42,12 @@ const gtwCommand: Cmd = {
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
         const wordOrSentence = interaction.options.getString('word-or-sentence', true).replace(/\s+/, () => ' ')
 
-        if (wordOrSentence.length < 2) return await interaction.reply({
-            content: 'String must be at least 2 characters long.',
-            ephemeral: true
-        })
-
         if (wordOrSentence.includes('_')) return await interaction.reply({
             content: 'Forbidden character `_`.',
+            ephemeral: true
+        })
+        else if (!wordOrSentence.match(/[a-zA-Z0-9.,:;'"-?!]/g)) return await interaction.reply({
+            content: 'Sentence can only contain alphanumerical characters (a-z, A-Z and 0-9), commas (`,`), periods (`.`), colons (`:`) and semicolons (`;`), quotation marks (`\'` and `"`), and the question (`?`) and exclamation (`!`) marks.',
             ephemeral: true
         })
 
@@ -52,7 +57,7 @@ const gtwCommand: Cmd = {
         let incorrectCharacters: string[] = []
         let layOut: string[][] = matchedWords.map(s => s.split('').map(n => n === ' ' ? ' ' : '_'))
         let wordLength = wordOrSentence.length
-        let numDistinctChars = [... new Set(wordOrSentence.split(''))].length
+        let numDistinctChars = wordOrSentence.split('').filter((s, i, arr) => arr.indexOf(s) === i).length
         let numGuesses: number = 
         (wordLength < 7)
         ? (20 - ((8 - numDistinctChars) * 2)) + numDistinctChars
@@ -118,10 +123,74 @@ const gtwCommand: Cmd = {
             fetchReply: true
         })
 
-        const messageCollector = game.channel.createMessageCollector()
+        const cooldowns = new Map<string, number>()
+
+        const messageCollector = game.channel.createMessageCollector({
+            filter: async (msg) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: msg.author.id
+                    }
+                })
+
+                if (isUserBlacklisted) return false
+                if (msg.author.id === interaction.user.id || msg.author.bot) return false
+                else if (!msg.reference || msg.reference.messageId !== game.id) return false
+                else {
+                    if (notEmpty(cooldowns.get(msg.author.id))) {
+                        if (Date.now() < (cooldowns.get(msg.author.id) || Date.now() + 2500) && msg.content.length === 1) {
+                            try {
+                                msg.reply(`Chill out! This command has a cooldown of \`2.5 seconds\`.\nYou can try again ${time(Math.ceil((cooldowns.get(msg.author.id) || Date.now() + 2500) / 1000), 'R')}.`)
+                                .then((m) => {
+                                    setTimeout(() => m.delete(), 1500)
+                                })
+                            } finally {
+                                return false
+                            }
+                        }
+                    }
+
+                    return true
+                }
+            }
+        })
 
         const buttonCollector = game.createMessageComponentCollector({
-            componentType: ComponentType.Button
+            componentType: ComponentType.Button,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+
+                if (btn.customId !== 'cancel' && !isFinite(Number(btn.customId))) return false
+                else {
+                    if (btn.customId === 'cancel') {
+                        if (btn.user.id !== interaction.user.id) {
+                            await btn.reply({
+                                content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                                ephemeral: true
+                            })
+                            return false
+                        }
+        
+                        return true
+                    } else return true
+                }
+            }
         })
 
         buttonCollector.on('collect', async (btn): Promise<any> => {
@@ -178,7 +247,7 @@ const gtwCommand: Cmd = {
                             { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                             { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                             { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                         )
@@ -192,10 +261,6 @@ const gtwCommand: Cmd = {
         })
 
         messageCollector.on('collect', async (msg): Promise<any> => {
-            if (
-                msg.author.id === interaction.user.id
-                || msg.author.bot
-            ) return
             if (msg.content.replace(/\s+/g, () => ' ') === wordOrSentence) {
                 embed
                 .setColor(0x00ff00)
@@ -214,6 +279,7 @@ const gtwCommand: Cmd = {
                 messageCollector.stop()
                 buttonCollector.stop()
             } else if (msg.content.length === 1) {
+                cooldowns.set(msg.author.id, Math.floor((Date.now() + 2500) / 1000))
                 const letter = msg.content
                 if (correctCharacters.includes(letter)) {
                     const rpl = await msg.reply( 
@@ -235,7 +301,7 @@ const gtwCommand: Cmd = {
                         { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                     ])
@@ -257,6 +323,7 @@ const gtwCommand: Cmd = {
                                 id: msg.author.id
                             }
                         })
+                        cooldowns.clear()
                         messageCollector.stop()
                         buttonCollector.stop()
                     }
@@ -270,7 +337,7 @@ const gtwCommand: Cmd = {
                         { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                         { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                         { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                     ])
@@ -322,7 +389,7 @@ const gtwCommand: Cmd = {
                         { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                     ])
@@ -345,6 +412,7 @@ const gtwCommand: Cmd = {
                                 id: msg.author.id
                             }
                         })
+                        cooldowns.clear()
                         messageCollector.stop()
                         buttonCollector.stop()
                     }
@@ -355,7 +423,7 @@ const gtwCommand: Cmd = {
 }
 
 function notEmpty<T>(value: T | undefined | null): value is T {
-    return value !== undefined && value !== null
+    return !!value
 }
 
 export {

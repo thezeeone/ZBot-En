@@ -1,8 +1,8 @@
-import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, GuildResolvable, TextBasedChannelResolvable, User } from "discord.js";
+import { ApplicationCommandData, ChatInputCommandInteraction, ContextMenuCommandInteraction } from "discord.js";
 
 interface Cmd {
     data: ApplicationCommandData,
-    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">): any
+    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">)
 }
 
 import { rankCommand } from "./rank";
@@ -28,6 +28,12 @@ import { balanceCommand } from "./balance";
 import { depositCommand } from "./deposit";
 import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
+import { channelBLCommand } from "./channelblacklist";
+import { channelWLCommand } from "./channelwhitelist";
+import { imageCommand } from "./image";
+import { questionCommand } from "./question";
+import { voteCommand } from "./vote";
+import { welcomeEditorCommand } from "./welcomeeditor";
 
 const tipsAndTricks = [
   /**
@@ -37,6 +43,7 @@ const tipsAndTricks = [
     * Every day this gets longer, so it gets harder to encounter all!
     * For now, just enjoy the source code.
   */
+ 'Facts are coming soon!'
 ] as const
 
 export {
@@ -64,5 +71,11 @@ export {
     balanceCommand,
     depositCommand,
     withdrawCommand,
-    giveCommand
+    giveCommand,
+    channelWLCommand,
+    channelBLCommand,
+    welcomeEditorCommand,
+    voteCommand,
+    imageCommand,
+    questionCommand
 }

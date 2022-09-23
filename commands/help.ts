@@ -1,4 +1,5 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ApplicationCommandOptionType, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
+import { BlacklistModel } from "../database";
 import { Cmd } from "./command-exports";
 import {
     banCommand,
@@ -208,18 +209,39 @@ const helpCommand: Cmd = {
 
         const collector = reply.createMessageComponentCollector({
             componentType: ComponentType.Button,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+
+                if (btn.user.id !== interaction.user.id) {
+                    await btn.reply({
+                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                        ephemeral: true
+                    })
+                    return false
+                }
+
+                return true
+            },
             time: 180000
         })
 
         collector.on('collect', async (button) => {
-            if (button.user.id !== interaction.user.id) {
-                await button.reply({
-                    content: 'These buttons aren\'t for you!',
-                    ephemeral: true
-                })
-                return
-            }
-
             const customId = button.customId
 
             if (customId === 'previous') {
@@ -418,6 +440,7 @@ const helpCommand: Cmd = {
                     components: [
                         selectMenu
                     ],
+                    ephemeral: true,
                     fetchReply: true
                 })
 
