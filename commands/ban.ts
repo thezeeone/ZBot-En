@@ -285,7 +285,7 @@ const banCommand: Cmd = {
                     } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
 
                     return true
-                },
+                }
                 time: 120000
             })
 
@@ -644,8 +644,6 @@ const banCommand: Cmd = {
                 ],
                 ephemeral: true
             })
-
-            
 
             const [
                 yesButton,

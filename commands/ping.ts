@@ -12,7 +12,7 @@ const pingCommand: Cmd = {
             fetchReply: true
         })
         const wsPing = interaction.client.ws.ping
-        interaction.editReply({
+        return interaction.editReply({
             content: '',
             embeds: [
                 new EmbedBuilder()

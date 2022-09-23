@@ -13,6 +13,7 @@ const gtwCommand: Cmd = {
                 type: ApplicationCommandOptionType.String,
                 minLength: 5,
                 maxLength: 150,
+
                 required: true
             },
             {

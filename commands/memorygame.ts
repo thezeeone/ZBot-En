@@ -175,8 +175,7 @@ async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> 
                     .setColor(0x00ffff)
                     .setTitle('Memory Game Match')
                     .setDescription(`${playerTurn === 0 ? interaction.user : opponent.user} It is now your turn, please select ${bold(`${inlineCode('2')} cards`)}.`)
-                    // @ts-ignore
-                    .setFooter({ text: '' })
+                    .setFooter(null)
                 ],
                 content: bold('Let the game begin!'),
                 components: grid

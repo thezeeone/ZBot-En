@@ -13,8 +13,6 @@ const imageCommand: Cmd = {
         description: 'Create a picture! (beta)',
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
-        await interaction.deferReply()
-
         try {
             const width = 512
             const height = 256

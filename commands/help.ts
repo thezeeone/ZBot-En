@@ -21,7 +21,9 @@ import {
     balanceCommand,
     withdrawCommand,
     depositCommand,
-    giveCommand
+    giveCommand,
+    channelWLCommand,
+    channelBLCommand
 } from './command-exports'
 
 const helpCommand: Cmd = {
@@ -30,20 +32,6 @@ const helpCommand: Cmd = {
         description: 'Get all info about this bot'
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
-        // const optionTypes = {
-        //     [ApplicationCommandOptionType.Attachment]: 'ATTACHMENT',
-        //     [ApplicationCommandOptionType.Boolean]: 'BOOLEAN',
-        //     [ApplicationCommandOptionType.Channel]: 'CHANNEL',
-        //     [ApplicationCommandOptionType.Integer]: 'INTEGER',
-        //     [ApplicationCommandOptionType.Mentionable]: 'MENTIONABLE',
-        //     [ApplicationCommandOptionType.Number]: 'NUMBER',
-        //     [ApplicationCommandOptionType.Role]: 'ROLE',
-        //     [ApplicationCommandOptionType.String]: 'STRING',
-        //     [ApplicationCommandOptionType.Subcommand]: 'SUBCOMMAND',
-        //     [ApplicationCommandOptionType.SubcommandGroup]: 'SUBCOMMAND GROUP',
-        //     [ApplicationCommandOptionType.User]: 'USER'
-        // }
-
         const groups: Array<{
             name: string,
             embedDescription: string,
@@ -76,7 +64,9 @@ const helpCommand: Cmd = {
                 selectMenuDescription: 'See all commands relating to ZBot level system',
                 commands: [
                     rankCommand.data,
-                    leaderboardCommand.data
+                    leaderboardCommand.data,
+                    channelWLCommand.data,
+                    channelBLCommand.data
                 ]
             },
             {
@@ -123,6 +113,14 @@ const helpCommand: Cmd = {
                     withdrawCommand.data,
                     depositCommand.data,
                     giveCommand.data
+                ]
+            },
+            {
+                name: 'Experimental Commands and Features',
+                embedDescription: `Some of the experimental commands you may come across.\n\n⚠ **Note: these are experimental features and may break while in use.**`,
+                selectMenuDescription: 'View features under testing',
+                commands: [
+                    imageCommand.data
                 ]
             },
             {

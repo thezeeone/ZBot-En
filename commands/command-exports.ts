@@ -48,6 +48,7 @@ const tipsAndTricks = [
 
 export {
     Cmd,
+    tipsAndTricks,
     rankCommand,
     leaderboardCommand,
     timeoutCommand,
@@ -66,7 +67,6 @@ export {
     updatesCommand,
     userInfoCommand,
     exchangeCommand,
-    tipsAndTricks,
     memberInfoCommand,
     balanceCommand,
     depositCommand,

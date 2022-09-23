@@ -295,6 +295,10 @@ const tttCommand: Cmd = {
                             ephemeral: true
                         })
                     } else {
+                        if (collectedBtn.user.id === (playerTurn === 0 ? interaction.user : opponent.user).id) return await collectedBtn.reply({
+                            content: 'It\'s not your turn.',
+                            ephemeral: true
+                        })
                         const position = Number(collectedBtn.customId)
                         grid[
                             Math.floor(position / 3)

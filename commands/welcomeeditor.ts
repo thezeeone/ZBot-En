@@ -2,8 +2,6 @@ import { ActionRowBuilder, APIEmbed, ButtonBuilder, ButtonStyle, ChatInputComman
 import { BlacklistModel, WelcomeMessageEditorModel } from "../database";
 import { Cmd } from "./command-exports";
 
-const rawExperimentalLabel = '⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot\'s own risk.__** Some buttons, select menus or features may fail, cause the command to behave strangely or unexpectedly, or worse, cause the bot to crash entirely. **PLEASE DO NOT USE THIS COMMAND __UNLESS__ YOU KNOW WHAT YOU\'RE DOING.**\n\n*...and if you do know what you\'re doing, why not come and help us out on our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20 \'#20 Per-Server Welcome System Editor • Zahid556/ZBot-En • GitHub\')??*'
-
 const welcomeEditorCommand: Cmd = {
     data: {
         name: 'welcome',
@@ -40,7 +38,7 @@ const welcomeEditorCommand: Cmd = {
             .addComponents(setupButton, cancelButton)
 
             const reply = await interaction.reply({
-                content: `You don\'t have a welcome system set up. Click the buttons below to get started.\n\n${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 120)}`)}\n\n${rawExperimentalLabel}`,
+                content: `You don\'t have a welcome system set up. Click the buttons below to get started.\n\n${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 120)}`)}`,
                 components: [buttonRow],
                 fetchReply: true
             })
@@ -84,16 +82,16 @@ const welcomeEditorCommand: Cmd = {
                     })
                     .then(async () => {
                         try {
-                            await reply.edit({ content: `To set up a welcome system, you must re-run this command.\n\n${rawExperimentalLabel}`, components: [buttonRow] })
-                            await btn.reply(`If you would like to set-up a welcome system, please re-run the command.\n\n${rawExperimentalLabel}`)
+                            await reply.edit({ content: `To set up a welcome system, you must re-run this command.`, components: [buttonRow] })
+                            await btn.reply(`If you would like to set-up a welcome system, please re-run the command.`)
                         } catch {
                             return
                         }
                     })
                     .catch(async () => {
                         try {
-                            await btn.reply(`Failed to create welcome system editor, please try again. If this issue persists, please report it [on our GitHub Issue #20](https://github.com/Zahid556/ZBot-En/issues/20) or in the [#reports channel on ZBot Server (En)](https://discord.gg/6tkn6m5g52).\n\n${rawExperimentalLabel}`)
-                            await reply.edit({ content: `Welcome system failed.\n\n${rawExperimentalLabel}`, components: [buttonRow] })
+                            await btn.reply(`Failed to create welcome system editor, please try again. If this issue persists, please report it [on our GitHub Issue #20](https://github.com/Zahid556/ZBot-En/issues/20) or in the [#reports channel on ZBot Server (En)](https://discord.gg/6tkn6m5g52).`)
+                            await reply.edit({ content: `Welcome system failed.`, components: [buttonRow] })
                         } catch {
                             return
                         }
@@ -101,8 +99,8 @@ const welcomeEditorCommand: Cmd = {
                 } else if (btn.customId === 'cancel') {
                     setupButton.setDisabled(true) 
                     cancelButton.setDisabled(true)
-                    reply.edit({ content: `Cancelled.\n\n${rawExperimentalLabel}`, components: [buttonRow] })
-                    btn.reply(`Set-up cancelled.\n\n${rawExperimentalLabel}`)
+                    reply.edit({ content: `Cancelled.`, components: [buttonRow] })
+                    btn.reply(`Set-up cancelled.`)
                 }
             })
 
@@ -112,7 +110,7 @@ const welcomeEditorCommand: Cmd = {
                         setupButton.setDisabled(true)
                         cancelButton.setDisabled(true)
                         await reply.edit({
-                            content: `A response wasn\'t received in time.\n\n${rawExperimentalLabel}`,
+                            content: `A response wasn\'t received in time.`,
                             components: [buttonRow]
                         })
                     } catch {
@@ -217,7 +215,6 @@ const welcomeEditorCommand: Cmd = {
             ]
 
             const reply = await interaction.reply({
-                content: rawExperimentalLabel,
                 components: [
                     editorRow,
                     enablerRow,

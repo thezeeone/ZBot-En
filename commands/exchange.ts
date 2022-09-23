@@ -173,7 +173,7 @@ const exchangeCommand: Cmd = {
                     content: 'Exchange cancelled.',
                     components: [ confirmationRow ]
                 })
-                button.reply(`You cancelled the exchange.\n${
+                await button.reply(`You cancelled the exchange.\n${
                     Math.random() < 0.1
                     ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
                     : ''

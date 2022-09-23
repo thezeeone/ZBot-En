@@ -1,5 +1,6 @@
 import { Sequelize, Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import { config } from 'dotenv';
+import { APIEmbed } from 'discord.js';
 config()
 
 const sequelize = new Sequelize(process.env.DATABASE_URL as string, {
