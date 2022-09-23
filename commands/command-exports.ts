@@ -2,7 +2,7 @@ import { ApplicationCommandData, ChatInputCommandInteraction, ContextMenuCommand
 
 interface Cmd {
     data: ApplicationCommandData,
-    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">): void
+    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">)
 }
 
 import { rankCommand } from "./rank";
@@ -28,12 +28,12 @@ import { balanceCommand } from "./balance";
 import { depositCommand } from "./deposit";
 import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
-import { channelWLCommand } from "./channelwhitelist";
 import { channelBLCommand } from "./channelblacklist";
-import { welcomeEditorCommand } from "./welcomeeditor";
-import { voteCommand } from "./vote";
+import { channelWLCommand } from "./channelwhitelist";
 import { imageCommand } from "./image";
 import { questionCommand } from "./question";
+import { voteCommand } from "./vote";
+import { welcomeEditorCommand } from "./welcomeeditor";
 
 const tipsAndTricks = [
   /**
@@ -43,7 +43,7 @@ const tipsAndTricks = [
     * Every day this gets longer, so it gets harder to encounter all!
     * For now, just enjoy the source code.
   */
- 'Coming soon!'
+ 'Facts are coming soon!'
 ] as const
 
 export {

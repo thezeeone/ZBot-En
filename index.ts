@@ -1,10 +1,10 @@
-import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, TextChannel } from "discord.js"
+import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, time, TimestampStyles } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, /*reportCommand,*/ pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, channelWLCommand, channelBLCommand, welcomeEditorCommand, voteCommand, imageCommand, questionCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel, RankCardModel, LevelsChannelListModel } from "./database"
+import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, voteCommand, welcomeEditorCommand, channelWLCommand, imageCommand, channelBLCommand } from "./commands/command-exports"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel, WelcomeMessageEditorModel } from "./database"
 import { pluralise } from "./util"
 
 const commands: Cmd[] = [
@@ -16,7 +16,7 @@ const commands: Cmd[] = [
     tttCommand,
     gtwCommand,
     memoryGameCommand,
-    // reportCommand,
+    reportCommand,
     pingCommand,
     slowmodeCommand,
     helpCommand,
@@ -30,12 +30,11 @@ const commands: Cmd[] = [
     withdrawCommand,
     depositCommand,
     giveCommand,
+    voteCommand,
+    welcomeEditorCommand,
     channelWLCommand,
     channelBLCommand,
-    welcomeEditorCommand,
-    voteCommand,
-    imageCommand,
-    questionCommand
+    imageCommand
 ]
 
 const privateCommands: Cmd[] = [
@@ -82,23 +81,109 @@ client.on('ready', async () => {
 
     const customStatuses: Array<ActivitiesOptions> = [
         {
-            name: `${pluralise(client.guilds.cache.filter(r => r.members.cache.filter(s => !s.user.bot).size > 1).size, 'server')} and ${
-                pluralise(
-                    client.guilds.cache
-                    .map(({ members }) => members.cache.filter(({ user }) => !user.bot))
-                    .flat()
-                    .map((collection) => collection.map(({ id }) => id))
-                    .flat()
-                    .filter((v, i, a) => a.indexOf(v) === i)
-                    .length,
-                    'user'
-                )
+            name: '/help commands',
+            type: ActivityType.Listening
+        },
+        {
+            name: `${pluralise(client.guilds.cache.size, 'server')} and ${pluralise(
+                client.guilds.cache
+                .map(r => r.members.cache.filter(s => !s.user.bot).size)
+                .reduce((num1, num2) => {
+                    return num1 + num2
+                }), 'user')
             }`,
             type: ActivityType.Watching
+        },
+        {
+            name: 'myself grow',
+            type: ActivityType.Watching
+        },
+        {
+            name: 'your feedbacks and reports on this bot',
+            type: ActivityType.Listening
         }
-    ];
+    ]
 
-    (client.user as ClientUser).setPresence({ status: 'dnd', activities: customStatuses })
+    setInterval(async () => {
+        (client.user as ClientUser).setPresence({ status: 'dnd', activities: customStatuses })
+    }, 300000)
+})
+
+client.on('guildMemberAdd', async (member) => {
+    const serverWelcomeSystem = await WelcomeMessageEditorModel.findOne({
+        where: {
+            id: member.guild.id
+        }
+    })
+
+    if (!serverWelcomeSystem) return
+
+    try {
+        const channel = await member.client.channels.fetch(serverWelcomeSystem.channelId || '')
+
+        if (!channel?.isTextBased()) return
+
+        channel?.send({
+            content: serverWelcomeSystem.message 
+            ? serverWelcomeSystem.message
+            .replace(/{user\.username}/ig, member.user.username)
+            .replace(/{user\.discriminator}/ig, member.user.discriminator)
+            .replace(/{user\.id}/ig, member.user.id)
+            .replace(/{user\.mention}/ig, member.user.toString())
+            .replace(/{user\.createdAt(?:\[(short time|long time|short date|long date|short date-time|long date-time|relative)\])?}/ig, (testParam) => {
+                let timeFormat;
+                switch (testParam) {
+                    case 'short time':
+                        timeFormat = TimestampStyles.ShortTime
+                        break
+                    case 'long time':
+                        timeFormat = TimestampStyles.LongTime
+                        break
+                    case 'short date':
+                        timeFormat = TimestampStyles.ShortDate
+                        break
+                    case 'long date':
+                        timeFormat = TimestampStyles.LongDate
+                        break
+                    case 'short date-time':
+                        timeFormat = TimestampStyles.ShortDateTime
+                        break
+                    case 'long date-time':
+                        timeFormat = TimestampStyles.LongDateTime
+                        break
+                    case 'relative':
+                        timeFormat = TimestampStyles.RelativeTime
+                        break
+                    default:
+                        timeFormat = TimestampStyles.ShortDateTime
+                        break
+                }
+                return time(member.user.createdAt, timeFormat)
+            })
+            .replace(/{server\.name}/ig, member.guild.name)
+            .replace(/{server\.description}/ig, member.guild.description || 'no description')
+            .replace(/{server\.memberCount(?:\[(before|after)\])?}/ig, (memberCountBorA) => {
+                let memberCountType: 'before' | 'after';
+                switch (memberCountBorA) {
+                    case 'before':
+                        memberCountType = 'before'
+                        break
+                    case 'after':
+                        memberCountType = 'after'
+                        break
+                    default:
+                        memberCountType = 'after'
+                        break
+                }
+                return memberCountType === 'before' ? (member.guild.memberCount - 1).toString() : (member.guild.memberCount).toString()
+            })
+            .replace(/{server\.id}/ig, member.guild.id)
+            : '',
+            embeds: serverWelcomeSystem.embeds
+        })
+    } catch {
+        return
+    }
 })
 
 client.on('interactionCreate', async (interaction): Promise<any> => {
@@ -114,7 +199,7 @@ client.on('interactionCreate', async (interaction): Promise<any> => {
                 new EmbedBuilder()
                 .setTitle(underscore('You are blacklisted from using this bot.'))
                 .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
-                .setColor(0x000001)
+                .setColor(0x000000)
             ],
             ephemeral: true
         })
@@ -180,6 +265,7 @@ client.on('interactionCreate', async (interaction): Promise<any> => {
                     })
                 })
             } else {
+          
                 (interaction.member?.roles as GuildMemberRoleManager).add('1010998028011839598')
                 .then(async () => {
                     return await interaction.reply({
@@ -214,21 +300,11 @@ client.on('messageCreate', async (message): Promise<any> => {
 
     if (isBlacklist) return
 
-    const isChannelBlacklisted = (await LevelsChannelListModel.findOne({
-        where: { guildId: (message.guild as Guild).id, channelId: (message.channel as TextChannel).id }
-    })) || (await LevelsChannelListModel.create({
-        guildId: (message.guild as Guild).id,
-        channelId: (message.channel as TextChannel).id,
-        allowed: true
-    }))
-
-    if (isChannelBlacklisted.allowed === false) return
-
     const words = message.content.split(' ').filter(s => s.match(/\b[\w\-\_']+\b/g))
     const attachments = message.attachments
     
-    let totalXP = (
-        attachments.size * 25
+    const totalXP = (
+        attachments.size * 100
     ) + (
         words.length >= 3
         ? (
@@ -240,10 +316,10 @@ client.on('messageCreate', async (message): Promise<any> => {
             }).reduce((a, b) => a + b, 0)
         )
         : 0
-    ) >= (attachments.size * 25 + 40)
-    ? (attachments.size * 25 + 40) * 1.5
+    ) >= (attachments.size * 100 + 40)
+    ? (attachments.size * 100 + 40)
     : (
-        attachments.size * 25
+        attachments.size * 100
     ) + (
         words.length >= 3
         ? (
@@ -255,15 +331,7 @@ client.on('messageCreate', async (message): Promise<any> => {
             }).reduce((a, b) => a + b, 0)
         )
         : 0
-    )
-
-    const isBoostingTime = Date.now() >= 1663097400000 && Date.now() < (1663097400000 + 3 * 24 * 60 * 60 * 1000)
-
-    if (isBoostingTime) totalXP *= 1.5
-
-    if (message.author.id === '744138083372367924' || message.author.id === '923315540024500304') totalXP = Math.round(totalXP * (4 / 3))
-
-    totalXP = Math.ceil(totalXP)
+    ) 
 
     const lvl = await (await LevelModel.findOne({
         where: { id: message.author.id }
@@ -295,13 +363,17 @@ client.on('messageCreate', async (message): Promise<any> => {
                 .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
                 .setColor((await RankCardModel.findOne({ where: { id: message.author.id }}))?.colour ?? 0x00ffff)
                 .setFooter(
-                    (message.author.id === '744138083372367924' || message.author.id === '923315540024500304')
-                    ? { text: 'This user has boosted the official ZBot Support Server and thus will gain a 50% XP boost until the boost ends, on top of another 50% XP boost for ZBot Support server hitting 40,000 messages, so in total they\'ll receive double the usual amount (100% boost).' }
-                    : (
-                        Math.random() < 0.1
-                        ? { text: `${isBoostingTime ? 'You will get an automatic 50% XP boost since our official server hit 40,000 messages! This boost will last until Friday, 16th September 2022 20:30 GMT. If we get to 50,000 messages within 3 days, we could get a 75% XP boost added making it 125%!! ' : ''}💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                        : { text: `${isBoostingTime ? 'You will get an automatic 50% XP boost since our official server hit 40,000 messages! This boost will last until Friday, 16th September 2022 20:30 GMT. If we get to 50,000 messages within 3 days, we could get a 75% XP boost added making it 125%!! ' : ''}` }
-                        )
+                    Math.random() < 0.1
+                    ? { text: `${
+                        message.author.id === '744138083372367924' || message.author.id === '923315540024500304'
+                        ? 'This user has a 50% XP boost on top of the existing 75% XP boost, making theirs 125%, until 22nd September 2022 12:30 PM.'
+                        : 'All users have a 75% XP boost until 22nd September 2022 12:30 (PM)!'
+                    } 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
+                    : { text: 
+                        message.author.id === '744138083372367924' || message.author.id === '923315540024500304'
+                        ? 'This user has a 50% XP boost on top of the existing 75% XP boost, making theirs 125%, until 22nd September 2022 12:30 PM.'
+                        : 'All users have a 75% XP boost until 22nd September 2022 12:30 (PM)!'
+                    }
                 )
             ]
         });
@@ -322,6 +394,7 @@ client.on('messageCreate', async (message): Promise<any> => {
         await lvl.update({ lvl: 0 }, { where: { id: message.author.id } })
         return
     }
+
 
     (<Guild>message.client.guilds.cache.get('1000073833551769600'))
     .members.fetch(message.author.id)

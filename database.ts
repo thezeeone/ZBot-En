@@ -26,7 +26,7 @@ interface WelcomeMessageEditorModel extends Model<InferAttributes<WelcomeMessage
     id: string,
     channelId?: string,
     message?: string,
-    embeds?: APIEmbed,
+    embeds?: object[],
     enabled: boolean
 }
 
@@ -100,7 +100,7 @@ const EconomyModel = sequelize.define<EconomyModel>('EconomySystems', {
     maxWallet: DataTypes.INTEGER
 })
 
-const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('PSWelcomeMessageEditors', {
+const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('PerServerWelcomeMessageEditors', {
     id: {
         type: DataTypes.STRING,
         primaryKey: true

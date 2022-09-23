@@ -1,4 +1,5 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time } from "discord.js"
+import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time, underscore } from "discord.js"
+import { BlacklistModel } from "../database"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -269,7 +270,35 @@ const kickCommand: Cmd = {
 
         const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
             componentType: ComponentType.Button,
-            maxComponents: 1,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+
+                if (btn.user.id !== interaction.user.id) {
+                    await btn.reply({
+                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                return true
+            },
             time: 120000
         })
 
@@ -418,11 +447,7 @@ const kickCommand: Cmd = {
                     ],
                     components: [ confirmationRow ]
                 })
-                try {
-                    await interaction.followUp('A response wasn\'t received in time.')
-                } catch {
-                    return await interaction.channel?.send('An error occured with the original message - kick cancelled.')
-                }
+                return await interaction.followUp('A response wasn\'t received in time.')
             }
         })
     }

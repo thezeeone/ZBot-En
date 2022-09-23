@@ -1,5 +1,5 @@
-import { ActionRowBuilder, APIEmbed, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, italic, PermissionsBitField, time } from "discord.js";
-import { WelcomeMessageEditorModel } from "../database";
+import { ActionRowBuilder, APIEmbed, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, italic, PermissionsBitField, time, TimestampStyles, underscore } from "discord.js";
+import { BlacklistModel, WelcomeMessageEditorModel } from "../database";
 import { Cmd } from "./command-exports";
 
 const welcomeEditorCommand: Cmd = {
@@ -20,393 +20,141 @@ const welcomeEditorCommand: Cmd = {
         })
 
         if (!serverWelcomeSystem) {
+            const [
+                setupButton,
+                cancelButton
+            ] = [
+                new ButtonBuilder()
+                .setCustomId('setup')
+                .setStyle(ButtonStyle.Success)
+                .setLabel('Set Up'),
+                new ButtonBuilder()
+                .setCustomId('cancel')
+                .setStyle(ButtonStyle.Danger)
+                .setLabel('Cancel')
+            ]
+
+            const buttonRow = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(setupButton, cancelButton)
+
             const reply = await interaction.reply({
-                content: `You don\'t have a welcome system set up. Click the button below to get started.\n\n${
-                    italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 121, 'R')}.`)
-                }`,
-                components: [
-                    new ActionRowBuilder<ButtonBuilder>({
-                        components: [
-                            new ButtonBuilder()
-                            .setStyle(ButtonStyle.Success)
-                            .setLabel('Set up')
-                            .setCustomId('setup'),
-                            new ButtonBuilder()
-                            .setStyle(ButtonStyle.Danger)
-                            .setLabel('Cancel')
-                            .setCustomId('cancel')
-                        ]
-                    })
-                ],
+                content: `You don\'t have a welcome system set up. Click the buttons below to get started.\n\n${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 120)}`)}`,
+                components: [buttonRow],
                 fetchReply: true
             })
 
-            const collector = reply.createMessageComponentCollector({
-               componentType: ComponentType.Button,
+            const confirmationCollector = reply.createMessageComponentCollector({
+                componentType: ComponentType.Button,
+                filter: async (btn) => {
+                    const isUserBlacklisted = await BlacklistModel.findOne({
+                        where: {
+                            id: btn.user.id
+                        }
+                    })
+
+                    if (isUserBlacklisted) {
+                        await btn.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                .setColor(0x000000)
+                            ]
+                        })
+                        return false
+                    }
+
+                    return true
+                },
                 time: 120000
             })
 
-            collector.on('collect', async (button) => {
-                if (button.user.id !== interaction.user.id) {
-                    await interaction.reply({
-                        content: 'These buttons are not for you!',
-                        ephemeral: true
-                    })
-                    collector.dispose(button)
-                    return
-                }
-
-                if (button.customId === 'setup') {
-                    button.reply({
-                        content: 'System to be setup.',
-                        ephemeral: true
-                    })
-                    collector.stop()
-                    reply.edit({
-                        content: 'Welcome system to be set up.',
-                        components: []
-                    })
-                } else if (button.customId === 'cancel') {
-                    reply.edit({
-                        content: 'Cancelled.',
-                        components: [
-                            new ActionRowBuilder<ButtonBuilder>({
-                                components: [
-                                    new ButtonBuilder()
-                                    .setStyle(ButtonStyle.Success)
-                                    .setLabel('Set up')
-                                    .setCustomId('setup')
-                                    .setDisabled(true),
-                                    new ButtonBuilder()
-                                    .setStyle(ButtonStyle.Danger)
-                                    .setLabel('Cancel')
-                                    .setCustomId('cancel')
-                                    .setDisabled(true)
-                                ]
-                            })
-                        ]
-                    })
-                    button.reply({
-                        content: 'Cancelled.',
-                        ephemeral: true
-                    })
-                    collector.stop()
-                    return
-                }
-            })
-
-            collector.on('end', async (collected) => {
-                if (collected.size) {
-                    if (collected.some(c => c.customId === 'cancel')) return
-                    const serverSystem = await WelcomeMessageEditorModel.findOne({
-                        where: {
-                            id: interaction.guild.id
-                        }
-                    }) || await WelcomeMessageEditorModel.create({
+            confirmationCollector.on('collect', (btn) => {
+                if (btn.customId === 'setup') {
+                    setupButton.setDisabled(true)
+                    cancelButton.setDisabled(true)
+                    WelcomeMessageEditorModel.create({
                         id: interaction.guild.id,
                         channelId: undefined,
-                        enabled: false
-                    })
-
-                    let newServerSystem: {
-                        id: string,
-                        channelId?: string,
-                        message?: string,
-                        embeds?: APIEmbed[],
-                        enabled: boolean
-                    } = {
-                        id: serverSystem.id,
-                        channelId: serverSystem.channelId,
                         message: '',
                         embeds: [],
-                        enabled: serverSystem.enabled ?? false
-                    }
-
-                    const embed = new EmbedBuilder()
-                    .setColor(0x00ffff)
-                    .setTitle('Welcome Message Editor')
-                    .setAuthor({
-                        name: `${interaction.user.tag} (${interaction.user.id})`,
-                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                        enabled: true
                     })
-                    .setDescription('Welcome to the Welcome Message Editor! This is the editor where you can edit the welcome message, manage settings and enable/disable the system. Use the buttons below to modify your welcome system. You can always discard your settings, save them or modify them later.\n\n⚠ **Note: this is an experimental feature and may break while in use.**')
-                    .addFields([
-                        {
-                            name: 'Syntax',
-                            value: [
-                                { syntax: '{user.username}', desc: 'Display the user\'s username' },
-                                { syntax: '{user.discriminator}', desc: 'Display the user\'s 4-digit discriminator' },
-                                { syntax: '{user.id}', desc: 'Display the user\'s ID' },
-                                { syntax: '{user.tag}', desc: 'Dislay the user\'s full tag' },
-                                { syntax: '{user.mention}', desc: 'Mention the user' },
-                                { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user.' },
-                                { syntax: '{server.name}', desc: 'Display the server name' },
-                                { syntax: '{server.description}', desc: 'Display the server description' },
-                                { syntax: '{server.memberCount[before | after]}', desc: 'Display the server\'s member count.' },
-                                { syntax: '{server.id}', desc: 'Display the server ID' }
-                            ].map((s) => `${inlineCode(s.syntax)} ${italic(s.desc)}`).join('\n')
-                        },
-                        {
-                            name: 'Examples',
-                            value: [
-                                { syntax: '{user.username}', ex: 'ZBot' },
-                                { syntax: '{user.discriminator}', ex: '9348' },
-                                { syntax: '{user.id}', ex: '956596792542257192' },
-                                { syntax: '{user.tag}', ex: 'ZBot#9348' },
-                                { syntax: '{user.mention}', ex: '<@956596792542257192>' },
-                                { syntax: '{user.createdAt}', ex: '<t:1648140848>' },
-                                { syntax: '{user.createdAt[relative]}', ex: '<t:1648140848:R>' },
-                                { syntax: '{server.name}', ex: interaction.guild.name },
-                                { syntax: '{server.description}', ex: interaction.guild.description || 'This is a server description!' },
-                                { syntax: '{server.memberCount}', ex: interaction.guild.memberCount },
-                                { syntax: '{server.memberCount[before]}', ex: interaction.guild.memberCount - 1 },
-                                { syntax: '{server.id}', ex: interaction.guild.id }
-                            ]
-                            .map(s => `${inlineCode(s.syntax)} ${s.ex}`)
-                            .join('\n')
+                    .then(async () => {
+                        try {
+                            await reply.edit({ content: `To set up a welcome system, you must re-run this command.`, components: [buttonRow] })
+                            await btn.reply(`If you would like to set-up a welcome system, please re-run the command.`)
+                        } catch {
+                            return
                         }
-                    ])
-
-                    const [
-                        editButton,
-                        channelButton,
-                        previewButton,
-                        saveButton,
-                        discardButton
-                    ] = [
-                        new ButtonBuilder()
-                        .setCustomId('edit')
-                        .setLabel('Edit Welcome Message')
-                        .setStyle(ButtonStyle.Primary)
-                        .setDisabled(!serverSystem.enabled),
-                        new ButtonBuilder()
-                        .setCustomId('channel')
-                        .setLabel('Display or Set Channel')
-                        .setStyle(ButtonStyle.Primary)
-                        .setDisabled(!serverSystem.enabled),
-                        new ButtonBuilder()
-                        .setCustomId('preview')
-                        .setLabel('Preview Welcome Message')
-                        .setStyle(ButtonStyle.Primary)
-                        .setDisabled(!serverSystem.enabled),
-                        new ButtonBuilder()
-                        .setCustomId('save')
-                        .setLabel('Save Changes')
-                        .setStyle(ButtonStyle.Success)
-                        .setDisabled(true),
-                        new ButtonBuilder()
-                        .setCustomId('discard')
-                        .setLabel('Discard Changes')
-                        .setStyle(ButtonStyle.Danger)
-                        .setDisabled(true)
-                    ]
-
-                    const [
-                        toggleEnableButton
-                    ] = [
-                        new ButtonBuilder()
-                        .setCustomId(serverSystem.enabled ? 'disable' : 'enable')
-                        .setLabel(serverSystem.enabled ? 'Disable Welcome Messages' : 'Enable Welcome Messages')
-                        .setStyle(serverSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
-                    ]
-
-                    const editorRow = new ActionRowBuilder<ButtonBuilder>({ components: [editButton, channelButton, previewButton, saveButton, discardButton] })
-                    const enablerRow = new ActionRowBuilder<ButtonBuilder>({ components: [toggleEnableButton] })
-
-                    const editor = await interaction[interaction.replied ? 'followUp' : 'reply']({
-                        embeds: [embed],
-                        components: [
-                            editorRow,
-                            enablerRow
-                        ],
-                        content: `⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
-                        fetchReply: true
                     })
-
-                    const editorCollector = editor.createMessageComponentCollector({
-                        componentType: ComponentType.Button,
-                        filter: (interaction): boolean => ['enable', 'disable', 'edit', 'channel', 'preview', 'save', 'discard'].some(s => interaction.customId === s),
-                        time: 300000
+                    .catch(async () => {
+                        try {
+                            await btn.reply(`Failed to create welcome system editor, please try again. If this issue persists, please report it [on our GitHub Issue #20](https://github.com/Zahid556/ZBot-En/issues/20) or in the [#reports channel on ZBot Server (En)](https://discord.gg/6tkn6m5g52).`)
+                            await reply.edit({ content: `Welcome system failed.`, components: [buttonRow] })
+                        } catch {
+                            return
+                        }
                     })
+                } else if (btn.customId === 'cancel') {
+                    setupButton.setDisabled(true) 
+                    cancelButton.setDisabled(true)
+                    reply.edit({ content: `Cancelled.`, components: [buttonRow] })
+                    btn.reply(`Set-up cancelled.`)
+                }
+            })
 
-                    editorCollector.on('collect', async (btn) => {
-                        if (btn.customId === "enable") {
-                            editButton.setDisabled(false)
-                            channelButton.setDisabled(false)
-                            previewButton.setDisabled(false)
-                            toggleEnableButton
-                            .setCustomId('disable')
-                            .setLabel('Disable Welcome Messages')
-                            .setStyle(ButtonStyle.Danger)
-                            editor[editor.constructor.name === 'Message' ? 'edit' : 'editReply']({
-                                components: [
-                                    editorRow,
-                                    enablerRow
-                                ]
-                            })
-                            btn.reply({
-                                content: `Enabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
-                                ephemeral: true
-                            })
-                        return
-                    } else if (btn.customId === "disable") {
-                        editButton.setDisabled(true)
-                        channelButton.setDisabled(true)
-                        previewButton.setDisabled(true)
-                        saveButton.setDisabled(true)
-                        discardButton.setDisabled(true)
-                        toggleEnableButton
-                        .setCustomId('enable')
-                        .setLabel('Enable Welcome Messages')
-                        .setStyle(ButtonStyle.Success)
-                        editor[editor.constructor.name === 'Message' ? 'edit' : 'editReply']({
-                            components: [
-                                editorRow,
-                                enablerRow
-                            ]
+            confirmationCollector.on('end', async (collected) => {
+                if (!collected.size) {
+                    try {
+                        setupButton.setDisabled(true)
+                        cancelButton.setDisabled(true)
+                        await reply.edit({
+                            content: `A response wasn\'t received in time.`,
+                            components: [buttonRow]
                         })
-                        btn.reply({
-                            content: `Disabled system messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
-                            ephemeral: true
-                        })
-                    } else if (btn.customId === "edit") {
-                        const cancelButton = new ButtonBuilder()
-                        .setCustomId('cancel')
-                        .setLabel('Cancel Message Edit')
-                        .setStyle(ButtonStyle.Danger)
-
-                        const reply = await btn.reply({
-                            content: `Please type your new message, using the syntax above to help you, and reply to this message for it to be applied. You have 15 minutes to type it up.\n\n*A response is required ${time(Math.floor(Date.now() / 1000) + 900, 'R')}.*`,
-                            components: [
-                                    new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(cancelButton)
-                            ],
-                            fetchReply: true
-                        })
-
-                        const cancelButtonCollector = reply.createMessageComponentCollector({ time: 900000, filter: (interaction) => interaction.customId === 'cancel' })
-
-                        const newMessageCollector = reply.channel.createMessageCollector({
-                            time: 900000
-                        })
-
-                        newMessageCollector.on('collect', (message) => {
-                            message.fetchReference()
-                            .then(async (refMsg) => {
-                                if (refMsg.id !== reply.id) return 
-                                else {
-                                    try {
-                                        await message.reply('This message is the same as your previous message. Edit discarded.')
-                                        newMessageCollector.stop()
-                                        cancelButtonCollector.stop()
-                                    } catch {
-                                        return
-                                    }
-                                }
-                            })
-                            .catch(async (err) => {
-                                console.log(err)
-                                await message.channel.send('An error occured while waiting for the edit message. Edit discarded.')
-                                .catch(() => {return})
-                            })
-                        })
-
-                        cancelButtonCollector.on('collect', async () => {
-                            cancelButton.setDisabled(true)
-                            await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
-                        })
-
-                        newMessageCollector.on('end', async (collected) => {
-                            if (!collected.size) {
-                                await reply.reply('A response wasn\'t received in time.').catch(() => {return})
-                                await reply.edit('A response wasn\'t received in time.').catch(() => {return})
-                            }
-                        })
-
-                        cancelButtonCollector.on('end', async () => {
-                            cancelButton.setDisabled(true)
-                            await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
-                        })
-                    } else if (btn.customId === "channel") {
-
-                    } else if (btn.customId === "preview") {
-
-                    } else if (btn.customId === "save") {
-
-                    } else if (btn.customId === "discard") {
-
-                    } else {
-                        await btn.reply({
-                            content: 'Unrecognised button.',
-                            ephemeral: true
-                        })
+                    } catch {
                         return
                     }
-                })
-            } else {
-                reply.edit({
-                    components: [],
-                    content: 'A response wasn\'t received in time.'
-                })
-            }
+                }
             })
         } else {
-            let newServerSystem: {
+            let editedSystem: {
+                message: string,
+                embeds: APIEmbed[],
                 id: string,
-                channelId?: string,
-                message?: string,
-                embeds?: APIEmbed[],
+                channelId: string | null,
                 enabled: boolean
             } = {
-                id: serverWelcomeSystem.id,
-                channelId: serverWelcomeSystem.channelId,
                 message: '',
                 embeds: [],
-                enabled: serverWelcomeSystem.enabled ?? false
+                id: interaction.guild.id,
+                channelId: serverWelcomeSystem.channelId || null,
+                enabled: false
             }
 
+            const syntax: ({ name: string, description: string, value: string | null | undefined | number })[] = [
+                { name: '{user.username}', description: 'User\'s username.', value: interaction.user.username },
+                { name: '{user.discriminator}', description: 'User\'s discriminator.', value: interaction.user.discriminator },
+                { name: '{user.id}', description: 'User\'s ID.', value: interaction.user.id },
+                { name: '{user.mention}', description: 'Mention the user.', value: interaction.user.toString() },
+                { name: '{user.createdAt}', description: 'User account creation date.', value: time(new Date()) },
+                { name: '{user.createdAt[short time | long time | short date | long date | short date-time | long date-time | relative]}', description: `User account creation date in a specific form. Type the syntax like this: \`{user.createdAt[short date]}\` to get ${time(new Date(), 'd')}, or an example with \`{user.createdAt[short date-time]}\`:`, value: time(new Date(), 'f') },
+                { name: '{server.name}', description: 'Server name.', value: interaction.guild.name },
+                { name: '{server.description}', description: 'Server description.', value: interaction.guild.description },
+                { name: '{server.memberCount[before | after]}', description: 'Server member count - default is member count after member joined. Example with `{server.memberCount[before]}`:', value: interaction.guild.memberCount },
+                { name: '{server.id}', description: 'Display the server ID.', value: interaction.guild.id }
+            ]
+
             const embed = new EmbedBuilder()
-            .setColor(0x00ffff)
-            .setTitle('Welcome Message Editor')
-            .setAuthor({
-                name: `${interaction.user.tag} (${interaction.user.id})`,
-                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
-            })
-            .setDescription('Welcome to the Welcome Message Editor! This is the editor where you can edit the welcome message, manage settings and enable/disable the system. Use the buttons below to modify your welcome system. You can always discard your settings, save them or modify them later.\n\n⚠ **Note: this is an experimental feature and may break while in use.**')
+            .setTitle('Welcome System Editor')
+            .setDescription('Welcome to the Welcome System Editor! This is your starting point for managing the welcome system editor. Click some of the buttons below to get started. (**please read the experimental label above**)')
             .addFields([
                 {
                     name: 'Syntax',
-                    value: [
-                        { syntax: '{user.username}', desc: 'Display the user\'s username' },
-                        { syntax: '{user.discriminator}', desc: 'Display the user\'s 4-digit discriminator' },
-                        { syntax: '{user.id}', desc: 'Display the user\'s ID' },
-                        { syntax: '{user.tag}', desc: 'Dislay the user\'s full tag' },
-                        { syntax: '{user.mention}', desc: 'Mention the user' },
-                        { syntax: '{user.createdAt[short-time | long time | short date | long date | short date-time | long date-time | relative]}', desc: 'The creation date of the user.' },
-                        { syntax: '{server.name}', desc: 'Display the server name' },
-                        { syntax: '{server.description}', desc: 'Display the server description' },
-                        { syntax: '{server.memberCount[before | after]}', desc: 'Display the server\'s member count.' },
-                        { syntax: '{server.id}', desc: 'Display the server ID' }
-                    ].map((s) => `${inlineCode(s.syntax)} ${italic(s.desc)}`).join('\n')
-                },
-                {
-                    name: 'Examples',
-                    value: [
-                        { syntax: '{user.username}', ex: 'ZBot' },
-                        { syntax: '{user.discriminator}', ex: '9348' },
-                        { syntax: '{user.id}', ex: '956596792542257192' },
-                        { syntax: '{user.tag}', ex: 'ZBot#9348' },
-                        { syntax: '{user.mention}', ex: '<@956596792542257192>' },
-                        { syntax: '{user.createdAt}', ex: '<t:1648140848>' },
-                        { syntax: '{user.createdAt[relative]}', ex: '<t:1648140848:R>' },
-                        { syntax: '{server.name}', ex: interaction.guild.name },
-                        { syntax: '{server.description}', ex: interaction.guild.description || 'This is a server description!' },
-                        { syntax: '{server.memberCount}', ex: interaction.guild.memberCount },
-                        { syntax: '{server.memberCount[before]}', ex: interaction.guild.memberCount - 1 },
-                        { syntax: '{server.id}', ex: interaction.guild.id }
-                    ]
-                    .map(s => `${inlineCode(s.syntax)} ${s.ex}`)
-                    .join('\n')
+                    value: syntax.map(({ name, description, value }) => {
+                        return `${inlineCode(name)} ${description} ${italic(value as string)}`
+                    }).join('\n')
                 }
             ])
 
@@ -415,177 +163,602 @@ const welcomeEditorCommand: Cmd = {
                 channelButton,
                 previewButton,
                 saveButton,
-                discardButton
+                discardButton,
+                toggleEnableButton,
+                completeButton
             ] = [
                 new ButtonBuilder()
                 .setCustomId('edit')
-                .setLabel('Edit Welcome Message')
+                .setLabel('Edit')
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(!serverWelcomeSystem.enabled),
+                .setDisabled(editedSystem.channelId && editedSystem.enabled ? false : true),
                 new ButtonBuilder()
                 .setCustomId('channel')
-                .setLabel('Display or Set Channel')
+                .setLabel('Set Channel')
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(!serverWelcomeSystem.enabled),
+                .setDisabled(!editedSystem.enabled),
                 new ButtonBuilder()
                 .setCustomId('preview')
-                .setLabel('Preview Welcome Message')
+                .setLabel('Preview')
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(!serverWelcomeSystem.enabled),
+                .setDisabled(editedSystem.enabled && (editedSystem.embeds.length || editedSystem.message) ? false : true),
                 new ButtonBuilder()
                 .setCustomId('save')
-                .setLabel('Save Changes')
+                .setLabel('Save')
                 .setStyle(ButtonStyle.Success)
-                .setDisabled(true),
+                .setDisabled(!editedSystem.enabled),
                 new ButtonBuilder()
                 .setCustomId('discard')
-                .setLabel('Discard Changes')
+                .setLabel('Discard')
                 .setStyle(ButtonStyle.Danger)
-                .setDisabled(true)
+                .setDisabled(!editedSystem.enabled),
+                new ButtonBuilder()
+                .setCustomId(!editedSystem.enabled ? 'enable' : 'disable')
+                .setLabel(!editedSystem.enabled ? 'Enable' : 'Disable')
+                .setStyle(!editedSystem.enabled ? ButtonStyle.Success : ButtonStyle.Danger)
+                .setDisabled(false),
+                new ButtonBuilder()
+                .setCustomId('complete')
+                .setLabel('Complete editing')
+                .setStyle(ButtonStyle.Success)
+                .setDisabled(false)
             ]
 
             const [
-                toggleEnableButton
+                editorRow,
+                enablerRow,
+                completionRow
             ] = [
-                new ButtonBuilder()
-                .setDisabled(serverWelcomeSystem.enabled)
-                .setCustomId(serverWelcomeSystem.enabled ? 'disable' : 'enable')
-                .setLabel(serverWelcomeSystem.enabled ? 'Disable Welcome Messages' : 'Enable Welcome Messages')
-                .setStyle(serverWelcomeSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+                new ActionRowBuilder<ButtonBuilder>().addComponents(editButton, channelButton, previewButton, saveButton, discardButton),
+                new ActionRowBuilder<ButtonBuilder>().addComponents(toggleEnableButton),
+                new ActionRowBuilder<ButtonBuilder>().addComponents(completeButton)
             ]
 
-            const editorRow = new ActionRowBuilder<ButtonBuilder>({ components: [editButton, channelButton, previewButton, saveButton, discardButton] })
-            const enablerRow = new ActionRowBuilder<ButtonBuilder>({ components: [toggleEnableButton] })
-
-            const editor = await interaction[interaction.replied ? 'followUp' : 'reply']({
-                embeds: [embed],
+            const reply = await interaction.reply({
                 components: [
                     editorRow,
-                    enablerRow
+                    enablerRow,
+                    completionRow
+                ],
+                embeds: [
+                    embed
                 ],
                 fetchReply: true
             })
 
-            const editorCollector = editor.createMessageComponentCollector({
-                componentType: ComponentType.Button,
-                filter: (interaction) => ['enable', 'disable', 'edit', 'channel', 'preview', 'save', 'discard'].some(s => interaction.customId === s) && !interaction.user.bot
-            })
-
-            editorCollector.on('collect', async (btn) => {
-                if (btn.customId === "enable") {
-                    editButton.setDisabled(false)
-                    channelButton.setDisabled(false)
-                    previewButton.setDisabled(false)
-                    toggleEnableButton
-                    .setCustomId('disable')
-                    .setLabel('Disable Welcome Messages')
-                    .setStyle(ButtonStyle.Danger)
-                    editor[editor.constructor.name === 'Message' ? 'edit' : 'editReply']({
-                        components: [
-                            editorRow,
-                            enablerRow
-                        ]
-                    })
-                    btn.reply({
-                        content: `Enabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
-                        ephemeral: true
-                    })
-                    return
-                } else if (btn.customId === "disable") {
-                    editButton.setDisabled(true)
-                    channelButton.setDisabled(true)
-                    previewButton.setDisabled(true)
-                    saveButton.setDisabled(true)
-                    discardButton.setDisabled(true)
-                    toggleEnableButton
-                    .setCustomId('enable')
-                    .setLabel('Enable Welcome Messages')
-                    .setStyle(ButtonStyle.Success)
-                    editor[editor.constructor.name === 'Message' ? 'edit' : 'editReply']({
-                        components: [
-                            editorRow,
-                            enablerRow
-                        ]
-                    })
-                    btn.reply({
-                        content: `Disabled welcome messages.\n\n⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot's own risk__.** Some buttons, select menus or features may fail, cause the command to behave strangely, or even worse, cause the bot to crash entirely. If using this command, we advise you use this **at the bot's own risk**.\n\n*Think you know what you're doing? Come and help us out in our GitHub issue, [#20 Per-Server Welcome System Editor](https://github.com/Zahid556/ZBot-En/issues/20).\n\n**This command has a due deadline of <t:1663628399:F> (<t:1663628399:R>)***`,
-                        ephemeral: true
-                    })
-                } else if (btn.customId === "edit") {
-                    const cancelButton = new ButtonBuilder()
-                    .setCustomId('cancel')
-                    .setLabel('Cancel Message Edit')
-                    .setStyle(ButtonStyle.Danger)
-
-                    const reply = await btn.reply({
-                        content: `Please type your new message, using the syntax above to help you, and reply to this message for it to be applied. You have 15 minutes to type it up.\n\n*A response is required ${time(Math.floor(Date.now() / 1000) + 900, 'R')}.*`,
-                        components: [
-                                new ActionRowBuilder<ButtonBuilder>()
-                                .addComponents(cancelButton)
-                        ],
-                        fetchReply: true
-                    })
-
-                    const cancelButtonCollector = reply.createMessageComponentCollector({ time: 900000, filter: (interaction) => interaction.customId === 'cancel' })
-
-                    const newMessageCollector = reply.channel.createMessageCollector({
-                        time: 900000
-                    })
-
-                    newMessageCollector.on('collect', (message) => {
-                        message.fetchReference()
-                        .then(async (refMsg) => {
-                            if (refMsg.id !== reply.id) return 
-                            else {
-                                try {
-                                    await message.reply('This message is the same as your previous message. Edit discarded.')
-                                    newMessageCollector.stop()
-                                    cancelButtonCollector.stop()
-                                } catch {
-                                    return
-                                }
-                            }
-                        })
-                        .catch(async (err) => {
-                            console.log(err)
-                            await message.channel.send('An error occured while waiting for the edit message. Edit discarded.')
-                            .catch(() => {return})
-                        })
-                    })
-
-                    cancelButtonCollector.on('collect', async () => {
-                        cancelButton.setDisabled(true)
-                        await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
-                    })
-
-                    newMessageCollector.on('end', async (collected) => {
-                        if (!collected.size) {
-                            await reply.reply('A response wasn\'t received in time.').catch(() => {return})
-                            await reply.edit('A response wasn\'t received in time.').catch(() => {return})
+            const collector = reply.createMessageComponentCollector({
+                filter: async (btn) => {
+                    const isUserBlacklisted = await BlacklistModel.findOne({
+                        where: {
+                            id: btn.user.id
                         }
                     })
 
-                    cancelButtonCollector.on('end', async () => {
-                        cancelButton.setDisabled(true)
-                        await reply.edit({ components: [ new ActionRowBuilder<ButtonBuilder>().addComponents(cancelButton) ] }).catch(() => {return})
-                    })
-                } else if (btn.customId === "channel") {
+                    if (isUserBlacklisted) { 
+                        await btn.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                .setColor(0x000000)
+                            ]
+                        })
+                        return false
+                    }
 
-                } else if (btn.customId === "preview") {
+                    if (btn.user.id !== interaction.user.id) {
+                        await btn.reply({
+                            content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                            ephemeral: true
+                        })
+                        return false
+                    }
 
-                } else if (btn.customId === "save") {
+                    return true
+                }
+            })
 
-                } else if (btn.customId === "discard") {
+            collector.on('collect', async (btn) => {
+                switch (btn.customId) {
+                    case 'edit':
+                        const rpl = await btn.reply({
+                            content: `Type up your new welcome message, while replying to this message, using the syntax to help - this will be saved. If you would like to cancel, type \`cancel\`. ${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 1200, 'R')}`)}`,
+                            fetchReply: true
+                        })
 
-                } else {
-                    await btn.reply({
-                        content: 'Unrecognised button.',
-                        ephemeral: true
-                    })
-                    return
+                        toggleEnableButton
+                        .setDisabled(true)
+                        editButton
+                        .setDisabled(true)
+                        channelButton
+                        .setDisabled(true)
+                        previewButton
+                        .setDisabled(true)
+                        saveButton
+                        .setDisabled(true)
+                        discardButton
+                        .setDisabled(true)
+                        await reply.edit({
+                            components: [
+                                editorRow,
+                                enablerRow,
+                                completionRow
+                            ]
+                        })
+
+                        const filter = rpl.channel.createMessageCollector({
+                            filter: async (msg) => {
+                                if (msg.author.id !== interaction.user.id || msg.reference?.messageId !== rpl.id) return false
+                                return true
+                            },
+                            time: 1200000
+                        })
+
+                        filter.on('collect', async (msg) => {
+                            if (msg.content === 'cancel') {
+                                await rpl.edit('Cancelled.')
+
+                                await msg.reply({
+                                    content: 'Cancelled.',
+                                    allowedMentions: {
+                                        repliedUser: false
+                                    }
+                                })
+                            } else {
+                                editedSystem.message = msg.content
+
+                                await msg.reply({
+                                    content: 'Saved as your message.'
+                                }) 
+                            }
+
+                            filter.stop()
+                        })
+
+                        filter.on('end', async (collected) => {
+                            if (!collected.size) {
+                                await rpl.edit('A response wasn\'t received in time.')
+                                await rpl.reply('A response wasn\'t received in time.')
+                            }
+
+                            toggleEnableButton
+                            .setCustomId('disable')
+                            .setLabel('Disable')
+                            .setStyle(ButtonStyle.Danger)
+                            editButton
+                            .setDisabled(editedSystem.channelId ? false : true)
+                            channelButton
+                            .setDisabled(false)
+                            previewButton
+                            .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
+                            saveButton
+                            .setDisabled(false)
+                            discardButton
+                            .setDisabled(false)
+                            await reply.edit({
+                                components: [
+                                    editorRow,
+                                    enablerRow,
+                                    completionRow
+                                ]
+                            })
+
+                            return
+                        })
+
+                        break
+                    case 'channel':
+                        const channelEditButton = new ButtonBuilder()
+                        .setCustomId(editedSystem.channelId ? 'change' : 'set')
+                        .setLabel(editedSystem.channelId ? 'Change Channel' : 'Set Channel')
+                        .setStyle(ButtonStyle.Primary)
+
+                        if (!editedSystem.channelId) {
+                            await btn.reply({
+                                content: 'This welcome system doesn\'t have a channel to send the messages to!',
+                                components: [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(channelEditButton)
+                                ],
+                                fetchReply: true
+                            })
+                        } else {
+                            try {
+                                const channel = await interaction.client.channels.fetch(editedSystem.channelId)
+                                await btn.reply({
+                                    content: `ZBot's welcome system messages will be sent in ${channel?.toString()}.`,
+                                    components: [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(channelEditButton)
+                                    ],
+                                    fetchReply: true
+                                })
+                            } catch {
+                                await btn.reply({
+                                    content: 'Channel unresolved; has been set to `undefined.`',
+                                    components: [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(channelEditButton)
+                                    ],
+                                    fetchReply: true
+                                })
+                            }
+                        }
+
+                        const fetchedreply = await btn.fetchReply()
+
+                        const fetchedreplyCollector = fetchedreply.createMessageComponentCollector({
+                            filter: async (btn) => {
+                                const isUserBlacklisted = await BlacklistModel.findOne({
+                                    where: {
+                                        id: btn.user.id
+                                    }
+                                })
+
+                                if (isUserBlacklisted) { 
+                                    await btn.reply({
+                                        embeds: [
+                                            new EmbedBuilder()
+                                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                            .setColor(0x000000)
+                                        ]
+                                    })
+                                    return false
+                                }
+
+                                if (btn.user.id !== interaction.user.id) {
+                                    await btn.reply({
+                                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                                        ephemeral: true
+                                    })
+                                    return false
+                                }
+
+                                return true
+                            },
+                            componentType: ComponentType.Button,
+                            time: 120000
+                        })
+
+                        fetchedreplyCollector.on('collect', async (collectedBtn) => {
+                            channelEditButton
+                            .setDisabled(true)
+                            .setLabel('Editing channel...')
+                            .setStyle(ButtonStyle.Secondary)
+
+                            await fetchedreply.edit({
+                                components: [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(channelEditButton)
+                                ]
+                            })
+
+                            const componentReply = await collectedBtn.reply({
+                                content: `Please type the channel (mention or ID) you would like to send the messages to, **while replying to this one**. To cancel, type \`cancel\`. ${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 120, 'R')}`)}`,
+                                fetchReply: true
+                            })
+
+                            const collector = componentReply.channel.createMessageCollector({
+                                filter: (msg) => {
+                                    if (msg.author.id !== interaction.user.id || msg.reference?.messageId !== componentReply.id) return false
+                                    else if (!msg.mentions.channels.size || !msg.content.match(/\d{17,19}/)) return false
+                                    return true
+                                },
+                                time: 120000
+                            })
+
+                            collector.on('collect', async (message) => {
+                                if (message.content === 'cancel') {
+                                    await componentReply.edit('Cancelled.')
+                                    channelEditButton
+                                    .setDisabled(true)
+                                    .setLabel('Channel Set')
+                                    .setStyle(ButtonStyle.Secondary)
+                                    await fetchedreply.edit({
+                                        components: [
+                                            new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(channelEditButton)
+                                        ]
+                                    })
+                                } else {
+                                    try {
+                                        const channel = await interaction.client.channels.fetch(message.content.match(/\d{17,19}/g)?.[0] as string)
+                                        if (!channel?.isTextBased()) {
+                                            await message.reply('Unrecognised channel.')
+                                            return
+                                        }
+                                        editedSystem.channelId = channel?.id
+                                        await componentReply.edit(`ZBot will now send welcome messages in ${channel}!`)
+                                        fetchedreplyCollector.stop()
+                                    } catch {
+                                        await message.reply('Unrecognised channel.')
+                                    } finally {
+                                        channelEditButton
+                                        .setDisabled(false)
+                                        .setLabel(editedSystem.channelId ? 'Change Channel' : 'Set Channel')
+                                        .setStyle(ButtonStyle.Primary)
+                                        await fetchedreply.edit({
+                                            components: [
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                .addComponents(channelEditButton)
+                                            ]
+                                        })
+                                        toggleEnableButton
+                                        .setCustomId('disable')
+                                        .setLabel('Disable')
+                                        .setStyle(ButtonStyle.Danger)
+                                        editButton
+                                        .setDisabled(editedSystem.channelId ? false : true)
+                                        channelButton
+                                        .setDisabled(false)
+                                        previewButton
+                                        .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
+                                        saveButton
+                                        .setDisabled(false)
+                                        discardButton
+                                        .setDisabled(false)
+                                        await reply.edit({
+                                            components: [
+                                                editorRow,
+                                                enablerRow,
+                                                completionRow
+                                            ]
+                                        })
+                                    }
+                                }
+                            })
+
+                            collector.on('end', async (collected) => {
+                                channelEditButton
+                                .setDisabled(true)
+                                .setLabel(!collected.size ? 'No response received' : 'Channel selected')
+                                .setStyle(ButtonStyle.Secondary)
+                                fetchedreply.edit({
+                                    content: !collected.size ? 'A response wasn\'t received in time.' : 'Channel selected.',
+                                    components: [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(channelEditButton)
+                                    ]
+                                })
+                            })
+                        })
+
+                        fetchedreplyCollector.on('end', () => {
+                            channelEditButton.setDisabled(true)
+                            fetchedreply.edit({
+                                components: [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(channelEditButton)
+                                ]
+                            })
+                        })
+
+                        break
+                    case 'preview':
+                        if (!editedSystem.message && !editedSystem.embeds.length) {
+                            await btn.reply({
+                                content: 'You don\'t have a message or any embeds! Click the edit button to edit your message.',
+                                ephemeral: true
+                            })
+                        } else {
+                            try {
+                                await btn.reply({
+                                    content: editedSystem.message
+                                    .replace(/{user\.username}/ig, interaction.member.user.username)
+                                    .replace(/{user\.discriminator}/ig, interaction.member.user.discriminator)
+                                    .replace(/{user\.id}/ig, interaction.member.user.id)
+                                    .replace(/{user\.mention}/ig, interaction.member.user.toString())
+                                    .replace(/{user\.createdAt(?:\[(short time|long time|short date|long date|short date-time|long date-time|relative)\])?}/ig, (testParam) => {
+                                        let timeFormat;
+                                        switch (testParam) {
+                                            case 'short time':
+                                                timeFormat = TimestampStyles.ShortTime
+                                                break
+                                            case 'long time':
+                                                timeFormat = TimestampStyles.LongTime
+                                                break
+                                            case 'short date':
+                                                timeFormat = TimestampStyles.ShortDate
+                                                break
+                                            case 'long date':
+                                                timeFormat = TimestampStyles.LongDate
+                                                break
+                                            case 'short date-time':
+                                                timeFormat = TimestampStyles.ShortDateTime
+                                                break
+                                            case 'long date-time':
+                                                timeFormat = TimestampStyles.LongDateTime
+                                                break
+                                            case 'relative':
+                                                timeFormat = TimestampStyles.RelativeTime
+                                                break
+                                            default:
+                                                timeFormat = TimestampStyles.ShortDateTime
+                                                break
+                                        }
+                                        return time(interaction.member.user.createdAt, timeFormat)
+                                    })
+                                    .replace(/{server\.name}/ig, interaction.member.guild.name)
+                                    .replace(/{server\.description}/ig, interaction.member.guild.description || 'no description')
+                                    .replace(/{server\.memberCount(?:\[(before|after)\])?}/ig, (memberCountBorA) => {
+                                        let memberCountType: 'before' | 'after';
+                                        switch (memberCountBorA) {
+                                            case 'before':
+                                                memberCountType = 'before'
+                                                break
+                                            case 'after':
+                                                memberCountType = 'after'
+                                                break
+                                            default:
+                                                memberCountType = 'after'
+                                                break
+                                        }
+                                        return memberCountType === 'before' ? (interaction.guild.memberCount - 1).toString() : (interaction.guild.memberCount).toString()
+                                    })
+                                    .replace(/{server\.id}/ig, interaction.member.guild.id),
+                                    embeds: editedSystem.embeds
+                                })
+                            } catch {
+                                await btn.reply({
+                                    content: 'There\'s something wrong with either your content, your embed(s) or both!',
+                                    ephemeral: true
+                                })
+                            }
+                        }
+
+                        break
+                    case 'save':
+                        try {
+                            await WelcomeMessageEditorModel.update({
+                                channelId: editedSystem.channelId as string,
+                                message: editedSystem.message,
+                                embeds: editedSystem.embeds,
+                                enabled: editedSystem.enabled
+                            }, {
+                                where: {
+                                    id: interaction.guild.id
+                                }
+                            })
+                            toggleEnableButton
+                            .setDisabled(true)
+                            editButton
+                            .setDisabled(true)
+                            channelButton
+                            .setDisabled(true)
+                            previewButton
+                            .setDisabled(true)
+                            saveButton
+                            .setDisabled(true)
+                            discardButton
+                            .setDisabled(true)
+                            completeButton
+                            .setDisabled(true)
+                            .setLabel('Changes Saved')
+                            .setStyle(ButtonStyle.Secondary)
+                            await reply.edit({
+                                components: [
+                                    editorRow,
+                                    enablerRow,
+                                    completionRow
+                                ]
+                            })
+                            await btn.reply('Changes saved.')
+                            
+                            break
+                        } catch {
+                            await btn.reply({
+                                content: 'An error occured.',
+                                ephemeral: true
+                            })
+                            return
+                        }
+                    case 'enable':
+                        toggleEnableButton
+                        .setCustomId('disable')
+                        .setLabel('Disable')
+                        .setStyle(ButtonStyle.Danger)
+                        if (serverWelcomeSystem.enabled || editedSystem.enabled) {
+                            await btn.reply({
+                                content: 'The server welcome system is already enabled!',
+                                ephemeral: true
+                            })
+                        } else {
+                            editedSystem.enabled = true
+                            await btn.reply({
+                                content: 'Server welcome system enabled.',
+                                ephemeral: true
+                            })
+                        }
+                        editButton
+                        .setDisabled(editedSystem.channelId ? false : true)
+                        channelButton
+                        .setDisabled(false)
+                        previewButton
+                        .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
+                        saveButton
+                        .setDisabled(false)
+                        discardButton
+                        .setDisabled(false)
+                        await reply.edit({
+                            components: [
+                                editorRow,
+                                enablerRow,
+                                completionRow
+                            ]
+                        })
+                        break
+                    case 'disable':
+                        toggleEnableButton
+                        .setCustomId('enable')
+                        .setLabel('Enable')
+                        .setStyle(ButtonStyle.Success)
+                        if (!(serverWelcomeSystem.enabled || editedSystem.enabled)) {
+                            await btn.reply({
+                                content: 'The server welcome system isn\'t enabled!',
+                                ephemeral: true
+                            })
+                        } else {
+                            editedSystem.enabled = false
+                            await btn.reply({
+                                content: 'Server welcome system disabled.',
+                                ephemeral: true
+                            })
+                        }
+                        editButton
+                        .setDisabled(true)
+                        channelButton
+                        .setDisabled(true)
+                        previewButton
+                        .setDisabled(true)
+                        saveButton
+                        .setDisabled(true)
+                        discardButton
+                        .setDisabled(true)
+                        await reply.edit({
+                            components: [
+                                editorRow,
+                                enablerRow,
+                                completionRow
+                            ]
+                        })
+                        break
+                    case 'discard':
+                    case 'complete':
+                        editButton.setDisabled(true)
+                        channelButton.setDisabled(true)
+                        previewButton.setDisabled(true)
+                        saveButton.setDisabled(true)
+                        discardButton.setDisabled(true)
+                        toggleEnableButton.setDisabled(true)
+                        completeButton
+                        .setDisabled(true)
+                        .setLabel(btn.customId === 'complete' ? 'Editing complete' : 'Changes Discarded')
+                        .setStyle(ButtonStyle.Secondary)
+                        await reply.edit({
+                            components: [
+                                editorRow,
+                                enablerRow,
+                                completionRow
+                            ]
+                        })
+                        await btn.reply({
+                            content: 'All your changes have been discarded.',
+                            ephemeral: true
+                        })
+                        collector.stop()
+                        break
+                    default:
+                        await btn.reply({
+                            content: 'Unrecognised button.',
+                            ephemeral: true
+                        })
+                        break
                 }
             })
         }
+
+        return
     }
 }
 

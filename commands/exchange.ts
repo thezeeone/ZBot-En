@@ -1,5 +1,5 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, inlineCode, ButtonBuilder, ButtonStyle, ActionRowBuilder, bold, italic, time, ComponentType } from "discord.js"
-import { LevelModel, EconomyModel } from "../database"
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, inlineCode, ButtonBuilder, ButtonStyle, ActionRowBuilder, bold, italic, time, ComponentType, EmbedBuilder, underscore } from "discord.js"
+import { LevelModel, EconomyModel, BlacklistModel } from "../database"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
 const exchangeCommand: Cmd = {
@@ -9,11 +9,9 @@ const exchangeCommand: Cmd = {
         options: [
             {
                 name: 'xp-amounts',
-                description: 'How many sets of 50 XP you want to trade (1 to 25)',
+                description: 'How many sets of 50 XP you want to trade',
                 type: ApplicationCommandOptionType.Integer,
-                required: true,
-                minValue: 1,
-                maxValue: 25
+                required: true
             }
         ]
     },
@@ -68,17 +66,39 @@ const exchangeCommand: Cmd = {
 
         const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
             componentType: ComponentType.Button,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+                
+                if (btn.user.id !== interaction.user.id) {
+                    await btn.reply({
+                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                else return true
+            },
             time: 120000
         })
 
         confirmationCollector.on('collect', async (button): Promise<any> => {
-            if (button.user.id !== interaction.user.id) {
-                confirmationCollector.dispose(button)
-                return await button.reply({
-                    content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
-                    ephemeral: true
-                })
-            }
             if (button.customId === 'yes') {
                 const original = await interaction.fetchReply()
                 yesButton.setDisabled(true)
@@ -107,10 +127,10 @@ const exchangeCommand: Cmd = {
                 }) 
                 else await EconomyModel.create({
                     wallet: XPamounts / 2,
-                    maxBank: (((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) + 3) * 50,
-                    maxWallet: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
+                    maxBank: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
                     bank: 0,
-                    id: interaction.user.id
+                    id: interaction.user.id,
+                    maxWallet: (((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) + 3) * 50
                 })
 
                 await LevelModel.increment({
@@ -153,7 +173,7 @@ const exchangeCommand: Cmd = {
                     content: 'Exchange cancelled.',
                     components: [ confirmationRow ]
                 })
-                return button.reply(`You cancelled the exchange.\n${
+                await button.reply(`You cancelled the exchange.\n${
                     Math.random() < 0.1
                     ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
                     : ''
@@ -171,29 +191,14 @@ const exchangeCommand: Cmd = {
                     content: 'A response wasn\'t received in time.',
                     components: [ confirmationRow ]
                 })
-                try {
-                    await interaction.followUp('A response wasn\'t received in time.')
-                } catch {
-                    return await interaction.channel?.send('An error occured with the original message - exchange cancelled.')
-                }
+                return await interaction.followUp('A response wasn\'t received in time.')
             }
         })
-
-        return
     }
 }
 
 function triangularNumbers(num: number): number {
-    if (num <= 1) return num
-
-    let a = 0
-    let i = 0
-
-    for (a; a <= num; a++) {
-        i += a
-    }
-
-    return i
+    return ((num) * (num + 1)) / 2
 }
 
 export {
