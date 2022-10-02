@@ -1,4 +1,6 @@
 # ZBot-En
+*This README is more than 2 and a half months old. Please update this later.*
+
 *هذه هي النسخة الإنجليزية لهذا الآلة. للنسخة العربية، [انقر على هذا الرابط](https://github.com/Zahid556/ZBot-Ar).*
 
 *Esta es la versión inglesa de este bot. Para la versión española, [haz click en este enlace](https://www.yout-ube.com/watch?v=BT9h5ifR1tY).*
