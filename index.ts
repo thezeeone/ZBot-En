@@ -107,14 +107,6 @@ client.on('ready', async () => {
                                     return false
                                 }
 
-                                console.log(
-                                    (await TicketSystemModel.findAll({
-                                        where: {
-                                            creator: msg.author.id,
-                                            closed: false
-                                        }
-                                    }))
-                                )
                                 if ((await TicketSystemModel.findAll({
                                     where: {
                                         creator: msg.author.id,
@@ -123,12 +115,8 @@ client.on('ready', async () => {
                                 })).length > 1) {
                                     try {
                                         const reference = await msg.fetchReference()
-                                        console.log(`[${associatedTicket.id}] [COLLECTOR FILTER] Message reference ${reference.id} with content "${reference.content}" and ${reference.attachments.size} attachment(s).`)
-                                        console.log(reference.embeds[0]?.title)
                                         if (reference.embeds[0]?.title?.startsWith('Ticket #')) {
-                                            console.log(reference.embeds[0].title.replace('Ticket #', ''))
                                             const ticketNum = Number(reference.embeds[0].title.replace('Ticket #', ''))
-                                            console.log(ticketNum)
                                             const foundTicket = await TicketSystemModel.findOne({
                                                 where: {
                                                     id: ticketNum
@@ -136,9 +124,12 @@ client.on('ready', async () => {
                                             })
                                             if (foundTicket && !foundTicket.closed && foundTicket.id === associatedTicket.id) {
                                                 return true
-                                                }
-                                            } else return false
-                                        } else return false
+                                            } else {
+                                                return false
+                                            }
+                                        } else {
+                                            return false
+                                        }
                                     } catch {
                                         console.log(repliedMessages)
                                         if (repliedMessages.has(msg.id)) return false
