@@ -104,6 +104,7 @@ client.on('ready', async () => {
                         const DMCollector = (dmChannel as DMChannel).createMessageCollector({
                             filter: async (msg) => {
                                 if (msg.author.bot) {
+                                    return false
                                 }
 
                                 console.log(
