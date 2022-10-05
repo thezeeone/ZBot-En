@@ -132,7 +132,7 @@ const helpCommand: Cmd = {
             },
             {
                 name: 'Links',
-                embedDescription: `**__Links__**\n**Join our support server,** [ZBot Server (En)](https://discord.gg/6tkn6m5g52).\n**Add this bot to your server** with [this invite link](https://discord.com/oauth2/authorize?client_id=956596792542257192&permissions=1644971949559&scope=bot%20applications.commands) (all permissions).\n**See our GitHub repository:** [Zahid556/ZBot-En](https://github.com/Zahid556/ZBot-Ar)\n**Read the Discord Guidelines** [here](https://discord.com/community-guidelines), the **Discord Terms of Service** [here](https://discord.com/terms) or the **Discord Privacy Policy** [here](https://discord.com/privacy).`,
+                embedDescription: `**__Links__**\n**Join our support server,** [ZBot Server (En)](https://discord.gg/6tkn6m5g52).\n**Add this bot to your server** with [this invite link](https://discord.com/oauth2/authorize?client_id=956596792542257192&permissions=1644971949559&scope=bot%20applications.commands) (all permissions).\n**See our GitHub repository:** [thezeeonee/ZBot-En](https://github.com/thezeeoneee/ZBot-Ar)\n**Read the Discord Guidelines** [here](https://discord.com/community-guidelines), the **Discord Terms of Service** [here](https://discord.com/terms) or the **Discord Privacy Policy** [here](https://discord.com/privacy).`,
                 selectMenuDescription: 'See available links',
                 commands: []
             }

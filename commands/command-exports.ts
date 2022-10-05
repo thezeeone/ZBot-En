@@ -1,4 +1,4 @@
-import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, GuildResolvable, TextBasedChannelResolvable, User } from "discord.js";
+import { ApplicationCommandData, ChatInputCommandInteraction, ContextMenuCommandInteraction } from "discord.js";
 
 interface Cmd {
     data: ApplicationCommandData,
@@ -28,6 +28,8 @@ import { balanceCommand } from "./balance";
 import { depositCommand } from "./deposit";
 import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
+import { ticketCommand } from "./ticket"
+import { imageCommand } from "./image"
 
 const tipsAndTricks = [
   /**
@@ -37,6 +39,7 @@ const tipsAndTricks = [
     * Every day this gets longer, so it gets harder to encounter all!
     * For now, just enjoy the source code.
   */
+ 'Coming soon!'
 ] as const
 
 export {
@@ -64,5 +67,7 @@ export {
     balanceCommand,
     depositCommand,
     withdrawCommand,
-    giveCommand
+    giveCommand,
+    ticketCommand,
+    imageCommand
 }

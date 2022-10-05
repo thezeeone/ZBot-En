@@ -1,11 +1,13 @@
-import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel } from "discord.js"
+import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel, CategoryChannel, ChannelType, DMChannel, time, OverwriteType, bold } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel, RankCardModel } from "./database"
-import { pluralise } from "./util"
+import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, imageCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, quizCommand } from "./commands/command-exports"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel } from "./database"
+import { commaList, pluralise } from "./util"
+
+const repliedMessages = new Set<string>()
 
 const commands: Cmd[] = [
     rankCommand,
@@ -29,7 +31,13 @@ const commands: Cmd[] = [
     balanceCommand,
     withdrawCommand,
     depositCommand,
-    giveCommand
+    giveCommand,
+    ticketCommand,
+    imageCommand,
+    reportMemberCommand,
+    reportMessageCommand,
+    questionCommand,
+    quizCommand
 ]
 
 const privateCommands: Cmd[] = [
@@ -72,7 +80,351 @@ client.on('ready', async () => {
             privateCommands.map(p => p.data),
             '1000073833551769600'
         )
-    );
+
+    const ticketsCategory = <CategoryChannel>await client.channels.fetch('1021361153202470942')
+
+    ticketsCategory.children.cache
+        .filter((c): c is TextChannel => c.type === ChannelType.GuildText)
+        .forEach(async (channel) => {
+            const associatedTicket = await TicketSystemModel.findOne({
+                where: {
+                    ticketChannelId: channel.id
+                }
+            })
+
+            if (!associatedTicket || associatedTicket.closed) {
+                try {
+                    await channel.delete()
+                } catch {
+                    return
+                }
+            } else {
+                client.channels.fetch(associatedTicket.ticketRecipientChannelId)
+                    .then(async (dmChannel) => {
+                        const DMCollector = (dmChannel as DMChannel).createMessageCollector({
+                            filter: async (msg) => {
+                                if (msg.author.bot) {
+                                }
+
+                                console.log(
+                                    (await TicketSystemModel.findAll({
+                                        where: {
+                                            creator: msg.author.id,
+                                            closed: false
+                                        }
+                                    }))
+                                )
+                                if ((await TicketSystemModel.findAll({
+                                    where: {
+                                        creator: msg.author.id,
+                                        closed: false
+                                    }
+                                })).length > 1) {
+                                    try {
+                                        const reference = await msg.fetchReference()
+                                        console.log(`[${associatedTicket.id}] [COLLECTOR FILTER] Message reference ${reference.id} with content "${reference.content}" and ${reference.attachments.size} attachment(s).`)
+                                        console.log(reference.embeds[0]?.title)
+                                        if (reference.embeds[0]?.title?.startsWith('Ticket #')) {
+                                            console.log(reference.embeds[0].title.replace('Ticket #', ''))
+                                            const ticketNum = Number(reference.embeds[0].title.replace('Ticket #', ''))
+                                            console.log(ticketNum)
+                                            const foundTicket = await TicketSystemModel.findOne({
+                                                where: {
+                                                    id: ticketNum
+                                                }
+                                            })
+                                            if (foundTicket && !foundTicket.closed && foundTicket.id === associatedTicket.id) {
+                                                return true
+                                                }
+                                            } else return false
+                                        } else return false
+                                    } catch {
+                                        console.log(repliedMessages)
+                                        if (repliedMessages.has(msg.id)) return false
+                                        msg.reply({
+                                            content: `You currently have ${bold(pluralise((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length, 'open ticket', 'open tickets'))} open (${(await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 3
+                                                ? `${commaList((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).slice(0, 3).map(s => `Ticket #${s.id}`).concat(`${(await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length - 3} more`))}`
+                                                : commaList((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).map(s => `Ticket #${s.id}`))
+                                                }). If you would like to get your message sent to a specific ticket, reply to one of the embeds sent by the bot.`,
+                                            allowedMentions: {
+                                                repliedUser: false
+                                            }
+                                        })
+                                        .then((reply) => {
+                                            repliedMessages.set(reply.id, msg.id)
+                                            console.log(repliedMessages)
+                                        })
+                                        return false
+                                    }
+                                } else {
+                                    if ((await TicketSystemModel.findAll({
+                                        where: {
+                                            creator: msg.author.id,
+                                            closed: false
+                                        }
+                                    })).length === 0) {
+                                        console.log('No tickets open.')
+                                        return false
+                                    }
+                                    return true
+                                }
+                            },
+                            time: 2700000
+                        })
+
+                        collector.on('collect', (msg) => {
+                            collector.resetTimer()
+                            try {
+                                const embed = new EmbedBuilder()
+                                    .setAuthor({
+                                        name: `${msg.author.tag} (${msg.author.id})`,
+                                        iconURL: msg.author.displayAvatarURL({ forceStatic: false })
+                                    })
+                                    .setColor(0x00ffff)
+                                    .setTitle(`Ticket #${associatedTicket.id}`)
+
+                                if (msg.content) embed.setDescription(msg.content)
+                                if (msg.attachments.size) embed.setFields([
+                                    {
+                                        name: 'Attachments',
+                                        value: msg.attachments
+                                            .map((v) => {
+                                                return `[${v.name || `unknown${v.contentType ? `.${v.contentType}` : ''}`}](${v.proxyURL})`
+                                            })
+                                            .join('\n')
+                                    }
+                                ]);
+
+                                (dmChannel as DMChannel)?.send({
+                                    embeds: [
+                                        embed
+                                    ]
+                                })
+                                    .then(async () => {
+                                        await msg.react('✅')
+                                    })
+                            } catch {
+                                msg.react('❌')
+                                    .then(async () => {
+                                        await msg.channel.send({
+                                            embeds: [
+                                                new EmbedBuilder()
+                                                    .setColor(0xff0000)
+                                                    .setTitle(`Ticket #${associatedTicket.id} closed`)
+                                                    .setDescription(`Couldn\'t DM the recipient. You can no longer send messages through this ticket.\n\n${italic(`This channel will be deleted ${time(Math.floor(Date.now() / 1000) + 600, 'R')}`)}`)
+                                            ]
+                                        })
+                                        channel?.permissionOverwrites.set([
+                                            {
+                                                id: (msg.guild as Guild).id,
+                                                type: OverwriteType.Role,
+                                                deny: PermissionsBitField.Flags.ViewChannel
+                                            },
+                                            ...['1000082840697970870', '1021429868900134952', '1016681069703073823', '1000076492023267429', '1013960404797493398', '1023228765934981230', '1014969108401500180']
+                                                .map((s) => {
+                                                    return {
+                                                        id: s,
+                                                        type: OverwriteType.Role,
+                                                        allow: PermissionsBitField.Flags.ViewChannel,
+                                                        deny: PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles | PermissionsBitField.Flags.EmbedLinks | PermissionsBitField.Flags.AddReactions | PermissionsBitField.Flags.ManageMessages
+                                                    }
+                                                })
+                                        ])
+                                        setTimeout(() => {
+                                            try {
+                                                (channel as TextChannel).delete()
+                                            } catch {
+                                                return
+                                            }
+                                        }, 600000)
+                                    })
+                                    .finally(() => {
+                                        collector.stop()
+                                        DMCollector.stop()
+                                    })
+                            }
+                        })
+
+                        DMCollector.on('collect', async (msg) => {
+                            DMCollector.resetTimer()
+
+                            if ((await TicketSystemModel.findAll({
+                                where: {
+                                    creator: msg.author.id,
+                                    closed: false
+                                }
+                            })).length === 0) return
+                            else if ((await TicketSystemModel.findAll({
+                                where: {
+                                    creator: msg.author.id,
+                                    closed: false
+                                }
+                            })).length === 1) {
+                                const ticket = Number(msg.embeds[0]?.title?.replace('Ticket #', ''))
+                                if (isNaN(ticket)) return
+                                const ticketNumber = await TicketSystemModel.findByPk(ticket)
+                                const ticketChannel = await client.channels.fetch(ticketNumber?.ticketChannelId as string) as TextChannel
+                                try {
+                                    const embed = new EmbedBuilder()
+                                        .setAuthor({
+                                            name: `${msg.author.tag} (${msg.author.id})`,
+                                            iconURL: msg.author.displayAvatarURL({ forceStatic: false })
+                                        })
+                                        .setColor(0x00ffff)
+
+                                    if (msg.content) embed.setDescription(msg.content)
+                                    if (msg.attachments.size) embed.setFields([
+                                        {
+                                            name: 'Attachments',
+                                            value: msg.attachments
+                                                .map((v) => {
+                                                    return `[${v.name || `unknown${v.contentType ? `.${v.contentType}` : ''}`}](${v.proxyURL})`
+                                                })
+                                                .join('\n')
+                                        }
+                                    ]);
+                                    if ((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 1) {
+                                        embed.setFooter({ text: 'You have more than one ticket open. If you would like to get your message sent to this ticket, please reply to this message.' })
+                                    } else {
+                                        embed.setFooter({ text: 'This is the only ticket you have open as of now. You do not need to reply to this message for your message to be sent.' })
+                                    }
+
+                                    ticketChannel.send({
+                                        embeds: [
+                                            embed
+                                        ]
+                                    })
+                                        .then(async () => {
+                                            await msg.react('✅')
+                                        })
+                                } catch {
+                                    msg.react('❌')
+                                        .then(async () => {
+                                            await msg.channel.send({
+                                                embeds: [
+                                                    new EmbedBuilder()
+                                                        .setColor(0xff0000)
+                                                        .setTitle(`Ticket #${(await TicketSystemModel.findByPk(ticket) as TicketSystemModel).id} closed`)
+                                                        .setDescription(`Couldn\'t send your message to the staff. You can no longer send messages through this ticket.`)
+                                                ]
+                                            })
+                                            ticketChannel.permissionOverwrites.set([
+                                                {
+                                                    id: (msg.guild as Guild).id,
+                                                    type: OverwriteType.Role,
+                                                    deny: PermissionsBitField.Flags.ViewChannel
+                                                },
+                                                ...['1000082840697970870', '1021429868900134952', '1016681069703073823', '1000076492023267429', '1013960404797493398', '1023228765934981230', '1014969108401500180']
+                                                    .map((s) => {
+                                                        return {
+                                                            id: s,
+                                                            type: OverwriteType.Role,
+                                                            allow: PermissionsBitField.Flags.ViewChannel,
+                                                            deny: PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles | PermissionsBitField.Flags.EmbedLinks | PermissionsBitField.Flags.AddReactions | PermissionsBitField.Flags.ManageMessages
+                                                        }
+                                                    })
+                                            ])
+                                            setTimeout(() => {
+                                                try {
+                                                    ticketChannel.delete()
+                                                } catch {
+                                                    return
+                                                }
+                                            }, 600000)
+                                        })
+                                        .finally(() => {
+                                            collector.stop()
+                                            DMCollector.stop()
+                                        })
+                                }
+                            } else {
+                                msg.fetchReference()
+                                    .then(async (reference) => {
+                                        const ticket = Number(reference.embeds[0]?.title?.replace('Ticket #', ''))
+                                        const ticketNumber = await TicketSystemModel.findByPk(ticket)
+                                        const ticketChannel = await client.channels.fetch(ticketNumber?.ticketChannelId as string) as TextChannel
+                                        try {
+                                            const embed = new EmbedBuilder()
+                                                .setAuthor({
+                                                    name: `${msg.author.tag} (${msg.author.id})`,
+                                                    iconURL: msg.author.displayAvatarURL({ forceStatic: false })
+                                                })
+                                                .setColor(0x00ffff)
+
+                                            if (msg.content) embed.setDescription(msg.content)
+                                            if (msg.attachments.size) embed.setFields([
+                                                {
+                                                    name: 'Attachments',
+                                                    value: msg.attachments.size
+                                                    ? pluralise(msg.attachments.size, 'attachment')
+                                                    : '*None*'
+                                                }
+                                            ]);
+                                            if ((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 1) {
+                                                embed.setFooter({ text: 'You have more than one ticket open. If you would like to get your message sent to this ticket, please reply to this message.' })
+                                            } else {
+                                                embed.setFooter({ text: 'This is the only ticket you have open as of now. You do not need to reply to this message for your message to be sent.' })
+                                            }
+
+                                            ticketChannel.send({
+                                                embeds: [
+                                                    embed
+                                                ],
+                                                files: [...msg.attachments.values()]
+                                            })
+                                                .then(async () => {
+                                                    await msg.react('✅')
+                                                })
+                                        } catch {
+                                            msg.react('❌')
+                                                .then(async () => {
+                                                    await msg.channel.send({
+                                                        embeds: [
+                                                            new EmbedBuilder()
+                                                                .setColor(0xff0000)
+                                                                .setTitle(`Ticket #${(await TicketSystemModel.findByPk(ticket) as TicketSystemModel).id} closed`)
+                                                                .setDescription(`Couldn\'t send your message to the staff. You can no longer send messages through this ticket.`)
+                                                        ]
+                                                    })
+                                                    ticketChannel.permissionOverwrites.set([
+                                                        {
+                                                            id: (msg.guild as Guild).id,
+                                                            type: OverwriteType.Role,
+                                                            deny: PermissionsBitField.Flags.ViewChannel
+                                                        },
+                                                        ...['1000082840697970870', '1021429868900134952', '1016681069703073823', '1000076492023267429', '1013960404797493398', '1023228765934981230', '1014969108401500180']
+                                                            .map((s) => {
+                                                                return {
+                                                                    id: s,
+                                                                    type: OverwriteType.Role,
+                                                                    allow: PermissionsBitField.Flags.ViewChannel,
+                                                                    deny: PermissionsBitField.Flags.SendMessages | PermissionsBitField.Flags.AttachFiles | PermissionsBitField.Flags.EmbedLinks | PermissionsBitField.Flags.AddReactions | PermissionsBitField.Flags.ManageMessages
+                                                                }
+                                                            })
+                                                    ])
+                                                    setTimeout(() => {
+                                                        try {
+                                                            ticketChannel.delete()
+                                                        } catch {
+                                                            return
+                                                        }
+                                                    }, 600000)
+                                                })
+                                                .finally(() => {
+                                                    collector.stop()
+                                                    DMCollector.stop()
+                                                })
+                                        }
+                                    })
+                                    .catch(() => null)
+                            }
+                        })
+                    })
+                    .catch(async () => {
+                        return
+                    })
+            }
+        })
 
     const customStatuses: Array<ActivitiesOptions> = [
         {
