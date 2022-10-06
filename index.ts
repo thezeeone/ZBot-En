@@ -1,10 +1,10 @@
-import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel, CategoryChannel, ChannelType, DMChannel, time, OverwriteType, bold } from "discord.js"
+import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel, CategoryChannel, ChannelType, DMChannel, time, OverwriteType, bold, TimestampStyles } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
 import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, imageCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, quizCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel } from "./database"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel, WelcomeMessageEditorModel } from "./database"
 import { commaList, pluralise } from "./util"
 
 const repliedMessages = new Set<string>()
@@ -60,7 +60,7 @@ const client = new Client({
 
 client.on('ready', async () => {
     console.log('Client is now ready!')
-
+    
     sequelize.authenticate().then(() => {
         console.log("Successfully connected to database")
     })
@@ -444,6 +444,83 @@ client.on('ready', async () => {
     }, 300000)
 })
 
+client.on('guildMemberAdd', async (member) => {
+    const serverWelcomeSystem = await WelcomeMessageEditorModel.findOne({
+        where: {
+            id: member.guild.id
+        }
+    })
+
+    if (!serverWelcomeSystem) return
+
+    try {
+        const channel = await member.client.channels.fetch(serverWelcomeSystem.channelId || '')
+
+        if (!channel?.isTextBased()) return
+
+        channel?.send({
+            content: serverWelcomeSystem.message 
+            ? serverWelcomeSystem.message
+            .replace(/{user\.username}/ig, member.user.username)
+            .replace(/{user\.discriminator}/ig, member.user.discriminator)
+            .replace(/{user\.id}/ig, member.user.id)
+            .replace(/{user\.mention}/ig, member.user.toString())
+            .replace(/{user\.createdAt(?:\[(short time|long time|short date|long date|short date-time|long date-time|relative)\])?}/ig, (testParam) => {
+                let timeFormat;
+                switch (testParam) {
+                    case 'short time':
+                        timeFormat = TimestampStyles.ShortTime
+                        break
+                    case 'long time':
+                        timeFormat = TimestampStyles.LongTime
+                        break
+                    case 'short date':
+                        timeFormat = TimestampStyles.ShortDate
+                        break
+                    case 'long date':
+                        timeFormat = TimestampStyles.LongDate
+                        break
+                    case 'short date-time':
+                        timeFormat = TimestampStyles.ShortDateTime
+                        break
+                    case 'long date-time':
+                        timeFormat = TimestampStyles.LongDateTime
+                        break
+                    case 'relative':
+                        timeFormat = TimestampStyles.RelativeTime
+                        break
+                    default:
+                        timeFormat = TimestampStyles.ShortDateTime
+                        break
+                }
+                return time(member.user.createdAt, timeFormat)
+            })
+            .replace(/{server\.name}/ig, member.guild.name)
+            .replace(/{server\.description}/ig, member.guild.description || 'no description')
+            .replace(/{server\.memberCount(?:\[(before|after)\])?}/ig, (memberCountBorA) => {
+                let memberCountType: 'before' | 'after';
+                switch (memberCountBorA) {
+                    case 'before':
+                        memberCountType = 'before'
+                        break
+                    case 'after':
+                        memberCountType = 'after'
+                        break
+                    default:
+                        memberCountType = 'after'
+                        break
+                }
+                return memberCountType === 'before' ? (member.guild.memberCount - 1).toString() : (member.guild.memberCount).toString()
+            })
+            .replace(/{server\.id}/ig, member.guild.id)
+            : '',
+            embeds: serverWelcomeSystem.embeds
+        })
+    } catch {
+        return
+    }
+})
+
 client.on('interactionCreate', async (interaction): Promise<any> => {
     if (interaction.type === InteractionType.ApplicationCommand) {
         const isBlacklist = await BlacklistModel.findOne({
@@ -558,7 +635,7 @@ client.on('messageCreate', async (message): Promise<any> => {
     const attachments = message.attachments
 
     const totalXP = (
-        attachments.size * 100
+        attachments.size * 20
     ) + (
             words.length >= 3
                 ? (
@@ -570,10 +647,10 @@ client.on('messageCreate', async (message): Promise<any> => {
                     }).reduce((a, b) => a + b, 0)
                 )
                 : 0
-        ) >= (attachments.size * 100 + 40)
-        ? (attachments.size * 100 + 40)
+        ) >= (attachments.size * 20 + 40)
+        ? (attachments.size * 20 + 40)
         : (
-            attachments.size * 100
+            attachments.size * 20
         ) + (
             words.length >= 3
                 ? (

@@ -1,8 +1,8 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ApplicationCommandOptionType, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
-import { Cmd } from "./command-exports";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
+import { BlacklistModel } from "../database";
+import { Cmd, imageCommand } from "./command-exports";
 import {
     banCommand,
-    exchangeCommand,
     gtwCommand,
     inviteCommand,
     kickCommand,
@@ -20,7 +20,14 @@ import {
     balanceCommand,
     withdrawCommand,
     depositCommand,
-    giveCommand
+    exchangeCommand,
+    giveCommand,
+    channelWLCommand,
+    channelBLCommand,
+    questionCommand,
+    ticketCommand,
+    reportMemberCommand,
+    reportMessageCommand
 } from './command-exports'
 
 const helpCommand: Cmd = {
@@ -29,20 +36,6 @@ const helpCommand: Cmd = {
         description: 'Get all info about this bot'
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
-        // const optionTypes = {
-        //     [ApplicationCommandOptionType.Attachment]: 'ATTACHMENT',
-        //     [ApplicationCommandOptionType.Boolean]: 'BOOLEAN',
-        //     [ApplicationCommandOptionType.Channel]: 'CHANNEL',
-        //     [ApplicationCommandOptionType.Integer]: 'INTEGER',
-        //     [ApplicationCommandOptionType.Mentionable]: 'MENTIONABLE',
-        //     [ApplicationCommandOptionType.Number]: 'NUMBER',
-        //     [ApplicationCommandOptionType.Role]: 'ROLE',
-        //     [ApplicationCommandOptionType.String]: 'STRING',
-        //     [ApplicationCommandOptionType.Subcommand]: 'SUBCOMMAND',
-        //     [ApplicationCommandOptionType.SubcommandGroup]: 'SUBCOMMAND GROUP',
-        //     [ApplicationCommandOptionType.User]: 'USER'
-        // }
-
         const groups: Array<{
             name: string,
             embedDescription: string,
@@ -75,7 +68,9 @@ const helpCommand: Cmd = {
                 selectMenuDescription: 'See all commands relating to ZBot level system',
                 commands: [
                     rankCommand.data,
-                    leaderboardCommand.data
+                    leaderboardCommand.data,
+                    channelWLCommand.data,
+                    channelBLCommand.data
                 ]
             },
             {
@@ -94,7 +89,8 @@ const helpCommand: Cmd = {
                 selectMenuDescription: 'See miscellaneous commands',
                 commands: [
                     pingCommand.data,
-                    reportCommand.data
+                    reportCommand.data,
+                    questionCommand.data
                 ]
             },
             {
@@ -126,13 +122,25 @@ const helpCommand: Cmd = {
             },
             {
                 name: 'Ticket System',
-                embedDescription: italic("Coming soon!"),
-                selectMenuDescription: 'Ticket System (coming soon)',
-                commands: []
+                embedDescription: 'The ticket system is a system that helps members to communicate to staff quicker! Tickets close after 45 minutes of inactivity.',
+                selectMenuDescription: 'View ticket system and commands',
+                commands: [
+                    ticketCommand.data,
+                    reportMemberCommand.data,
+                    reportMessageCommand.data
+                ]
+            },
+            {
+                name: 'Experimental Commands and Features',
+                embedDescription: `Some of the experimental commands you may come across.\n\n⚠ **Note: these are experimental features and may break while in use.**`,
+                selectMenuDescription: 'View features under testing',
+                commands: [
+                    imageCommand.data
+                ]
             },
             {
                 name: 'Links',
-                embedDescription: `**__Links__**\n**Join our support server,** [ZBot Server (En)](https://discord.gg/6tkn6m5g52).\n**Add this bot to your server** with [this invite link](https://discord.com/oauth2/authorize?client_id=956596792542257192&permissions=1644971949559&scope=bot%20applications.commands) (all permissions).\n**See our GitHub repository:** [thezeeonee/ZBot-En](https://github.com/thezeeoneee/ZBot-Ar)\n**Read the Discord Guidelines** [here](https://discord.com/community-guidelines), the **Discord Terms of Service** [here](https://discord.com/terms) or the **Discord Privacy Policy** [here](https://discord.com/privacy).`,
+                embedDescription: `**__Links__**\n**Join our support server,** [ZBot Server (En)](https://discord.gg/6tkn6m5g52).\n**Add this bot to your server** with [this invite link](https://discord.com/oauth2/authorize?client_id=956596792542257192&permissions=1644971949559&scope=bot%20applications.commands) (all permissions).\n**See our GitHub repository:** [Zahid556/ZBot-En](https://github.com/Zahid556/ZBot-Ar)\n**Read the Discord Guidelines** [here](https://discord.com/community-guidelines), the **Discord Terms of Service** [here](https://discord.com/terms) or the **Discord Privacy Policy** [here](https://discord.com/privacy).`,
                 selectMenuDescription: 'See available links',
                 commands: []
             }
@@ -208,18 +216,39 @@ const helpCommand: Cmd = {
 
         const collector = reply.createMessageComponentCollector({
             componentType: ComponentType.Button,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+
+                if (btn.user.id !== interaction.user.id) {
+                    await btn.reply({
+                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                        ephemeral: true
+                    })
+                    return false
+                }
+
+                return true
+            },
             time: 180000
         })
 
         collector.on('collect', async (button) => {
-            if (button.user.id !== interaction.user.id) {
-                await button.reply({
-                    content: 'These buttons aren\'t for you!',
-                    ephemeral: true
-                })
-                return
-            }
-
             const customId = button.customId
 
             if (customId === 'previous') {
@@ -418,6 +447,7 @@ const helpCommand: Cmd = {
                     components: [
                         selectMenu
                     ],
+                    ephemeral: true,
                     fetchReply: true
                 })
 

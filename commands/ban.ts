@@ -1,4 +1,5 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time } from "discord.js"
+import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time, underscore } from "discord.js"
+import { BlacklistModel } from "../database"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -20,8 +21,10 @@ const banCommand: Cmd = {
                     },
                     {
                         name: 'reason',
-                        description: 'The reason for banning this user',
+                        description: 'The reason for banning this user (max len 200)',
                         type: ApplicationCommandOptionType.String,
+                        minLength: 1,
+                        maxLength: 200,
                         required: false
                     },
                     {
@@ -80,8 +83,10 @@ const banCommand: Cmd = {
                     },
                     { 
                         name: 'reason',
-                        description: 'The reason for unbanning this user',
+                        description: 'The reason for unbanning this user (max len 200)',
                         type: ApplicationCommandOptionType.String,
+                        minLength: 1,
+                        maxLength: 200,
                         required: false
                     }
                 ]
@@ -219,7 +224,7 @@ const banCommand: Cmd = {
             const confirmationRow = new ActionRowBuilder<ButtonBuilder>()
             .addComponents([yesButton, noButton])
 
-            await interaction.reply({
+            const reply = await interaction.reply({
                 embeds: [
                     new EmbedBuilder()
                     .setAuthor({
@@ -245,30 +250,53 @@ const banCommand: Cmd = {
                 ],
                 components: [
                     confirmationRow
-                ]
+                ],
+                fetchReply: true
             })
 
-            const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
+            const confirmationCollector = reply.createMessageComponentCollector({
                 componentType: ComponentType.Button,
                 maxComponents: 1,
+                filter: async (btn) => {
+                    const isUserBlacklisted = await BlacklistModel.findOne({
+                        where: {
+                            id: btn.user.id
+                        }
+                    })
+
+                    if (isUserBlacklisted) {
+                        await btn.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                .setColor(0x000000)
+                            ]
+                        })
+                        return false
+                    }
+
+                    if (btn.user.id !== interaction.user.id) {
+                        await btn.reply({
+                            content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                            ephemeral: true
+                        })
+                        return false
+                    } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                    return true
+                }
                 time: 120000
             })
 
             confirmationCollector.on('collect', async (button): Promise<any> => {
-                if (button.user.id !== interaction.user.id) {
-                    confirmationCollector.dispose(button)
-                    return await button.reply({
-                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
-                        ephemeral: true
-                    })
-                }
                 if (button.customId === 'yes') {
                     const original = await interaction.fetchReply()
                     yesButton.setDisabled(true)
                     noButton.setDisabled(true)
                     original.edit({
                         embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                            EmbedBuilder.from(reply.embeds[0])
                             .setColor(0x00ff00)
                             .setTitle('Successful Unban')
                             .setDescription(`Successfully unbanned ${
@@ -303,7 +331,7 @@ const banCommand: Cmd = {
                         await button.reply({
                             content: 'Unban successful. Member has been messaged.',
                             embeds: [
-                                EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                                EmbedBuilder.from(reply.embeds[0])
                                 .setColor(0x00ff00)
                                 .setTitle('Unban Successful')
                                 .setDescription(`Successfully unbanned ${
@@ -329,7 +357,7 @@ const banCommand: Cmd = {
                         await button.reply({
                             content: 'Unban removal successful. Couldn\'t send the member a message.',
                             embeds: [
-                                EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                                EmbedBuilder.from(reply.embeds[0])
                                 .setColor(0x00ff00)
                                 .setTitle('Unban Successful')
                                 .setDescription(`Successfully unbanned ${
@@ -370,7 +398,7 @@ const banCommand: Cmd = {
                     original.edit({
                         components: [ confirmationRow ],
                         embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                            EmbedBuilder.from(reply.embeds[0])
                             .setColor(0xff0000)
                             .setTitle('Unban Cancellation')
                             .setDescription(`Cancelled the unban for ${bold(user.tag)} (${inlineCode(user.id)}).`)
@@ -394,7 +422,7 @@ const banCommand: Cmd = {
                     noButton.setDisabled(true)
                     original.edit({
                         embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                            EmbedBuilder.from(reply.embeds[0])
                             .setColor(0xff0000)
                             .setTitle('Unban Cancellation')
                             .setDescription('A response wasn\'t received in time.')
@@ -617,8 +645,6 @@ const banCommand: Cmd = {
                 ephemeral: true
             })
 
-            
-
             const [
                 yesButton,
                 noButton
@@ -636,7 +662,7 @@ const banCommand: Cmd = {
             const confirmationRow = new ActionRowBuilder<ButtonBuilder>()
             .addComponents([yesButton, noButton])
 
-            await interaction.reply({
+            const reply = await interaction.reply({
                 embeds: [
                     new EmbedBuilder()
                     .setAuthor({
@@ -662,29 +688,52 @@ const banCommand: Cmd = {
                 ],
                 components: [
                     confirmationRow
-                ]
+                ],
+                fetchReply: true
             })
 
-            const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
+            const confirmationCollector = reply.createMessageComponentCollector({
                 componentType: ComponentType.Button,
+                filter: async (btn) => {
+                    const isUserBlacklisted = await BlacklistModel.findOne({
+                        where: {
+                            id: btn.user.id
+                        }
+                    })
+                    
+                    if (isUserBlacklisted) {
+                        await btn.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                .setColor(0x000000)
+                            ]
+                        })
+                        return false
+                    }
+                    
+                    if (btn.user.id !== interaction.user.id) {
+                        await btn.reply({
+                            content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                            ephemeral: true
+                        })
+                        return false
+                    } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                    return true
+                },
                 time: 120000
             })
 
             confirmationCollector.on('collect', async (button): Promise<any> => {
-                if (button.user.id !== interaction.user.id) {
-                    confirmationCollector.dispose(button)
-                    return await button.reply({
-                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
-                        ephemeral: true
-                    })
-                }
                 if (button.customId === 'yes') {
                     const original = await interaction.fetchReply()
                     yesButton.setDisabled(true)
                     noButton.setDisabled(true)
                     original.edit({
                         embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                            EmbedBuilder.from(reply.embeds[0])
                             .setColor(0x00ff00)
                             .setTitle('Successful Ban')
                             .setDescription(`Successfully banned ${
@@ -723,7 +772,7 @@ const banCommand: Cmd = {
                         await button.reply({
                             content: 'Ban successful. Member has been messaged.',
                             embeds: [
-                                EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                                EmbedBuilder.from(reply.embeds[0])
                                 .setColor(0x00ff00)
                                 .setTitle('Ban Successful')
                                 .setDescription(`Successfully banned ${
@@ -753,7 +802,7 @@ const banCommand: Cmd = {
                         await button.reply({
                             content: 'Ban successful. Couldn\'t send the member a message.',
                             embeds: [
-                                EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                                EmbedBuilder.from(reply.embeds[0])
                                 .setColor(0x00ff00)
                                 .setTitle('Ban Successful')
                                 .setDescription(`Successfully banned ${
@@ -802,7 +851,7 @@ const banCommand: Cmd = {
                     original.edit({
                         components: [ confirmationRow ],
                         embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                            EmbedBuilder.from(reply.embeds[0])
                             .setColor(0xff0000)
                             .setTitle('Ban Cancellation')
                             .setDescription(`Cancelled the ban for ${bold(user.tag)} (${inlineCode(user.id)}).`)
@@ -822,7 +871,7 @@ const banCommand: Cmd = {
                     noButton.setDisabled(true)
                     original.edit({
                         embeds: [
-                            EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                            EmbedBuilder.from(reply.embeds[0])
                             .setColor(0xff0000)
                             .setTitle('Ban Cancellation')
                             .setDescription('A response wasn\'t received in time.')

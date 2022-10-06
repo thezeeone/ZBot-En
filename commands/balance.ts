@@ -30,7 +30,7 @@ const balanceCommand: Cmd = {
             : `${inlineCode(user.tag)} doesn't`
         } have any money!`)
 
-        await interaction.reply(`${
+        return await interaction.reply(`${
             user.id === interaction.user.id
             ? 'You have'
             : `${user.username} has`

@@ -2,7 +2,7 @@ import { ApplicationCommandData, ChatInputCommandInteraction, ContextMenuCommand
 
 interface Cmd {
     data: ApplicationCommandData,
-    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">): any
+    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">)
 }
 
 import { rankCommand } from "./rank";
@@ -28,12 +28,16 @@ import { balanceCommand } from "./balance";
 import { depositCommand } from "./deposit";
 import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
+import { channelBLCommand } from "./channelblacklist";
+import { channelWLCommand } from "./channelwhitelist";
 import { ticketCommand } from "./ticket"
 import { imageCommand } from "./image"
 import { reportMemberCommand } from "./report-member";
 import { reportMessageCommand } from "./report-message";
 import { quizCommand } from "./quiz";
 import { questionCommand } from "./question";
+import { removeXPCommand } from "./removexp";
+import { giveXPCommand } from "./givexp";
 
 const tipsAndTricks = [
   /**
@@ -48,6 +52,7 @@ const tipsAndTricks = [
 
 export {
     Cmd,
+    tipsAndTricks,
     rankCommand,
     leaderboardCommand,
     timeoutCommand,
@@ -66,16 +71,19 @@ export {
     updatesCommand,
     userInfoCommand,
     exchangeCommand,
-    tipsAndTricks,
     memberInfoCommand,
     balanceCommand,
     depositCommand,
     withdrawCommand,
+    removeXPCommand,
     giveCommand,
     ticketCommand,
     imageCommand,
     reportMemberCommand,
     reportMessageCommand,
     quizCommand,
-    questionCommand
+    channelBLCommand,
+    channelWLCommand,
+    questionCommand,
+    giveXPCommand
 }
