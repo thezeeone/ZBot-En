@@ -43,6 +43,11 @@ const gtwCommand: Cmd = {
     async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
         const wordOrSentence = interaction.options.getString('word-or-sentence', true).replace(/\s+/, () => ' ')
 
+        if (wordOrSentence.length < 2) return await interaction.reply({
+            content: 'String must be at least 2 characters long.',
+            ephemeral: true
+        })
+
         if (wordOrSentence.includes('_')) return await interaction.reply({
             content: 'Forbidden character `_`.',
             ephemeral: true
@@ -262,6 +267,10 @@ const gtwCommand: Cmd = {
         })
 
         messageCollector.on('collect', async (msg): Promise<any> => {
+            if (
+                msg.author.id === interaction.user.id
+                || msg.author.bot
+            ) return
             if (msg.content.replace(/\s+/g, () => ' ') === wordOrSentence) {
                 embed
                 .setColor(0x00ff00)
@@ -424,7 +433,7 @@ const gtwCommand: Cmd = {
 }
 
 function notEmpty<T>(value: T | undefined | null): value is T {
-    return !!value
+    return value !== undefined && value !== null
 }
 
 export {

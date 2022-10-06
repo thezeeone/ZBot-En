@@ -1,4 +1,5 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, Collection, time, italic, APIButtonComponentWithCustomId } from "discord.js"
+import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, inlineCode, Collection, time, italic, APIButtonComponentWithCustomId, underscore } from "discord.js"
+import { BlacklistModel } from "../database"
 import { pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
@@ -219,8 +220,8 @@ const voteCommand: Cmd = {
     }
 }
 
-function notEmpty<T>(v: T | null | undefined): v is T {
-    return !!v
+function notEmpty<T>(value: T | null | undefined): value is T {
+    return value !== null && value !== undefined
 }
 
 export {

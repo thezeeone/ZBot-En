@@ -1,4 +1,4 @@
-import { AttachmentBuilder, ChatInputCommandInteraction } from "discord.js"
+import { ApplicationCommandOptionType, AttachmentBuilder, ChatInputCommandInteraction } from "discord.js"
 import { Cmd, tipsAndTricks } from "./command-exports"
 // @ts-ignore
 import { createCanvas, registerFont, loadImage } from "canvas"
@@ -9,10 +9,20 @@ registerFont('fonts/static/Rubik-Bold.ttf', { family: 'Rubik', weight: '400', st
 
 const imageCommand: Cmd = {
     data: {
-        name: 'pic',
-        description: 'Create a picture! (beta)',
+        name: 'rank-card',
+        description: 'See your rank card as a picture! (beta)',
+        options: [
+            {
+                name: 'user',
+                description: 'The user\'s rank card to show',
+                type: ApplicationCommandOptionType.User,
+                required: false
+            }
+        ]
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
+        await interaction.deferReply()
+
         try {
             const width = 512
             const height = 256
@@ -23,13 +33,13 @@ const imageCommand: Cmd = {
 
             const userRankCard = await LevelModel.findOne({
                 where: {
-                    id: interaction.user.id
+                    id: interaction.options.getUser('user')?.id || interaction.user.id
                 }
             })
 
             const userRankCardModel = await RankCardModel.findOne({
                 where: {
-                    id: interaction.user.id
+                    id: interaction.options.getUser('user')?.id || interaction.user.id
                 }
             })
 
@@ -46,7 +56,7 @@ const imageCommand: Cmd = {
             context.fillStyle = "#282b30"
             context.fillRect(0, 0, width, height)
 
-            context.fillStyle = (userRankCardModel?.colour) ? `#${userRankCardModel.colour.toString(16)}` : "#00ffff"
+            context.fillStyle = (userRankCardModel?.colour) ? `#${userRankCardModel.colour.toString(16).padStart(6, '0')}` : "#00ffff"
             context.fillRect(10, 192, Math.floor(XP && XPToNextLevel ? (XP / XPToNextLevel) * total : 0), 10)
 
             context.fillStyle = '#ffffff'
@@ -58,7 +68,7 @@ const imageCommand: Cmd = {
             context.fillText('Level', 10, 187)
 
             context.textAlign = 'left'
-            context.fillStyle = (userRankCardModel?.colour) ? `#${userRankCardModel.colour.toString(16)}` : "#00ffff"
+            context.fillStyle = (userRankCardModel?.colour) ? `#${userRankCardModel.colour.toString(16).padStart(6, '0')}` : "#00ffff"
 
             context.fillText(`${userRankCard?.lvl || '0'}`, 65, 187)
 
@@ -70,7 +80,7 @@ const imageCommand: Cmd = {
 
             context.font = '20px "Rubik"'
             context.textAlign = 'right'
-            context.fillStyle = (userRankCardModel?.colour) ? `#${userRankCardModel.colour.toString(16)}` : "#00ffff"
+            context.fillStyle = (userRankCardModel?.colour) ? `#${userRankCardModel.colour.toString(16).padStart(6, '0')}` : "#00ffff"
 
             context.fillText(XP.toString(), 502 - (10 + XPToNextLevel.toString().length * 9.5), 187)
 
@@ -95,7 +105,7 @@ const imageCommand: Cmd = {
             }
 
             try {
-                const avatar = await loadImage(interaction.user.displayAvatarURL({ forceStatic: true }).replace(/(webm|webp)/g, 'jpg'))
+                const avatar = await loadImage((interaction.options.getUser('user') || interaction.user).displayAvatarURL({ forceStatic: true }).replace(/(webm|webp)/g, 'jpg'))
 
                 const aspect = avatar.height / avatar.width
 

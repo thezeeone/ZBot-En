@@ -30,10 +30,14 @@ import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
 import { channelBLCommand } from "./channelblacklist";
 import { channelWLCommand } from "./channelwhitelist";
-import { imageCommand } from "./image";
+import { ticketCommand } from "./ticket"
+import { imageCommand } from "./image"
+import { reportMemberCommand } from "./report-member";
+import { reportMessageCommand } from "./report-message";
+import { quizCommand } from "./quiz";
 import { questionCommand } from "./question";
-import { voteCommand } from "./vote";
-import { welcomeEditorCommand } from "./welcomeeditor";
+import { removeXPCommand } from "./removexp";
+import { giveXPCommand } from "./givexp";
 
 const tipsAndTricks = [
   /**
@@ -43,7 +47,7 @@ const tipsAndTricks = [
     * Every day this gets longer, so it gets harder to encounter all!
     * For now, just enjoy the source code.
   */
- 'Facts are coming soon!'
+ 'Coming soon!'
 ] as const
 
 export {
@@ -71,11 +75,15 @@ export {
     balanceCommand,
     depositCommand,
     withdrawCommand,
+    removeXPCommand,
     giveCommand,
-    channelWLCommand,
-    channelBLCommand,
-    welcomeEditorCommand,
-    voteCommand,
+    ticketCommand,
     imageCommand,
-    questionCommand
+    reportMemberCommand,
+    reportMessageCommand,
+    quizCommand,
+    channelBLCommand,
+    channelWLCommand,
+    questionCommand,
+    giveXPCommand
 }

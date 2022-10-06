@@ -1,11 +1,16 @@
 import { Sequelize, Model, DataTypes, InferAttributes, InferCreationAttributes } from 'sequelize';
 import { config } from 'dotenv';
-import { APIEmbed } from 'discord.js';
 config()
 
 const sequelize = new Sequelize(process.env.DATABASE_URL as string, {
     logging: false
 })
+
+const enum TicketTypes {
+    Normal,
+    ReportMember,
+    ReportMessage
+}
 
 interface LevelModel extends Model<InferAttributes<LevelModel>, InferCreationAttributes<LevelModel>> {
     id: string,
@@ -42,6 +47,16 @@ interface LevelsChannelListModel extends Model<InferAttributes<LevelsChannelList
     guildId: string,
     channelId: string,
     allowed: boolean
+}
+
+interface TicketSystemModel extends Model<InferAttributes<TicketSystemModel>, InferCreationAttributes<TicketSystemModel>> {
+    id: number,
+    creator: string,
+    ticketChannelId: string,
+    ticketRecipientChannelId: string,
+    referenceMessage: string,
+    closed: boolean,
+    ticketType: TicketTypes
 }
 
 const LevelModel = sequelize.define<LevelModel>('Levels', {
@@ -120,6 +135,26 @@ const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('P
     enabled: DataTypes.BOOLEAN
 })
 
+const TicketSystemModel = sequelize.define<TicketSystemModel>('TicketSystems', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    creator: DataTypes.STRING,
+    ticketChannelId: DataTypes.STRING,
+    ticketRecipientChannelId: DataTypes.STRING,
+    referenceMessage: DataTypes.STRING,
+    ticketType: {
+        type: DataTypes.INTEGER,
+        defaultValue: TicketTypes.Normal
+    },
+    closed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
+})
+
 export {
     sequelize,
     LevelModel,
@@ -127,5 +162,7 @@ export {
     RankCardModel,
     EconomyModel,
     LevelsChannelListModel,
-    WelcomeMessageEditorModel
+    WelcomeMessageEditorModel,
+    TicketSystemModel,
+    TicketTypes
 }

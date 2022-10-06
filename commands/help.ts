@@ -1,9 +1,8 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
 import { BlacklistModel } from "../database";
-import { Cmd } from "./command-exports";
+import { Cmd, imageCommand } from "./command-exports";
 import {
     banCommand,
-    exchangeCommand,
     gtwCommand,
     inviteCommand,
     kickCommand,
@@ -21,9 +20,14 @@ import {
     balanceCommand,
     withdrawCommand,
     depositCommand,
+    exchangeCommand,
     giveCommand,
     channelWLCommand,
-    channelBLCommand
+    channelBLCommand,
+    questionCommand,
+    ticketCommand,
+    reportMemberCommand,
+    reportMessageCommand
 } from './command-exports'
 
 const helpCommand: Cmd = {
@@ -85,7 +89,8 @@ const helpCommand: Cmd = {
                 selectMenuDescription: 'See miscellaneous commands',
                 commands: [
                     pingCommand.data,
-                    reportCommand.data
+                    reportCommand.data,
+                    questionCommand.data
                 ]
             },
             {
@@ -116,18 +121,22 @@ const helpCommand: Cmd = {
                 ]
             },
             {
+                name: 'Ticket System',
+                embedDescription: 'The ticket system is a system that helps members to communicate to staff quicker! Tickets close after 45 minutes of inactivity.',
+                selectMenuDescription: 'View ticket system and commands',
+                commands: [
+                    ticketCommand.data,
+                    reportMemberCommand.data,
+                    reportMessageCommand.data
+                ]
+            },
+            {
                 name: 'Experimental Commands and Features',
                 embedDescription: `Some of the experimental commands you may come across.\n\n⚠ **Note: these are experimental features and may break while in use.**`,
                 selectMenuDescription: 'View features under testing',
                 commands: [
                     imageCommand.data
                 ]
-            },
-            {
-                name: 'Ticket System',
-                embedDescription: italic("Coming soon!"),
-                selectMenuDescription: 'Ticket System (coming soon)',
-                commands: []
             },
             {
                 name: 'Links',
