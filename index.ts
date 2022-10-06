@@ -60,7 +60,7 @@ const client = new Client({
 
 client.on('ready', async () => {
     console.log('Client is now ready!')
-    
+
     sequelize.authenticate().then(() => {
         console.log("Successfully connected to database")
     })
@@ -75,11 +75,10 @@ client.on('ready', async () => {
     );
 
     // Private
-    (await
-        (<ClientApplication>client.application).commands.set(
-            privateCommands.map(p => p.data),
-            '1000073833551769600'
-        )
+    const guild = client.guilds.cache.get('1000073833551769600') as Guild
+    guild.commands.set(
+        privateCommands.map(p => p.data)
+    )
 
     const ticketsCategory = <CategoryChannel>await client.channels.fetch('1021361153202470942')
 
@@ -131,21 +130,22 @@ client.on('ready', async () => {
                                             return false
                                         }
                                     } catch {
-                                        console.log(repliedMessages)
-                                        if (repliedMessages.has(msg.id)) return false
-                                        msg.reply({
-                                            content: `You currently have ${bold(pluralise((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length, 'open ticket', 'open tickets'))} open (${(await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 3
-                                                ? `${commaList((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).slice(0, 3).map(s => `Ticket #${s.id}`).concat(`${(await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length - 3} more`))}`
-                                                : commaList((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).map(s => `Ticket #${s.id}`))
-                                                }). If you would like to get your message sent to a specific ticket, reply to one of the embeds sent by the bot.`,
-                                            allowedMentions: {
-                                                repliedUser: false
+                                        setTimeout(async () => {
+                                            if (!repliedMessages.has(msg.id)) {
+                                                await msg.reply({
+                                                    content: `You currently have ${bold(pluralise((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length, 'open ticket', 'open tickets'))} open (${(await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 3
+                                                        ? `${commaList((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).slice(0, 3).map(s => `Ticket #${s.id}`).concat(`${(await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length - 3} more`))}`
+                                                        : commaList((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).map(s => `Ticket #${s.id}`))
+                                                        }). If you would like to get your message sent to a specific ticket, reply to one of the embeds sent by the bot.`,
+                                                    allowedMentions: {
+                                                        repliedUser: false
+                                                    }
+                                                })
+                                                    .then(() => {
+                                                        repliedMessages.add(msg.id)
+                                                    })
                                             }
-                                        })
-                                        .then((reply) => {
-                                            repliedMessages.set(reply.id, msg.id)
-                                            console.log(repliedMessages)
-                                        })
+                                        }, 100)
                                         return false
                                     }
                                 } else {
@@ -155,7 +155,6 @@ client.on('ready', async () => {
                                             closed: false
                                         }
                                     })).length === 0) {
-                                        console.log('No tickets open.')
                                         return false
                                     }
                                     return true
@@ -163,8 +162,12 @@ client.on('ready', async () => {
                             },
                             time: 2700000
                         })
+                        const collector = channel.createMessageCollector({
+                            time: 2700000,
+                            filter: msg => !msg.author.bot
+                        })
 
-                        collector.on('collect', (msg) => {
+                        collector.on('collect', async (msg) => {
                             collector.resetTimer()
                             try {
                                 const embed = new EmbedBuilder()
@@ -179,18 +182,22 @@ client.on('ready', async () => {
                                 if (msg.attachments.size) embed.setFields([
                                     {
                                         name: 'Attachments',
-                                        value: msg.attachments
-                                            .map((v) => {
-                                                return `[${v.name || `unknown${v.contentType ? `.${v.contentType}` : ''}`}](${v.proxyURL})`
-                                            })
-                                            .join('\n')
+                                        value: msg.attachments.size
+                                            ? pluralise(msg.attachments.size, 'attachment')
+                                            : '*None*'
                                     }
                                 ]);
+                                if ((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 1) {
+                                    embed.setFooter({ text: 'You have more than one ticket open. If you would like to get your message sent to this ticket, please reply to this message.' })
+                                } else {
+                                    embed.setFooter({ text: 'This is the only ticket you have open as of now. You do not need to reply to this message for your message to be sent.' })
+                                }
 
                                 (dmChannel as DMChannel)?.send({
                                     embeds: [
                                         embed
-                                    ]
+                                    ],
+                                    files: [...msg.attachments.values()]
                                 })
                                     .then(async () => {
                                         await msg.react('✅')
@@ -252,10 +259,9 @@ client.on('ready', async () => {
                                     closed: false
                                 }
                             })).length === 1) {
-                                const ticket = Number(msg.embeds[0]?.title?.replace('Ticket #', ''))
-                                if (isNaN(ticket)) return
-                                const ticketNumber = await TicketSystemModel.findByPk(ticket)
-                                const ticketChannel = await client.channels.fetch(ticketNumber?.ticketChannelId as string) as TextChannel
+                                const ticketNumber = await TicketSystemModel.findOne({ where: { creator: msg.author.id, closed: false } })
+                                if (!ticketNumber) return
+                                const ticketChannel = await client.channels.fetch(ticketNumber.ticketChannelId as string) as TextChannel
                                 try {
                                     const embed = new EmbedBuilder()
                                         .setAuthor({
@@ -268,23 +274,17 @@ client.on('ready', async () => {
                                     if (msg.attachments.size) embed.setFields([
                                         {
                                             name: 'Attachments',
-                                            value: msg.attachments
-                                                .map((v) => {
-                                                    return `[${v.name || `unknown${v.contentType ? `.${v.contentType}` : ''}`}](${v.proxyURL})`
-                                                })
-                                                .join('\n')
+                                            value: msg.attachments.size
+                                                ? pluralise(msg.attachments.size, 'attachment')
+                                                : '*None*'
                                         }
                                     ]);
-                                    if ((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 1) {
-                                        embed.setFooter({ text: 'You have more than one ticket open. If you would like to get your message sent to this ticket, please reply to this message.' })
-                                    } else {
-                                        embed.setFooter({ text: 'This is the only ticket you have open as of now. You do not need to reply to this message for your message to be sent.' })
-                                    }
 
                                     ticketChannel.send({
                                         embeds: [
                                             embed
-                                        ]
+                                        ],
+                                        files: [...msg.attachments.values()]
                                     })
                                         .then(async () => {
                                             await msg.react('✅')
@@ -296,7 +296,7 @@ client.on('ready', async () => {
                                                 embeds: [
                                                     new EmbedBuilder()
                                                         .setColor(0xff0000)
-                                                        .setTitle(`Ticket #${(await TicketSystemModel.findByPk(ticket) as TicketSystemModel).id} closed`)
+                                                        .setTitle(`Ticket #${(await TicketSystemModel.findOne({ where: { id: ticketNumber.id } }) as TicketSystemModel).id} closed`)
                                                         .setDescription(`Couldn\'t send your message to the staff. You can no longer send messages through this ticket.`)
                                                 ]
                                             })
@@ -333,8 +333,9 @@ client.on('ready', async () => {
                                 msg.fetchReference()
                                     .then(async (reference) => {
                                         const ticket = Number(reference.embeds[0]?.title?.replace('Ticket #', ''))
-                                        const ticketNumber = await TicketSystemModel.findByPk(ticket)
-                                        const ticketChannel = await client.channels.fetch(ticketNumber?.ticketChannelId as string) as TextChannel
+                                        const ticketNumber = await TicketSystemModel.findOne({ where: { id: ticket } })
+                                        if (!ticketNumber) return
+                                        const ticketChannel = await reference.client.channels.fetch(ticketNumber?.ticketChannelId as string) as TextChannel
                                         try {
                                             const embed = new EmbedBuilder()
                                                 .setAuthor({
@@ -348,15 +349,10 @@ client.on('ready', async () => {
                                                 {
                                                     name: 'Attachments',
                                                     value: msg.attachments.size
-                                                    ? pluralise(msg.attachments.size, 'attachment')
-                                                    : '*None*'
+                                                        ? pluralise(msg.attachments.size, 'attachment')
+                                                        : '*None*'
                                                 }
                                             ]);
-                                            if ((await TicketSystemModel.findAll({ where: { creator: msg.author.id, closed: false } })).length > 1) {
-                                                embed.setFooter({ text: 'You have more than one ticket open. If you would like to get your message sent to this ticket, please reply to this message.' })
-                                            } else {
-                                                embed.setFooter({ text: 'This is the only ticket you have open as of now. You do not need to reply to this message for your message to be sent.' })
-                                            }
 
                                             ticketChannel.send({
                                                 embeds: [
@@ -408,7 +404,7 @@ client.on('ready', async () => {
                                                 })
                                         }
                                     })
-                                    .catch(() => null)
+                                    .catch(console.error)
                             }
                         })
                     })
@@ -426,11 +422,11 @@ client.on('ready', async () => {
         {
             name: `${pluralise(client.guilds.cache.size, 'server')} and ${pluralise(
                 client.guilds.cache
-                .map(r => r.members.cache.filter(s => !s.user.bot).size)
-                .reduce((num1, num2) => {
-                    return num1 + num2
-                }), 'user')
-            }`,
+                    .map(r => r.members.cache.filter(s => !s.user.bot).size)
+                    .reduce((num1, num2) => {
+                        return num1 + num2
+                    }), 'user')
+                }`,
             type: ActivityType.Watching
         },
         {
@@ -472,79 +468,75 @@ client.on('interactionCreate', async (interaction): Promise<any> => {
         if (interaction.customId === 'announcement-ping') {
             if ((interaction.member?.roles as GuildMemberRoleManager).cache.has('1010997349079863351')) {
                 (interaction.member?.roles as GuildMemberRoleManager).remove('1010997349079863351')
-                .then(async () => {
-                    return await interaction.reply({
-                        content: `Taken the <@&1010997349079863351> role off you.\n${
-                            Math.random() < 0.1
-                            ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
-                            : ''
-                        }`,
-                        ephemeral: true
+                    .then(async () => {
+                        return await interaction.reply({
+                            content: `Taken the <@&1010997349079863351> role off you.\n${Math.random() < 0.1
+                                ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
+                                : ''
+                                }`,
+                            ephemeral: true
+                        })
                     })
-                })
-                .catch(async () => {
-                    return await interaction.reply({
-                        content: 'Couldn\'t take the role <@&1010997349079863351> off you.',
-                        ephemeral: true
+                    .catch(async () => {
+                        return await interaction.reply({
+                            content: 'Couldn\'t take the role <@&1010997349079863351> off you.',
+                            ephemeral: true
+                        })
                     })
-                })
             } else {
                 (interaction.member?.roles as GuildMemberRoleManager).add('1010997349079863351')
-                .then(async () => {
-                    return await interaction.reply({
-                        content: `Given you the <@&1010997349079863351> role.\n${
-                            Math.random() < 0.1
-                            ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
-                            : ''
-                        }`,
-                        ephemeral: true
+                    .then(async () => {
+                        return await interaction.reply({
+                            content: `Given you the <@&1010997349079863351> role.\n${Math.random() < 0.1
+                                ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
+                                : ''
+                                }`,
+                            ephemeral: true
+                        })
                     })
-                })
-                .catch(async () => {
-                    return await interaction.reply({
-                        content: 'Couldn\'t give you the <@&1010997349079863351> role.',
-                        ephemeral: true
+                    .catch(async () => {
+                        return await interaction.reply({
+                            content: 'Couldn\'t give you the <@&1010997349079863351> role.',
+                            ephemeral: true
+                        })
                     })
-                })
             }
         } else if (interaction.customId === 'zbot-announcement-ping') {
             if ((interaction.member?.roles as GuildMemberRoleManager).cache.has('1010998028011839598')) {
                 (interaction.member?.roles as GuildMemberRoleManager).remove('1010998028011839598')
-                .then(async () => {
-                    return await interaction.reply({
-                        content: `Taken the <@&1010998028011839598> role off you.\n${
-                            Math.random() < 0.1
-                            ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
-                            : ''
-                        }`,
-                        ephemeral: true
+                    .then(async () => {
+                        return await interaction.reply({
+                            content: `Taken the <@&1010998028011839598> role off you.\n${Math.random() < 0.1
+                                ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
+                                : ''
+                                }`,
+                            ephemeral: true
+                        })
                     })
-                })
-                .catch(async () => {
-                    return await interaction.reply({
-                        content: 'Couldn\'t take the role <@&1010998028011839598> off you.',
-                        ephemeral: true
+                    .catch(async () => {
+                        return await interaction.reply({
+                            content: 'Couldn\'t take the role <@&1010998028011839598> off you.',
+                            ephemeral: true
+                        })
                     })
-                })
             } else {
-          
+
                 (interaction.member?.roles as GuildMemberRoleManager).add('1010998028011839598')
-                .then(async () => {
-                    return await interaction.reply({
-                        content: `Given you the <@&1010998028011839598> role.\n${
-                            Math.random() < 0.1
-                            ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
-                            : ''
-                        }`,
-                        ephemeral: true
+                    .then(async () => {
+                        return await interaction.reply({
+                            content: `Given you the <@&1010998028011839598> role.\n${Math.random() < 0.1
+                                ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
+                                : ''
+                                }`,
+                            ephemeral: true
+                        })
                     })
-                })
-                .catch(async () => {
-                    return await interaction.reply({
-                        content: 'Couldn\'t give you the <@&1010998028011839598> role.',
-                        ephemeral: true
+                    .catch(async () => {
+                        return await interaction.reply({
+                            content: 'Couldn\'t give you the <@&1010998028011839598> role.',
+                            ephemeral: true
+                        })
                     })
-                })
             }
         }
     }
@@ -564,36 +556,36 @@ client.on('messageCreate', async (message): Promise<any> => {
 
     const words = message.content.split(' ').filter(s => s.match(/\b[\w\-\_']+\b/g))
     const attachments = message.attachments
-    
+
     const totalXP = (
         attachments.size * 100
     ) + (
-        words.length >= 3
-        ? (
-            5
-            + words.slice(3).map((w, i, arr): number => {
-                if (i % 2 !== 0) return 0
-                else if (w.length >= 3 || arr[i + 1]?.length >= 3) return 2
-                else return 0
-            }).reduce((a, b) => a + b, 0)
+            words.length >= 3
+                ? (
+                    5
+                    + words.slice(3).map((w, i, arr): number => {
+                        if (i % 2 !== 0) return 0
+                        else if (w.length >= 3 || arr[i + 1]?.length >= 3) return 2
+                        else return 0
+                    }).reduce((a, b) => a + b, 0)
+                )
+                : 0
+        ) >= (attachments.size * 100 + 40)
+        ? (attachments.size * 100 + 40)
+        : (
+            attachments.size * 100
+        ) + (
+            words.length >= 3
+                ? (
+                    5
+                    + words.slice(3).map((w, i, arr): number => {
+                        if (i % 2 !== 0) return 0
+                        else if (w.length >= 3 || arr[i + 1]?.length >= 3) return 2
+                        else return 0
+                    }).reduce((a, b) => a + b, 0)
+                )
+                : 0
         )
-        : 0
-    ) >= (attachments.size * 100 + 40)
-    ? (attachments.size * 100 + 40)
-    : (
-        attachments.size * 100
-    ) + (
-        words.length >= 3
-        ? (
-            5
-            + words.slice(3).map((w, i, arr): number => {
-                if (i % 2 !== 0) return 0
-                else if (w.length >= 3 || arr[i + 1]?.length >= 3) return 2
-                else return 0
-            }).reduce((a, b) => a + b, 0)
-        )
-        : 0
-    ) 
 
     const lvl = await (await LevelModel.findOne({
         where: { id: message.author.id }
@@ -621,14 +613,14 @@ client.on('messageCreate', async (message): Promise<any> => {
         message.channel.send({
             embeds: [
                 new EmbedBuilder()
-                .setTitle('Level Up!')
-                .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
-                .setColor((await RankCardModel.findOne({ where: { id: message.author.id }}))?.colour ?? 0x00ffff)
-                .setFooter(
-                    Math.random() < 0.1
-                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                    : null
-                )
+                    .setTitle('Level Up!')
+                    .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
+                    .setColor((await RankCardModel.findOne({ where: { id: message.author.id } }))?.colour ?? 0x00ffff)
+                    .setFooter(
+                        Math.random() < 0.1
+                            ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
+                            : null
+                    )
             ]
         });
         return
@@ -641,7 +633,7 @@ client.on('messageCreate', async (message): Promise<any> => {
             await lvl.update({ lvl: 0 }, { where: { id: message.author.id } })
         }
         if (lvl.xp < 0) {
-            await lvl.update({ xp: 0 }, { where: { id: message.author.id }})
+            await lvl.update({ xp: 0 }, { where: { id: message.author.id } })
         }
         return
     } else if (lvl.lvl < 0) {
@@ -651,20 +643,24 @@ client.on('messageCreate', async (message): Promise<any> => {
 
 
     (<Guild>message.client.guilds.cache.get('1000073833551769600'))
-    .members.fetch(message.author.id)
-    .then((member: GuildMember) => {
-        if (lvl.lvl >= 100 && !member.roles.cache.has(levelRoles[0])) member.roles.add(levelRoles[0])
-        else if (lvl.lvl < 5) member.roles.remove(levelRoles)
-        else {
-            member.roles.remove(
-                levelRoles.filter((r, i) => i !== (20 - Math.floor(lvl.lvl / 5)) && member.roles.cache.has(r))
-            )
-            member.roles.add(
-                levelRoles[20 - Math.floor(lvl.lvl / 5)]
-            )
-        }
-    })
-    .catch(() => null)
+        .members.fetch(message.author.id)
+        .then((member: GuildMember) => {
+            if (lvl.lvl >= 100 && !member.roles.cache.has(levelRoles[0])) member.roles.add(levelRoles[0])
+            else if (lvl.lvl < 5) member.roles.remove(levelRoles)
+            else {
+                member.roles.remove(
+                    levelRoles.filter((r, i) => i !== (20 - Math.floor(lvl.lvl / 5)) && member.roles.cache.has(r))
+                )
+                member.roles.add(
+                    levelRoles[20 - Math.floor(lvl.lvl / 5)]
+                )
+            }
+        })
+        .catch(() => null)
 })
 
 client.login(process.env.TOKEN)
+
+export {
+    repliedMessages   
+}

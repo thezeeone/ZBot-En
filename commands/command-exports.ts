@@ -30,6 +30,10 @@ import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
 import { ticketCommand } from "./ticket"
 import { imageCommand } from "./image"
+import { reportMemberCommand } from "./report-member";
+import { reportMessageCommand } from "./report-message";
+import { quizCommand } from "./quiz";
+import { questionCommand } from "./question";
 
 const tipsAndTricks = [
   /**
@@ -69,5 +73,9 @@ export {
     withdrawCommand,
     giveCommand,
     ticketCommand,
-    imageCommand
+    imageCommand,
+    reportMemberCommand,
+    reportMessageCommand,
+    quizCommand,
+    questionCommand
 }

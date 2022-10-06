@@ -210,6 +210,7 @@ const reportMessageCommand: Cmd = {
                             })
 
                             channel.send({
+                                content: `<@1023228765934981230>`,
                                 embeds: [
                                     new EmbedBuilder()
                                         .setColor(0x00ffff)
@@ -302,7 +303,7 @@ const reportMessageCommand: Cmd = {
                                                             }
                                                         })
                                                         
-                                                        if (foundTicket && !foundTicket.closed) {
+                                                        if (foundTicket && !foundTicket.closed && foundTicket.id === ticket.id) {
                                                             
                                                             return true
                                                         } else {

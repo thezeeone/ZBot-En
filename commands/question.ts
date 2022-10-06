@@ -263,8 +263,8 @@ const questionCommand: Cmd = {
     }
 }
 
-function notEmpty<T>(v: T | null | undefined): v is T {
-    return !!v
+function notEmpty<T>(value: T | null | undefined): value is T {
+    return value !== undefined && value !== null
 }
 
 export {
