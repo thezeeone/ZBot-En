@@ -111,6 +111,8 @@ const pingCommand: Cmd = {
                 )
             ]
         })
+
+        return
     }
 }
 

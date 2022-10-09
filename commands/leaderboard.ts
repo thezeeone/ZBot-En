@@ -263,6 +263,8 @@ const leaderboardCommand: Cmd = {
                 return console.log(err)
             }
         }
+
+        return
     }
 }
 

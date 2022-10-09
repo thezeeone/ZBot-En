@@ -59,20 +59,20 @@ const memoryGameCommand: Cmd = {
     .setStyle(ButtonStyle.Success)
     .setLabel('Accept')
 
-    const rejectButton = new ButtonBuilder()
-    .setCustomId('reject')
-    .setStyle(ButtonStyle.Danger)
-    .setLabel('Reject')
-    
-    const requestMessage = await interaction.reply({
-        content: opponent.user.toString(),
-        embeds: [confirmationEmbed],
-        components: [
-            new ActionRowBuilder<ButtonBuilder>()
-            .addComponents([acceptButton, rejectButton])
-        ],
-        fetchReply: true
-    })
+        const rejectButton = new ButtonBuilder()
+            .setCustomId('reject')
+            .setStyle(ButtonStyle.Danger)
+            .setLabel('Reject')
+
+        const requestMessage = await interaction.reply({
+            content: opponent.user.toString(),
+            embeds: [confirmationEmbed],
+            components: [
+                new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents([acceptButton, rejectButton])
+            ],
+            fetchReply: true
+        })
 
     const requestCollector = requestMessage.createMessageComponentCollector({
         componentType: ComponentType.Button,
