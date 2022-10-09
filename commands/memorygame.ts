@@ -121,27 +121,28 @@ const memoryGameCommand: Cmd = {
             let foundPairs: Array<{
                 user: User, 
                 customId1: number, 
-                customId2: number, 
-                numberFound: number
-            }> = []
-    
-            let grid: ActionRowBuilder<ButtonBuilder>[] = [
-                new ActionRowBuilder<ButtonBuilder>(),
-                new ActionRowBuilder<ButtonBuilder>(),
-                new ActionRowBuilder<ButtonBuilder>(),
-                new ActionRowBuilder<ButtonBuilder>()
-            ].map(
-                (_, rindex) => new ActionRowBuilder<ButtonBuilder>({ components:
-                    (numArrRandomised.splice(0, 5))
-                    .map(
-                        (_item, iindex) => new ButtonBuilder()
-                        .setCustomId(String(rindex * 5 + iindex))
-                        .setDisabled(false)
-                        .setStyle(ButtonStyle.Secondary)
-                        .setLabel('\u200b')
-                    )
-                })
-            )
+                    customId2: number,
+                    numberFound: number
+                }> = []
+
+                let grid: ActionRowBuilder<ButtonBuilder>[] = [
+                    new ActionRowBuilder<ButtonBuilder>(),
+                    new ActionRowBuilder<ButtonBuilder>(),
+                    new ActionRowBuilder<ButtonBuilder>(),
+                    new ActionRowBuilder<ButtonBuilder>()
+                ].map(
+                    (_, rindex) => new ActionRowBuilder<ButtonBuilder>({
+                        components:
+                            (numArrRandomised.splice(0, 5))
+                                .map(
+                                    (_item, iindex) => new ButtonBuilder()
+                                        .setCustomId(String(rindex * 5 + iindex))
+                                        .setDisabled(false)
+                                        .setStyle(ButtonStyle.Secondary)
+                                        .setLabel('\u200b')
+                                )
+                    })
+                )
 
             await requestMessage.edit({
                 embeds: [
@@ -156,17 +157,17 @@ const memoryGameCommand: Cmd = {
                 components: grid
             })
 
-            const buttonCollector = requestMessage.createMessageComponentCollector({ componentType: ComponentType.Button })
+                const buttonCollector = requestMessage.createMessageComponentCollector({ componentType: ComponentType.Button })
 
-            buttonCollector.on('collect', async (collectedBtn): Promise<any> => {
-                if (collectedBtn.user.id !== interaction.user.id && collectedBtn.user.id !== opponent.user.id) return await collectedBtn.reply({
-                    content: 'You\'re not playing this match! Please start a new game to be able to play a match.',
-                    ephemeral: true
-                })
-                if (collectedBtn.user.id === (playerTurn === 0 ? opponent.user : interaction.user).id) return await collectedBtn.reply({
-                    content: 'It\'s not your turn.',
-                    ephemeral: true
-                })
+                buttonCollector.on('collect', async (collectedBtn): Promise<any> => {
+                    if (collectedBtn.user.id !== interaction.user.id && collectedBtn.user.id !== opponent.user.id) return await collectedBtn.reply({
+                        content: 'You\'re not playing this match! Please start a new game to be able to play a match.',
+                        ephemeral: true
+                    })
+                    if (collectedBtn.user.id === (playerTurn === 0 ? opponent.user : interaction.user).id) return await collectedBtn.reply({
+                        content: 'It\'s not your turn.',
+                        ephemeral: true
+                    })
 
                 opponentChoices.push(Number(collectedBtn.customId))
 
