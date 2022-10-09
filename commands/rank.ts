@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, italic, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode } from "discord.js";
+import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode } from "discord.js";
 import { Cmd, tipsAndTricks } from "./command-exports";
 import { LevelModel, RankCardModel } from "../database";
 import { ordinalNumber } from "../util";
@@ -70,6 +70,7 @@ const rankCommand: Cmd = {
                 const user = interaction.options.getUser('user', true)
 
                 const localLeaderboard = (await LevelModel.findAll())
+                // @ts-ignore
                 .filter(async r => {
                     try { await interaction.guild.members.fetch(r.id) }
                     catch (error) { return undefined }
