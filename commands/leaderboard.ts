@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, italic, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode, underscore, User } from "discord.js";
+import { ApplicationCommandOptionType, bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode, underscore, User } from "discord.js";
 import { LevelModel } from "../database";
 import { ordinalNumber } from "../util";
 import { Cmd, tipsAndTricks } from "./command-exports";

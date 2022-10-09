@@ -1,0 +1,6 @@
+*.js
+node_modules/
+*.png
+.env
+package*.json
+facts.ts

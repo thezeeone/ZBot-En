@@ -1,4 +1,5 @@
-import { ApplicationCommandData, ApplicationCommandPermissionType, ChatInputCommandInteraction, Collection, ContextMenuCommandInteraction, GuildResolvable, TextBasedChannelResolvable, User } from "discord.js";
+import { ApplicationCommandData, ChatInputCommandInteraction, ContextMenuCommandInteraction } from "discord.js";
+import { tipsAndTricks } from "../../facts"
 
 interface Cmd {
     data: ApplicationCommandData,
@@ -28,16 +29,16 @@ import { balanceCommand } from "./balance";
 import { depositCommand } from "./deposit";
 import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
-
-const tipsAndTricks = [
-  /**
-    * A bunch of secret tips and tricks you're not supposed to know.
-    * You must pay attention to message embed footers and message responses - you never know, one of these tricks could pop up in one of them!
-    * Want to know it all? You just have to be lucky to encounter all of them.
-    * Every day this gets longer, so it gets harder to encounter all!
-    * For now, just enjoy the source code.
-  */
-] as const
+import { channelBLCommand } from "./channelblacklist";
+import { channelWLCommand } from "./channelwhitelist";
+import { giveXPCommand } from "./givexp";
+import { imageCommand } from "./image";
+import { questionCommand } from "./question";
+import { removeXPCommand } from "./removexp";
+import { reportMemberCommand } from "./report-member";
+import { reportMessageCommand } from "./report-message";
+import { ticketCommand } from "./ticket";
+import { voteCommand } from "./vote";
 
 export {
     Cmd,
@@ -64,5 +65,15 @@ export {
     balanceCommand,
     depositCommand,
     withdrawCommand,
-    giveCommand
+    giveCommand,
+    channelBLCommand,
+    channelWLCommand,
+    giveXPCommand,
+    imageCommand,
+    questionCommand,
+    removeXPCommand,
+    reportMemberCommand,
+    reportMessageCommand,
+    ticketCommand,
+    voteCommand
 }

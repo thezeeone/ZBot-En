@@ -47,6 +47,8 @@ const balanceCommand: Cmd = {
             ? `💡 **Did you know?** ${italic(tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)])}`
             : ''
         }`)
+
+        return
     }
 }
 

@@ -421,6 +421,8 @@ const kickCommand: Cmd = {
                 return await interaction.followUp('A response wasn\'t received in time.')
             }
         })
+
+        return
     }
 }
 

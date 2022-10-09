@@ -1,39 +1,39 @@
-import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, User, ApplicationCommandOptionType, ButtonStyle, GuildMember, ComponentType, ChatInputCommandInteraction, bold, inlineCode, italic, time } from "discord.js"
+import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, User, ApplicationCommandOptionType, ButtonStyle, ComponentType, ChatInputCommandInteraction, bold, inlineCode, italic, time } from "discord.js"
 import { LevelModel } from "../database"
 import { pluralise } from "../util"
 import { Cmd } from "./command-exports"
 
 const memoryGameCommand: Cmd = {
-data: {
-    name: 'memory-game',
-    description: 'Test your memory with this game! (Two-player)',
-    options: [
-        {
-            name: 'opponent',
-            description: 'The opponent you want to play with',
-            type: ApplicationCommandOptionType.User,
-            required: true
-        }
-    ],
-    dmPermission: false
-},
-async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
-    const opponent = interaction.options.getMember('opponent')
-    if (!opponent) return await interaction.reply({
-        embeds: [
-            new EmbedBuilder()
-            .setAuthor({
-                name: `${interaction.user.tag} (${interaction.user.id})`,
-                iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
-            })
-            .setTitle(`Member not found`)
-            .setDescription(`Couldn't find that member.`)
-            .setColor(0xff0000)
+    data: {
+        name: 'memory-game',
+        description: 'Test your memory with this game! (Two-player)',
+        options: [
+            {
+                name: 'opponent',
+                description: 'The opponent you want to play with',
+                type: ApplicationCommandOptionType.User,
+                required: true
+            }
         ],
-        ephemeral: true
-    })
-    let playerTurn: 0 | 1 = 0 as 0 | 1
-    let opponentChoices: number[] = []
+        dmPermission: false
+    },
+    async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
+        const opponent = interaction.options.getMember('opponent')
+        if (!opponent) return await interaction.reply({
+            embeds: [
+                new EmbedBuilder()
+                    .setAuthor({
+                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
+                    })
+                    .setTitle(`Member not found`)
+                    .setDescription(`Couldn't find that member.`)
+                    .setColor(0xff0000)
+            ],
+            ephemeral: true
+        })
+        let playerTurn: 0 | 1 = 0 as 0 | 1
+        let opponentChoices: number[] = []
 
     if (opponent.user.id === interaction.user.id || opponent.user.id === interaction.client.user?.id) return await interaction.reply({
         content: 'You can\'t play with yourself or the bot, find someone else to play with!',

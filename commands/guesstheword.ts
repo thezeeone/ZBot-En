@@ -1,4 +1,4 @@
-import { ComponentType, EmbedBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, bold, inlineCode, italic, ButtonBuilder, ButtonStyle, ActionRowBuilder, APIEmbedField, APIButtonComponentWithCustomId } from "discord.js"
+import { ComponentType, EmbedBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, bold, inlineCode, italic, ButtonBuilder, ButtonStyle, ActionRowBuilder, APIButtonComponentWithCustomId } from "discord.js"
 import { Cmd, tipsAndTricks } from "./command-exports"
 import { LevelModel } from "../database"
 
@@ -178,7 +178,7 @@ const gtwCommand: Cmd = {
                             { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                             { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                             { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                         )
@@ -235,7 +235,7 @@ const gtwCommand: Cmd = {
                         { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                     ])
@@ -270,7 +270,7 @@ const gtwCommand: Cmd = {
                         { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                         { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join(' '), inline: true },
                         { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                     ])
@@ -322,7 +322,7 @@ const gtwCommand: Cmd = {
                         { name: 'Correct Characters', value: correctCharacters.length === 0 ? 'none' : correctCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Incorrect Characters', value: incorrectCharacters.length === 0 ? 'none' : incorrectCharacters.map(s => inlineCode(s)).join('  '), inline: true },
                         { name: 'Clues', value: clues.filter(c => c.revealed).length
-                                ? clues.filter(c => c.revealed).map((c, i) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
+                                ? clues.filter(c => c.revealed).map((c) => `${bold((c.index + 1).toString())} ${italic(c.clue)}`).join('\n')
                                 : 'none'
                             }
                     ])

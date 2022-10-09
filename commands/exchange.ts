@@ -107,7 +107,8 @@ const exchangeCommand: Cmd = {
                 }) 
                 else await EconomyModel.create({
                     wallet: XPamounts / 2,
-                    maxBank: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
+                    maxWallet: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
+                    maxBank:(3 + ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1)) * 50,
                     bank: 0,
                     id: interaction.user.id
                 })
@@ -173,20 +174,13 @@ const exchangeCommand: Cmd = {
                 return await interaction.followUp('A response wasn\'t received in time.')
             }
         })
+
+        return
     }
 }
 
 function triangularNumbers(num: number): number {
-    if (num <= 1) return num
-
-    let a = 0
-    let i = 0
-
-    for (a; a <= num; a++) {
-        i += a
-    }
-
-    return i
+    return ((num + 1) * num) / 2
 }
 
 export {

@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ApplicationCommandOptionType, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
 import { Cmd } from "./command-exports";
 import {
     banCommand,
@@ -29,20 +29,6 @@ const helpCommand: Cmd = {
         description: 'Get all info about this bot'
     },
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
-        // const optionTypes = {
-        //     [ApplicationCommandOptionType.Attachment]: 'ATTACHMENT',
-        //     [ApplicationCommandOptionType.Boolean]: 'BOOLEAN',
-        //     [ApplicationCommandOptionType.Channel]: 'CHANNEL',
-        //     [ApplicationCommandOptionType.Integer]: 'INTEGER',
-        //     [ApplicationCommandOptionType.Mentionable]: 'MENTIONABLE',
-        //     [ApplicationCommandOptionType.Number]: 'NUMBER',
-        //     [ApplicationCommandOptionType.Role]: 'ROLE',
-        //     [ApplicationCommandOptionType.String]: 'STRING',
-        //     [ApplicationCommandOptionType.Subcommand]: 'SUBCOMMAND',
-        //     [ApplicationCommandOptionType.SubcommandGroup]: 'SUBCOMMAND GROUP',
-        //     [ApplicationCommandOptionType.User]: 'USER'
-        // }
-
         const groups: Array<{
             name: string,
             embedDescription: string,

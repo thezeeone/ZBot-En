@@ -74,5 +74,9 @@ export {
     LevelModel,
     BlacklistModel,
     RankCardModel,
-    WelcomeMessageEditorModel
+    EconomyModel,
+    LevelsChannelListModel,
+    WelcomeMessageEditorModel,
+    TicketSystemModel,
+    TicketTypes
 }

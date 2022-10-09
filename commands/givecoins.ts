@@ -114,7 +114,8 @@ const giveCommand: Cmd = {
                 }) 
                 else await EconomyModel.create({
                     wallet: amount,
-                    maxBank: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
+                    maxWallet: ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1) * 50,
+                    maxBank: (3 + ((await LevelModel.findOne({ where: { id: interaction.user.id } }))?.lvl || 1)) * 50,
                     bank: 0,
                     id: member.user.id
                 })
@@ -155,6 +156,8 @@ const giveCommand: Cmd = {
                 return await interaction.followUp('A response wasn\'t received in time.')
             }
         })
+
+        return
     }
 }
 

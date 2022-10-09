@@ -30,8 +30,8 @@ const memberInfoCommand: Cmd = {
         } = member.user
 
         const {
-            bannable, manageable, moderatable, kickable, displayColor, nickname, pending, permissions,
-            premiumSinceTimestamp, roles, joinedTimestamp
+            displayColor, nickname, pending, permissions,
+            premiumSinceTimestamp, joinedTimestamp
         } = member
 
         const embed = new EmbedBuilder()

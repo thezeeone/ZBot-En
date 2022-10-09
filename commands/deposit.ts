@@ -42,6 +42,8 @@ const depositCommand: Cmd = {
         .catch(async () => {
             return await interaction.reply('Couldn\'t deposit money to bank.')
         })
+            
+        return
     }
 }
 
