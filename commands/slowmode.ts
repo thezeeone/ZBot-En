@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, italic, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember, TextChannel } from "discord.js"
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember, TextChannel } from "discord.js"
 import { commaList, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -238,6 +238,8 @@ const slowmodeCommand: Cmd = {
                 })
             })
         }
+
+        return
     }
 }
 

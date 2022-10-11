@@ -1,4 +1,4 @@
-import { ButtonBuilder, ActionRowBuilder, ButtonStyle, GuildMember, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time } from "discord.js"
+import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time } from "discord.js"
 import { LevelModel } from "../database"
 import { Cmd } from "./command-exports"
 
@@ -31,7 +31,7 @@ const tttCommand: Cmd = {
             }
         ]
     },
-    async execute(interaction: ChatInputCommandInteraction<"cached">): Promise<any> {
+    async execute(interaction: ChatInputCommandInteraction<"cached">) {
         let playerChoice = interaction.options.getString('play-as', true) as "X" | "O"
         let opponentChoice = (playerChoice === "X" ? "O" : "X") as "X" | "O"
         let playerTurn: 0 | 1 = 0 as 0 | 1
@@ -393,6 +393,7 @@ const tttCommand: Cmd = {
             }
         })
 
+        return
     }
 }
 

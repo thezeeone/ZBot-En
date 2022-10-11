@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, GuildMember, italic, NewsChannel, PermissionsBitField, TextChannel } from "discord.js";
+import { ApplicationCommandOptionType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, GuildMember, italic, NewsChannel, PermissionsBitField } from "discord.js";
 import { Cmd, tipsAndTricks } from "./command-exports";
 
 const updatesCommand: Cmd = {
@@ -69,6 +69,8 @@ const updatesCommand: Cmd = {
                 ephemeral: true
             })
         }
+
+        return
     }
 }
 

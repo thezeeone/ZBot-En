@@ -105,7 +105,7 @@ const timeoutCommand: Cmd = {
             const botMember = <GuildMember>interaction.guild.members.me
 
             // Check if the bot's highest role is higher than the member's highest
-            if (member.roles.highest.position >= (<GuildMember>interaction.guild.members.me).roles.highest.position) {
+            if (member.roles.highest.position >= botMember.roles.highest.position) {
                 const memberRolePos = member.roles.highest.position
                 const botRolePos = botMember.roles.highest.position
                 const numRoles = interaction.guild.roles.cache.size - 1
@@ -956,6 +956,8 @@ const timeoutCommand: Cmd = {
                 }
             })
         }
+
+        return
     }
 }
 
