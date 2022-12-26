@@ -1,8 +1,6 @@
-import { ApplicationCommandOptionType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, OverwriteType, PermissionsBitField, time } from "discord.js"
+import { ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, EmbedBuilder, OverwriteType, PermissionsBitField, time } from "discord.js"
 import { TicketSystemModel, TicketTypes } from "../database"
 import { Cmd } from "./command-exports"
-
-const experimentalWarning = '⚠ **__Warning:__ this is an experimental feature and may break while in use; please use this command __at the bot\'s own risk.__** Some buttons, select menus or features may fail, cause the command to behave strangely, or even cause the bot to crash entirely! If using this command, we advise you use this **at the bot\'s own risk**.\n\n*...and if you do know what you\'re doing, why not come and help us on our GitHub issue, [#21 Ticket System](https://github.com/Zahid556/ZBot-En/issues/21)??*'
 
 const ticketCommand: Cmd = {
     data: {
@@ -42,7 +40,17 @@ const ticketCommand: Cmd = {
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
         if (interaction.guild.id !== '1000073833551769600') {
             return await interaction.reply({
-                content: `This command only works in the official support server, [ZBot Server (En)](https://discord.gg/6tkn6m5g52)!\n\n${experimentalWarning}`,
+                content: `This command only works in the official support server!`,
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52')
+                        )
+                ] : [],
                 ephemeral: true
             })
         }
@@ -57,16 +65,26 @@ const ticketCommand: Cmd = {
             if (!ticket) {
                 await interaction.reply({
                     content: `**Ticket #${id}** does not exist.`,
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : [],
                     ephemeral: true
                 })
             } else {
                 
             }
         } else if (subcommand === 'create') {
-            interaction.user.send(`Creating ticket...\n\n${experimentalWarning}`)
+            interaction.user.send(`Creating ticket...`)
             .then(async (DMMessage) => {
                 await interaction.reply({
-                    content: `Creating ticket...\n\n${experimentalWarning}`,
+                    content: `Creating ticket...`,
                     ephemeral: true
                 })
 
@@ -80,8 +98,6 @@ const ticketCommand: Cmd = {
                     closed: false,
                     referenceMessage: '',
                     ticketChannelId: '',
-                }, {
-                    timestamps: true
                 })
 
                 const channel = await interaction.guild.channels.create({
@@ -110,7 +126,7 @@ const ticketCommand: Cmd = {
                         new EmbedBuilder()
                         .setColor(0x00ffff)
                         .setAuthor({
-                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
                         .setTitle(`Ticket #${ticket.id}`)
@@ -132,20 +148,42 @@ const ticketCommand: Cmd = {
                 })
                 .then(async (message) => {
                     await channel.edit({
-                        topic: `This is **ticket #${ticket.id}**, created by ${interaction.user.tag} (${interaction.user.id}) ${time(Date.now(), 'R')}. Use **/ticket close id: ${ticket.id}** to close the ticket.`,
+                        topic: `This is **ticket #${ticket.id}**, created by ${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id}) ${time(Date.now(), 'R')}. Use **/ticket close id: ${ticket.id}** to close the ticket.`,
                         name: `ticket-${ticket.id}`
                     })
                     await ticket.update({
                         referenceMessage: message.url,
                         ticketChannelId: channel.id
                     })
-                    await interaction.editReply(`Your **ticket #${ticket.id}** has been created. If you would like to use the ticket, please wait for a staff response which will be send in DMs.\n\n${experimentalWarning}`)
+                    await interaction.editReply({ 
+                        content: `Your **ticket #${ticket.id}** has been created. If you would like to use the ticket, please wait for a staff response which will be send in DMs.`,
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : []
+                    })
                     await DMMessage.edit(`**Ticket #${ticket.id}** created.`)
                 })
             })
             .catch(async () => {
                 await interaction.reply({
-                    content: `Please make sure this bot is unblocked and your DMs are open so you can run this command.\n\n${experimentalWarning}`,
+                    content: `Please make sure this bot is unblocked and your DMs are open so you can run this command.`,
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : [],
                     ephemeral: true
                 })
             })

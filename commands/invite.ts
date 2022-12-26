@@ -23,7 +23,7 @@ const inviteCommand: Cmd = {
             interaction.options.getBoolean('admin') 
             ? 'Administrator permissions' 
             : 'all permissions'
-        })") to invite **ZBot** to your server. Thanks a lot!`)
+        })") to invite **ZBot** to your server. You can also join the support server [following this link](https://discord.gg/6tkn6m5g52) - the link is permanent. Thanks a lot!`)
     }
 }
 

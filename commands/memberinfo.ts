@@ -1,4 +1,4 @@
-import { ApplicationCommandType, UserContextMenuCommandInteraction, EmbedBuilder, bold, inlineCode, time } from "discord.js"
+import { ApplicationCommandType, UserContextMenuCommandInteraction, EmbedBuilder, bold, inlineCode, time, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 import { commaList } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -14,7 +14,7 @@ const memberInfoCommand: Cmd = {
             embeds: [
                 new EmbedBuilder()
                 .setAuthor({
-                    name: `${interaction.user.tag} (${interaction.user.id})`,
+                    name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
                     iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                 })
                 .setTitle(`User unknown`)
@@ -122,7 +122,17 @@ const memberInfoCommand: Cmd = {
                         ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
                         : null
                     )
-                ]
+                ],
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52')
+                        )
+                ] : []
             })
         }
     }

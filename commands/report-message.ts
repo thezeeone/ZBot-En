@@ -172,16 +172,16 @@ const reportMessageCommand: Cmd = {
                     btn.awaitModalSubmit({
                         time: 1800000
                     })
-                        .then(async (modalInteraction) => {
-                            const titleVal = modalInteraction.fields.getTextInputValue('title')
-                            const extraInfoVal = modalInteraction.fields.getTextInputValue('info')
+                        .then(async (modalSubmit) => {
+                            const titleVal = modalSubmit.fields.getTextInputValue('title')
+                            const extraInfoVal = modalSubmit.fields.getTextInputValue('info')
 
-                            await modalInteraction.reply('Creating report ticket...')
+                            await modalSubmit.reply('Creating report ticket...')
 
                             // @ts-ignore
                             const ticket = await TicketSystemModel.create({
                                 creator: interaction.user.id,
-                                ticketRecipientChannelId: (modalInteraction.channel as DMChannel).id,
+                                ticketRecipientChannelId: (DMMessage.channel as DMChannel).id,
                                 ticketType: TicketTypes.ReportMessage,
                                 closed: false,
                                 referenceMessage: '',
@@ -215,7 +215,7 @@ const reportMessageCommand: Cmd = {
                                     new EmbedBuilder()
                                         .setColor(0x00ffff)
                                         .setAuthor({
-                                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                                            name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
                                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                                         })
                                         .setTitle(`Ticket #${ticket.id}`)
@@ -259,26 +259,38 @@ const reportMessageCommand: Cmd = {
                             })
                                 .then(async (message) => {
                                     await channel.edit({
-                                        topic: `This is **ticket #${ticket.id}**, created by ${interaction.user.tag} (${interaction.user.id}) ${time(Math.floor(Date.now() / 1000), 'R')}. Use **/ticket close id: ${ticket.id}** to close the ticket.`,
+                                        topic: `This is **ticket #${ticket.id}**, created by ${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id}) ${time(Math.floor(Date.now() / 1000), 'R')}. Use **/ticket close id: ${ticket.id}** to close the ticket.`,
                                         name: `ticket-${ticket.id}`
                                     })
                                     await ticket.update({
                                         referenceMessage: message.url,
                                         ticketChannelId: channel.id
                                     })
-                                    await modalInteraction.editReply(`**Report Ticket #${ticket.id}** created.${(await TicketSystemModel.findAll({ where: { creator: interaction.user.id, closed: false } })).length > 1
+                                    await modalSubmit.editReply({
+                                        content: `**Report Ticket #${ticket.id}** created.${(await TicketSystemModel.findAll({ where: { creator: interaction.user.id, closed: false } })).length > 1
                                         ? `\n\nYou now have **more than one** ticket open (${(await TicketSystemModel.findAll({ where: { creator: interaction.user.id, closed: false } })).length > 3
                                             ? `${commaList((await TicketSystemModel.findAll({ where: { creator: interaction.user.id, closed: false } })).slice(0, 3).map(s => `Ticket #${s.id}`).concat(`${(await TicketSystemModel.findAll({ where: { creator: interaction.user.id, closed: false } })).length - 3} more`))}`
                                             : commaList((await TicketSystemModel.findAll({ where: { creator: interaction.user.id, closed: false } })).map(s => `Ticket #${s.id}`))
                                         }). If you would like to get your message sent to a specific ticket, reply to one of the embeds sent by the bot.`
                                         : ''
-                                        }`)
+                                        }`,
+                                        components: interaction.guild.id !== '1000073833551769600' ? [
+                                            new ActionRowBuilder<ButtonBuilder>()
+                                                .addComponents(
+                                                    new ButtonBuilder()
+                                                        .setEmoji('🔗')
+                                                        .setLabel('Join ZBot Support Server!')
+                                                        .setStyle(ButtonStyle.Link)
+                                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                                )
+                                        ] : []
+                                    })
 
                                     const collector = channel.createMessageCollector({
                                         time: 2700000,
                                         filter: msg => !msg.author.bot
                                     })
-                                    const DMCollector = (modalInteraction.channel as DMChannel).createMessageCollector({
+                                    const DMCollector = (DMMessage.channel as DMChannel).createMessageCollector({
                                         filter: async (msg) => {
                                             
                                             if (msg.author.bot) {
@@ -372,7 +384,7 @@ const reportMessageCommand: Cmd = {
                                                 embed.setFooter({ text: 'This is the only ticket you have open as of now. You do not need to reply to this message for your message to be sent.' })
                                             }
 
-                                            (modalInteraction.channel as DMChannel)?.send({
+                                            (DMMessage.channel as DMChannel)?.send({
                                                 embeds: [
                                                     embed
                                                 ],
@@ -585,7 +597,7 @@ const reportMessageCommand: Cmd = {
                                     })
 
                                     collector.on('end', async () => {
-                                        (modalInteraction.channel as DMChannel).send({
+                                        (DMMessage.channel as DMChannel).send({
                                             embeds: [
                                                 new EmbedBuilder()
                                                     .setColor(0xff0000)
@@ -670,6 +682,16 @@ const reportMessageCommand: Cmd = {
             .catch(async () => {
                 await interaction.reply({
                     content: 'Please make sure this bot is unblocked and your DMs are open so you can run this command.',
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : [],
                     ephemeral: true
                 })
             })

@@ -125,7 +125,7 @@ const questionCommand: Cmd = {
 
                 const embed = new EmbedBuilder()
                 .setAuthor({
-                    name: `${interaction.user.tag} (${interaction.user.id})`,
+                    name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
                     iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                 })
                 .setColor(0x00ffff)
@@ -136,6 +136,16 @@ const questionCommand: Cmd = {
                     embeds: [
                         embed
                     ],
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : [],
                     fetchReply: true
                 })
 
@@ -252,7 +262,19 @@ const questionCommand: Cmd = {
                     .setPlaceholder('No answer was selected!')
                     await reply.edit({
                         content: 'Didn\'t receive a response in time.',
-                        components: [ selectMenuRow ]
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            selectMenuRow,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : [
+                            selectMenuRow
+                        ]
                     })
                     return
                 } catch (error) {

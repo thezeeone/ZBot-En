@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ChannelType, ChatInputCommandInteraction, TextChannel } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, TextChannel } from "discord.js";
 import { LevelsChannelListModel } from "../database";
 import { Cmd } from "./command-exports";
 
@@ -33,15 +33,25 @@ const channelWLCommand: Cmd = {
             })
             else {
                 isChannelWhitelisted.allowed = true
-                await interaction.reply(`Successfully whitelisted ${
-                    channel.id === interaction.channel?.id
-                    ? 'this channel'
-                    : channel.toString()
-                }; members can always get XP for sending messages in ${
-                    channel.id === interaction.channel?.id
-                    ? 'this'
-                    : 'that'
-                } channel.`)
+                await interaction.reply({
+                    content: `Successfully whitelisted ${channel.id === interaction.channel?.id
+                        ? 'this channel'
+                        : channel.toString()
+                        }; members can always get XP for sending messages in ${channel.id === interaction.channel?.id
+                            ? 'this'
+                            : 'that'
+                        } channel.`,
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : []
+                })
             }
         } else {
             LevelsChannelListModel.create({
@@ -49,23 +59,33 @@ const channelWLCommand: Cmd = {
                 channelId: (interaction.channel as TextChannel).id,
                 allowed: true
             })
-            .then(async () => {
-                await interaction.reply(`Successfully whitelisted ${
-                    channel.id === interaction.channel?.id
-                    ? 'this channel'
-                    : channel.toString()
-                }; members can always get XP for sending messages in ${
-                    channel.id === interaction.channel?.id
-                    ? 'this'
-                    : 'that'
-                } channel.`)
-            })
-            .catch(async () => {
-                await interaction.reply({
-                    content: 'An error occured, please retry. If this problem persists, use the `/report-problem` command.',
-                    ephemeral: true
+                .then(async () => {
+                    await interaction.reply({
+                        content: `Successfully whitelisted ${channel.id === interaction.channel?.id
+                            ? 'this channel'
+                            : channel.toString()
+                            }; members can always get XP for sending messages in ${channel.id === interaction.channel?.id
+                                ? 'this'
+                                : 'that'
+                            } channel.`,
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : []
+                    })
                 })
-            })
+                .catch(async () => {
+                    await interaction.reply({
+                        content: 'An error occured, please retry. If this problem persists, use the `/report-problem` command.',
+                        ephemeral: true
+                    })
+                })
         }
 
         return

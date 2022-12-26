@@ -12,10 +12,8 @@ import { timeoutCommand } from "./timeout";
 import { kickCommand } from "./kick";
 import { banCommand } from "./ban";
 import { tttCommand } from "./tictactoe";
-import { gtwCommand } from "./guesstheword";
 import { memoryGameCommand } from "./memorygame";
 import { blacklistCommand } from "./blacklist";
-import { reportCommand } from "./reportproblem";
 import { pingCommand } from "./ping"
 import { slowmodeCommand } from "./slowmode";
 import { helpCommand } from "./help";
@@ -23,7 +21,6 @@ import { serverInfoCommand } from "./serverinfo";
 import { inviteCommand } from "./invite";
 import { updatesCommand } from "./updates";
 import { userInfoCommand } from "./userinfo";
-import { exchangeCommand } from "./exchange";
 import { memberInfoCommand } from "./memberinfo";
 import { balanceCommand } from "./balance";
 import { depositCommand } from "./deposit";
@@ -31,14 +28,16 @@ import { withdrawCommand } from "./withdraw";
 import { giveCommand } from "./givecoins";
 import { channelBLCommand } from "./channelblacklist";
 import { channelWLCommand } from "./channelwhitelist";
-import { giveXPCommand } from "./givexp";
-import { imageCommand } from "./image";
 import { questionCommand } from "./question";
-import { removeXPCommand } from "./removexp";
 import { reportMemberCommand } from "./report-member";
 import { reportMessageCommand } from "./report-message";
 import { ticketCommand } from "./ticket";
 import { voteCommand } from "./vote";
+import { sudokuCommand } from "./sudoku";
+import { zBankCommand } from "./zbank";
+import { quizCommand } from "./quiz";
+import { warnCommand } from "./warn";
+import { welcomeEditorCommand } from "./welcomeeditor";
 
 export {
     Cmd,
@@ -48,10 +47,8 @@ export {
     kickCommand,
     banCommand,
     tttCommand,
-    gtwCommand,
     memoryGameCommand,
     blacklistCommand,
-    reportCommand,
     pingCommand,
     slowmodeCommand,
     helpCommand,
@@ -59,7 +56,6 @@ export {
     inviteCommand,
     updatesCommand,
     userInfoCommand,
-    exchangeCommand,
     tipsAndTricks,
     memberInfoCommand,
     balanceCommand,
@@ -68,12 +64,14 @@ export {
     giveCommand,
     channelBLCommand,
     channelWLCommand,
-    giveXPCommand,
-    imageCommand,
     questionCommand,
-    removeXPCommand,
     reportMemberCommand,
     reportMessageCommand,
     ticketCommand,
-    voteCommand
+    voteCommand,
+    sudokuCommand,
+    zBankCommand,
+    quizCommand,
+    warnCommand,
+    welcomeEditorCommand
 }

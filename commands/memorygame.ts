@@ -23,7 +23,7 @@ const memoryGameCommand: Cmd = {
             embeds: [
                 new EmbedBuilder()
                     .setAuthor({
-                        name: `${interaction.user.tag} (${interaction.user.id})`,
+                        name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
                         iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                     })
                     .setTitle(`Member not found`)

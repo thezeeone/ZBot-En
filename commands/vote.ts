@@ -83,7 +83,7 @@ const voteCommand: Cmd = {
 
         const embed = new EmbedBuilder()
         .setAuthor({
-            name: `${interaction.user.tag} (${interaction.user.id})`,
+            name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
         })
         .setColor(0x00ffff)
@@ -209,11 +209,35 @@ const voteCommand: Cmd = {
 
                 voteMessage.edit({
                     embeds: [embed],
-                    components: [buttons]
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        buttons,
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : [
+                        buttons
+                    ]
                 })
             } catch {
                 voteMessage.delete().catch(async () => {
-                    return await interaction.channel?.send('An error occured with the original message - vote cancelled.')
+                    return await interaction.channel?.send({
+                        content: 'An error occured with the original message - vote cancelled.',
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : []
+                    })
                 })
             }
         })

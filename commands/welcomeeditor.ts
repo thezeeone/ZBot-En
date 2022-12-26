@@ -24,22 +24,47 @@ const welcomeEditorCommand: Cmd = {
                 setupButton,
                 cancelButton
             ] = [
-                new ButtonBuilder()
-                .setCustomId('setup')
-                .setStyle(ButtonStyle.Success)
-                .setLabel('Set Up'),
-                new ButtonBuilder()
-                .setCustomId('cancel')
-                .setStyle(ButtonStyle.Danger)
-                .setLabel('Cancel')
-            ]
+                    new ButtonBuilder()
+                        .setCustomId('setup')
+                        .setStyle(ButtonStyle.Success)
+                        .setLabel('Set Up'),
+                    new ButtonBuilder()
+                        .setCustomId('cancel')
+                        .setStyle(ButtonStyle.Danger)
+                        .setLabel('Cancel')
+                ]
 
             const buttonRow = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(setupButton, cancelButton)
+                .addComponents(setupButton, cancelButton)
 
             const reply = await interaction.reply({
                 content: `You don\'t have a welcome system set up. Click the buttons below to get started.\n\n${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 120)}`)}`,
-                components: [buttonRow],
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    buttonRow,
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52'),
+                            new ButtonBuilder()
+                                .setEmoji('⚠')
+                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                        )
+                ] : [
+                    buttonRow,
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('⚠')
+                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                        )
+                ],
                 fetchReply: true
             })
 
@@ -56,9 +81,9 @@ const welcomeEditorCommand: Cmd = {
                         await btn.reply({
                             embeds: [
                                 new EmbedBuilder()
-                                .setTitle(underscore('You are blacklisted from using this bot.'))
-                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
-                                .setColor(0x000000)
+                                    .setTitle(underscore('You are blacklisted from using this bot.'))
+                                    .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                    .setColor(0x000000)
                             ]
                         })
                         return false
@@ -80,27 +105,187 @@ const welcomeEditorCommand: Cmd = {
                         embeds: [],
                         enabled: true
                     })
-                    .then(async () => {
-                        try {
-                            await reply.edit({ content: `To set up a welcome system, you must re-run this command.`, components: [buttonRow] })
-                            await btn.reply(`If you would like to set-up a welcome system, please re-run the command.`)
-                        } catch {
-                            return
-                        }
-                    })
-                    .catch(async () => {
-                        try {
-                            await btn.reply(`Failed to create welcome system editor, please try again. If this issue persists, please report it [on our GitHub Issue #20](https://github.com/Zahid556/ZBot-En/issues/20) or in the [#reports channel on ZBot Server (En)](https://discord.gg/6tkn6m5g52).`)
-                            await reply.edit({ content: `Welcome system failed.`, components: [buttonRow] })
-                        } catch {
-                            return
-                        }
-                    })
+                        .then(async () => {
+                            try {
+                                await reply.edit({
+                                    content: `To set up a welcome system, you must re-run this command.`,
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        buttonRow,
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        buttonRow,
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ]
+                                })
+                                await btn.reply({
+                                    content: `If you would like to set-up a welcome system, please re-run the command.`,
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ]
+                                })
+                            } catch {
+                                return
+                            }
+                        })
+                        .catch(async () => {
+                            try {
+                                await btn.reply({
+                                    content: `Failed to create welcome system editor, please try again. If this issue persists, please report it in the [#reports channel](https://discord.gg/6tkn6m5g52) in our support server.`,
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ]
+                                })
+                                await reply.edit({
+                                    content: `Welcome system failed.`,
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ]
+                                })
+                            } catch {
+                                return
+                            }
+                        })
                 } else if (btn.customId === 'cancel') {
-                    setupButton.setDisabled(true) 
+                    setupButton.setDisabled(true)
                     cancelButton.setDisabled(true)
-                    reply.edit({ content: `Cancelled.`, components: [buttonRow] })
-                    btn.reply(`Set-up cancelled.`)
+                    reply.edit({
+                        content: `Cancelled.`,
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            buttonRow,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52'),
+                                    new ButtonBuilder()
+                                        .setEmoji('⚠')
+                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                )
+                        ] : [
+                            buttonRow,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('⚠')
+                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                )
+                        ]
+                    })
+                    btn.reply({
+                        content: `Set-up cancelled.`,
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52'),
+                                    new ButtonBuilder()
+                                        .setEmoji('⚠')
+                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                )
+                        ] : [
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('⚠')
+                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                )
+                        ]
+                    })
                 }
             })
 
@@ -111,7 +296,32 @@ const welcomeEditorCommand: Cmd = {
                         cancelButton.setDisabled(true)
                         await reply.edit({
                             content: `A response wasn\'t received in time.`,
-                            components: [buttonRow]
+                            components: interaction.guild.id !== '1000073833551769600' ? [
+                                buttonRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                buttonRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ]
                         })
                     } catch {
                         return
@@ -147,16 +357,16 @@ const welcomeEditorCommand: Cmd = {
             ]
 
             const embed = new EmbedBuilder()
-            .setTitle('Welcome System Editor')
-            .setDescription('Welcome to the Welcome System Editor! This is your starting point for managing the welcome system editor. Click some of the buttons below to get started. (**please read the experimental label above**)')
-            .addFields([
-                {
-                    name: 'Syntax',
-                    value: syntax.map(({ name, description, value }) => {
-                        return `${inlineCode(name)} ${description} ${italic(value as string)}`
-                    }).join('\n')
-                }
-            ])
+                .setTitle('Welcome System Editor')
+                .setDescription('Welcome to the Welcome System Editor! This is your starting point for managing the welcome system editor. Click some of the buttons below to get started. (**please read the experimental label above**)')
+                .addFields([
+                    {
+                        name: 'Syntax',
+                        value: syntax.map(({ name, description, value }) => {
+                            return `${inlineCode(name)} ${description} ${italic(value as string)}`
+                        }).join('\n')
+                    }
+                ])
 
             const [
                 editButton,
@@ -167,58 +377,83 @@ const welcomeEditorCommand: Cmd = {
                 toggleEnableButton,
                 completeButton
             ] = [
-                new ButtonBuilder()
-                .setCustomId('edit')
-                .setLabel('Edit')
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(editedSystem.channelId && editedSystem.enabled ? false : true),
-                new ButtonBuilder()
-                .setCustomId('channel')
-                .setLabel('Set Channel')
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(!editedSystem.enabled),
-                new ButtonBuilder()
-                .setCustomId('preview')
-                .setLabel('Preview')
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(editedSystem.enabled && (editedSystem.embeds.length || editedSystem.message) ? false : true),
-                new ButtonBuilder()
-                .setCustomId('save')
-                .setLabel('Save')
-                .setStyle(ButtonStyle.Success)
-                .setDisabled(!editedSystem.enabled),
-                new ButtonBuilder()
-                .setCustomId('discard')
-                .setLabel('Discard')
-                .setStyle(ButtonStyle.Danger)
-                .setDisabled(!editedSystem.enabled),
-                new ButtonBuilder()
-                .setCustomId(!editedSystem.enabled ? 'enable' : 'disable')
-                .setLabel(!editedSystem.enabled ? 'Enable' : 'Disable')
-                .setStyle(!editedSystem.enabled ? ButtonStyle.Success : ButtonStyle.Danger)
-                .setDisabled(false),
-                new ButtonBuilder()
-                .setCustomId('complete')
-                .setLabel('Complete editing')
-                .setStyle(ButtonStyle.Success)
-                .setDisabled(false)
-            ]
+                    new ButtonBuilder()
+                        .setCustomId('edit')
+                        .setLabel('Edit')
+                        .setStyle(ButtonStyle.Primary)
+                        .setDisabled(editedSystem.channelId && editedSystem.enabled ? false : true),
+                    new ButtonBuilder()
+                        .setCustomId('channel')
+                        .setLabel('Set Channel')
+                        .setStyle(ButtonStyle.Primary)
+                        .setDisabled(!editedSystem.enabled),
+                    new ButtonBuilder()
+                        .setCustomId('preview')
+                        .setLabel('Preview')
+                        .setStyle(ButtonStyle.Primary)
+                        .setDisabled(editedSystem.enabled && (editedSystem.embeds.length || editedSystem.message) ? false : true),
+                    new ButtonBuilder()
+                        .setCustomId('save')
+                        .setLabel('Save')
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(!editedSystem.enabled),
+                    new ButtonBuilder()
+                        .setCustomId('discard')
+                        .setLabel('Discard')
+                        .setStyle(ButtonStyle.Danger)
+                        .setDisabled(!editedSystem.enabled),
+                    new ButtonBuilder()
+                        .setCustomId(!editedSystem.enabled ? 'enable' : 'disable')
+                        .setLabel(!editedSystem.enabled ? 'Enable' : 'Disable')
+                        .setStyle(!editedSystem.enabled ? ButtonStyle.Success : ButtonStyle.Danger)
+                        .setDisabled(false),
+                    new ButtonBuilder()
+                        .setCustomId('complete')
+                        .setLabel('Complete editing')
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(false)
+                ]
 
             const [
                 editorRow,
                 enablerRow,
                 completionRow
             ] = [
-                new ActionRowBuilder<ButtonBuilder>().addComponents(editButton, channelButton, previewButton, saveButton, discardButton),
-                new ActionRowBuilder<ButtonBuilder>().addComponents(toggleEnableButton),
-                new ActionRowBuilder<ButtonBuilder>().addComponents(completeButton)
-            ]
+                    new ActionRowBuilder<ButtonBuilder>().addComponents(editButton, channelButton, previewButton, saveButton, discardButton),
+                    new ActionRowBuilder<ButtonBuilder>().addComponents(toggleEnableButton),
+                    new ActionRowBuilder<ButtonBuilder>().addComponents(completeButton)
+                ]
 
             const reply = await interaction.reply({
-                components: [
+                components: interaction.guild.id !== '1000073833551769600' ? [
                     editorRow,
                     enablerRow,
-                    completionRow
+                    completionRow,
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52'),
+                            new ButtonBuilder()
+                                .setEmoji('⚠')
+                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                        )
+                ] : [
+                    editorRow,
+                    enablerRow,
+                    completionRow,
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('⚠')
+                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                        )
                 ],
                 embeds: [
                     embed
@@ -234,13 +469,13 @@ const welcomeEditorCommand: Cmd = {
                         }
                     })
 
-                    if (isUserBlacklisted) { 
+                    if (isUserBlacklisted) {
                         await btn.reply({
                             embeds: [
                                 new EmbedBuilder()
-                                .setTitle(underscore('You are blacklisted from using this bot.'))
-                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
-                                .setColor(0x000000)
+                                    .setTitle(underscore('You are blacklisted from using this bot.'))
+                                    .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                    .setColor(0x000000)
                             ]
                         })
                         return false
@@ -249,6 +484,30 @@ const welcomeEditorCommand: Cmd = {
                     if (btn.user.id !== interaction.user.id) {
                         await btn.reply({
                             content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                            components: interaction.guild.id !== '1000073833551769600' ? [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ],
                             ephemeral: true
                         })
                         return false
@@ -263,26 +522,75 @@ const welcomeEditorCommand: Cmd = {
                     case 'edit':
                         const rpl = await btn.reply({
                             content: `Type up your new welcome message, while replying to this message, using the syntax to help - this will be saved. If you would like to cancel, type \`cancel\`. ${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 1200, 'R')}`)}`,
+                            components: interaction.guild.id !== '1000073833551769600' ? [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ],
                             fetchReply: true
                         })
 
                         toggleEnableButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         editButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         channelButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         previewButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         saveButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         discardButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         await reply.edit({
-                            components: [
+                            components: interaction.guild.id !== '1000073833551769600' ? [
                                 editorRow,
                                 enablerRow,
-                                completionRow
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                editorRow,
+                                enablerRow,
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
                             ]
                         })
 
@@ -300,6 +608,30 @@ const welcomeEditorCommand: Cmd = {
 
                                 await msg.reply({
                                     content: 'Cancelled.',
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ],
                                     allowedMentions: {
                                         repliedUser: false
                                     }
@@ -308,8 +640,32 @@ const welcomeEditorCommand: Cmd = {
                                 editedSystem.message = msg.content
 
                                 await msg.reply({
-                                    content: 'Saved as your message.'
-                                }) 
+                                    content: 'Saved as your message.',
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ]
+                                })
                             }
 
                             filter.stop()
@@ -317,29 +673,106 @@ const welcomeEditorCommand: Cmd = {
 
                         filter.on('end', async (collected) => {
                             if (!collected.size) {
-                                await rpl.edit('A response wasn\'t received in time.')
-                                await rpl.reply('A response wasn\'t received in time.')
+                                await rpl.edit({
+                                    content: 'A response wasn\'t received in time.',
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ]
+                                })
+                                await rpl.reply({
+                                    content: 'A response wasn\'t received in time.',
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ]
+                                })
                             }
 
                             toggleEnableButton
-                            .setCustomId(editedSystem.enabled ? 'disable' : 'enable')
-                            .setLabel(editedSystem.enabled ? 'Disable' : 'Enable')
-                            .setStyle(editedSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+                                .setCustomId(editedSystem.enabled ? 'disable' : 'enable')
+                                .setLabel(editedSystem.enabled ? 'Disable' : 'Enable')
+                                .setStyle(editedSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
                             editButton
-                            .setDisabled(editedSystem.channelId ? false : true)
+                                .setDisabled(editedSystem.channelId ? false : true)
                             channelButton
-                            .setDisabled(false)
+                                .setDisabled(false)
                             previewButton
-                            .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
+                                .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
                             saveButton
-                            .setDisabled(false)
+                                .setDisabled(false)
                             discardButton
-                            .setDisabled(false)
+                                .setDisabled(false)
                             await reply.edit({
-                                components: [
+                                components: interaction.guild.id !== '1000073833551769600' ? [
                                     editorRow,
                                     enablerRow,
-                                    completionRow
+                                    completionRow,
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    editorRow,
+                                    enablerRow,
+                                    completionRow,
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
                                 ]
                             })
 
@@ -349,16 +782,40 @@ const welcomeEditorCommand: Cmd = {
                         break
                     case 'channel':
                         const channelEditButton = new ButtonBuilder()
-                        .setCustomId(editedSystem.channelId ? 'change' : 'set')
-                        .setLabel(editedSystem.channelId ? 'Change Channel' : 'Set Channel')
-                        .setStyle(ButtonStyle.Primary)
+                            .setCustomId(editedSystem.channelId ? 'change' : 'set')
+                            .setLabel(editedSystem.channelId ? 'Change Channel' : 'Set Channel')
+                            .setStyle(ButtonStyle.Primary)
 
                         if (!editedSystem.channelId) {
                             await btn.reply({
                                 content: 'This welcome system doesn\'t have a channel to send the messages to!',
-                                components: [
+                                components: interaction.guild.id !== '1000073833551769600' ? [
                                     new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(channelEditButton)
+                                        .addComponents(channelEditButton),
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(channelEditButton),
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
                                 ],
                                 fetchReply: true
                             })
@@ -367,18 +824,66 @@ const welcomeEditorCommand: Cmd = {
                                 const channel = await interaction.client.channels.fetch(editedSystem.channelId)
                                 await btn.reply({
                                     content: `ZBot's welcome system messages will be sent in ${channel?.toString()}.`,
-                                    components: [
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
                                         new ActionRowBuilder<ButtonBuilder>()
-                                        .addComponents(channelEditButton)
+                                            .addComponents(channelEditButton),
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(channelEditButton),
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
                                     ],
                                     fetchReply: true
                                 })
                             } catch {
                                 await btn.reply({
                                     content: 'Channel unresolved; has been set to `undefined.`',
-                                    components: [
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
                                         new ActionRowBuilder<ButtonBuilder>()
-                                        .addComponents(channelEditButton)
+                                            .addComponents(channelEditButton),
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(channelEditButton),
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
                                     ],
                                     fetchReply: true
                                 })
@@ -395,13 +900,13 @@ const welcomeEditorCommand: Cmd = {
                                     }
                                 })
 
-                                if (isUserBlacklisted) { 
+                                if (isUserBlacklisted) {
                                     await btn.reply({
                                         embeds: [
                                             new EmbedBuilder()
-                                            .setTitle(underscore('You are blacklisted from using this bot.'))
-                                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
-                                            .setColor(0x000000)
+                                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                                .setColor(0x000000)
                                         ]
                                     })
                                     return false
@@ -410,6 +915,30 @@ const welcomeEditorCommand: Cmd = {
                                 if (btn.user.id !== interaction.user.id) {
                                     await btn.reply({
                                         content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                                        components: interaction.guild.id !== '1000073833551769600' ? [
+                                            new ActionRowBuilder<ButtonBuilder>()
+                                                .addComponents(
+                                                    new ButtonBuilder()
+                                                        .setEmoji('🔗')
+                                                        .setLabel('Join ZBot Support Server!')
+                                                        .setStyle(ButtonStyle.Link)
+                                                        .setURL('https://discord.gg/6tkn6m5g52'),
+                                                    new ButtonBuilder()
+                                                        .setEmoji('⚠')
+                                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                        .setStyle(ButtonStyle.Link)
+                                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                )
+                                        ] : [
+                                            new ActionRowBuilder<ButtonBuilder>()
+                                                .addComponents(
+                                                    new ButtonBuilder()
+                                                        .setEmoji('⚠')
+                                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                        .setStyle(ButtonStyle.Link)
+                                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                )
+                                        ],
                                         ephemeral: true
                                     })
                                     return false
@@ -423,19 +952,67 @@ const welcomeEditorCommand: Cmd = {
 
                         fetchedreplyCollector.on('collect', async (collectedBtn) => {
                             channelEditButton
-                            .setDisabled(true)
-                            .setLabel('Editing channel...')
-                            .setStyle(ButtonStyle.Secondary)
+                                .setDisabled(true)
+                                .setLabel('Editing channel...')
+                                .setStyle(ButtonStyle.Secondary)
 
                             await fetchedreply.edit({
-                                components: [
+                                components: interaction.guild.id !== '1000073833551769600' ? [
                                     new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(channelEditButton)
+                                        .addComponents(channelEditButton),
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(channelEditButton),
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
                                 ]
                             })
 
                             const componentReply = await collectedBtn.reply({
                                 content: `Please type the channel (mention or ID) you would like to send the messages to, **while replying to this one**. To cancel, type \`cancel\`. ${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 120, 'R')}`)}`,
+                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ],
                                 fetchReply: true
                             })
 
@@ -452,57 +1029,208 @@ const welcomeEditorCommand: Cmd = {
                                 if (message.content === 'cancel') {
                                     await componentReply.edit('Cancelled.')
                                     channelEditButton
-                                    .setDisabled(true)
-                                    .setLabel('Channel Set')
-                                    .setStyle(ButtonStyle.Secondary)
+                                        .setDisabled(true)
+                                        .setLabel('Channel Set')
+                                        .setStyle(ButtonStyle.Secondary)
                                     await fetchedreply.edit({
-                                        components: [
+                                        components: interaction.guild.id !== '1000073833551769600' ? [
                                             new ActionRowBuilder<ButtonBuilder>()
-                                            .addComponents(channelEditButton)
+                                                .addComponents(channelEditButton),
+                                            new ActionRowBuilder<ButtonBuilder>()
+                                                .addComponents(
+                                                    new ButtonBuilder()
+                                                        .setEmoji('🔗')
+                                                        .setLabel('Join ZBot Support Server!')
+                                                        .setStyle(ButtonStyle.Link)
+                                                        .setURL('https://discord.gg/6tkn6m5g52'),
+                                                    new ButtonBuilder()
+                                                        .setEmoji('⚠')
+                                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                        .setStyle(ButtonStyle.Link)
+                                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                )
+                                        ] : [
+                                            new ActionRowBuilder<ButtonBuilder>()
+                                                .addComponents(channelEditButton),
+                                            new ActionRowBuilder<ButtonBuilder>()
+                                                .addComponents(
+                                                    new ButtonBuilder()
+                                                        .setEmoji('⚠')
+                                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                        .setStyle(ButtonStyle.Link)
+                                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                )
                                         ]
                                     })
                                 } else {
                                     try {
                                         const channel = await interaction.client.channels.fetch(message.content.match(/\d{17,19}/g)?.[0] as string)
                                         if (!channel?.isTextBased()) {
-                                            await message.reply('Unrecognised channel.')
+                                            await message.reply({
+                                                content: 'Unrecognised channel.',
+                                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                                    new ActionRowBuilder<ButtonBuilder>()
+                                                        .addComponents(
+                                                            new ButtonBuilder()
+                                                                .setEmoji('🔗')
+                                                                .setLabel('Join ZBot Support Server!')
+                                                                .setStyle(ButtonStyle.Link)
+                                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                                            new ButtonBuilder()
+                                                                .setEmoji('⚠')
+                                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                                .setStyle(ButtonStyle.Link)
+                                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                        )
+                                                ] : [
+                                                    new ActionRowBuilder<ButtonBuilder>()
+                                                        .addComponents(
+                                                            new ButtonBuilder()
+                                                                .setEmoji('⚠')
+                                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                                .setStyle(ButtonStyle.Link)
+                                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                        )
+                                                ]
+                                            })
                                             return
                                         }
                                         editedSystem.channelId = channel?.id
-                                        await componentReply.edit(`ZBot will now send welcome messages in ${channel}!`)
+                                        await componentReply.edit({
+                                            content: `ZBot will now send welcome messages in ${channel}!`,
+                                            components: interaction.guild.id !== '1000073833551769600' ? [
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('🔗')
+                                                            .setLabel('Join ZBot Support Server!')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
+                                            ] : [
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
+                                            ]
+                                        })
                                         fetchedreplyCollector.stop()
                                     } catch {
-                                        await message.reply('Unrecognised channel.')
+                                        await message.reply({
+                                            content: 'Unrecognised channel.',
+                                            components: interaction.guild.id !== '1000073833551769600' ? [
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('🔗')
+                                                            .setLabel('Join ZBot Support Server!')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
+                                            ] : [
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
+                                            ]
+                                        })
                                     } finally {
                                         channelEditButton
-                                        .setDisabled(false)
-                                        .setLabel(editedSystem.channelId ? 'Change Channel' : 'Set Channel')
-                                        .setStyle(ButtonStyle.Primary)
+                                            .setDisabled(false)
+                                            .setLabel(editedSystem.channelId ? 'Change Channel' : 'Set Channel')
+                                            .setStyle(ButtonStyle.Primary)
                                         await fetchedreply.edit({
-                                            components: [
+                                            components: interaction.guild.id !== '1000073833551769600' ? [
                                                 new ActionRowBuilder<ButtonBuilder>()
-                                                .addComponents(channelEditButton)
+                                                    .addComponents(channelEditButton),
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('🔗')
+                                                            .setLabel('Join ZBot Support Server!')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
+                                            ] : [
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(channelEditButton),
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
                                             ]
                                         })
                                         toggleEnableButton
-                                        .setCustomId(editedSystem.enabled ? 'disable' : 'enable')
-                                        .setLabel(editedSystem.enabled ? 'Disable' : 'Enable')
-                                        .setStyle(editedSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+                                            .setCustomId(editedSystem.enabled ? 'disable' : 'enable')
+                                            .setLabel(editedSystem.enabled ? 'Disable' : 'Enable')
+                                            .setStyle(editedSystem.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
                                         editButton
-                                        .setDisabled(editedSystem.channelId ? false : true)
+                                            .setDisabled(editedSystem.channelId ? false : true)
                                         channelButton
-                                        .setDisabled(false)
+                                            .setDisabled(false)
                                         previewButton
-                                        .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
+                                            .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
                                         saveButton
-                                        .setDisabled(false)
+                                            .setDisabled(false)
                                         discardButton
-                                        .setDisabled(false)
+                                            .setDisabled(false)
                                         await reply.edit({
-                                            components: [
+                                            components: interaction.guild.id !== '1000073833551769600' ? [
                                                 editorRow,
                                                 enablerRow,
-                                                completionRow
+                                                completionRow,
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('🔗')
+                                                            .setLabel('Join ZBot Support Server!')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
+                                            ] : [
+                                                editorRow,
+                                                enablerRow,
+                                                completionRow,
+                                                new ActionRowBuilder<ButtonBuilder>()
+                                                    .addComponents(
+                                                        new ButtonBuilder()
+                                                            .setEmoji('⚠')
+                                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                            .setStyle(ButtonStyle.Link)
+                                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                                    )
                                             ]
                                         })
                                     }
@@ -511,14 +1239,38 @@ const welcomeEditorCommand: Cmd = {
 
                             collector.on('end', async (collected) => {
                                 channelEditButton
-                                .setDisabled(true)
-                                .setLabel(!collected.size ? 'No response received' : 'Channel selected')
-                                .setStyle(ButtonStyle.Secondary)
+                                    .setDisabled(true)
+                                    .setLabel(!collected.size ? 'No response received' : 'Channel selected')
+                                    .setStyle(ButtonStyle.Secondary)
                                 fetchedreply.edit({
                                     content: !collected.size ? 'A response wasn\'t received in time.' : 'Channel selected.',
-                                    components: [
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
                                         new ActionRowBuilder<ButtonBuilder>()
-                                        .addComponents(channelEditButton)
+                                            .addComponents(channelEditButton),
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(channelEditButton),
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
                                     ]
                                 })
                             })
@@ -527,9 +1279,33 @@ const welcomeEditorCommand: Cmd = {
                         fetchedreplyCollector.on('end', () => {
                             channelEditButton.setDisabled(true)
                             fetchedreply.edit({
-                                components: [
+                                components: interaction.guild.id !== '1000073833551769600' ? [
                                     new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(channelEditButton)
+                                        .addComponents(channelEditButton),
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(channelEditButton),
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
                                 ]
                             })
                         })
@@ -539,69 +1315,117 @@ const welcomeEditorCommand: Cmd = {
                         if (!editedSystem.message && !editedSystem.embeds.length) {
                             await btn.reply({
                                 content: 'You don\'t have a message or any embeds! Click the edit button to edit your message.',
+                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ],
                                 ephemeral: true
                             })
                         } else {
                             try {
                                 await btn.reply({
                                     content: editedSystem.message
-                                    .replace(/{user\.username}/ig, interaction.member.user.username)
-                                    .replace(/{user\.discriminator}/ig, interaction.member.user.discriminator)
-                                    .replace(/{user\.id}/ig, interaction.member.user.id)
-                                    .replace(/{user\.mention}/ig, interaction.member.user.toString())
-                                    .replace(/{user\.createdAt(?:\[(short time|long time|short date|long date|short date-time|long date-time|relative)\])?}/ig, (testParam) => {
-                                        let timeFormat;
-                                        switch (testParam) {
-                                            case 'short time':
-                                                timeFormat = TimestampStyles.ShortTime
-                                                break
-                                            case 'long time':
-                                                timeFormat = TimestampStyles.LongTime
-                                                break
-                                            case 'short date':
-                                                timeFormat = TimestampStyles.ShortDate
-                                                break
-                                            case 'long date':
-                                                timeFormat = TimestampStyles.LongDate
-                                                break
-                                            case 'short date-time':
-                                                timeFormat = TimestampStyles.ShortDateTime
-                                                break
-                                            case 'long date-time':
-                                                timeFormat = TimestampStyles.LongDateTime
-                                                break
-                                            case 'relative':
-                                                timeFormat = TimestampStyles.RelativeTime
-                                                break
-                                            default:
-                                                timeFormat = TimestampStyles.ShortDateTime
-                                                break
-                                        }
-                                        return time(interaction.member.user.createdAt, timeFormat)
-                                    })
-                                    .replace(/{server\.name}/ig, interaction.member.guild.name)
-                                    .replace(/{server\.description}/ig, interaction.member.guild.description || 'no description')
-                                    .replace(/{server\.memberCount(?:\[(before|after)\])?}/ig, (memberCountBorA) => {
-                                        let memberCountType: 'before' | 'after';
-                                        switch (memberCountBorA) {
-                                            case 'before':
-                                                memberCountType = 'before'
-                                                break
-                                            case 'after':
-                                                memberCountType = 'after'
-                                                break
-                                            default:
-                                                memberCountType = 'after'
-                                                break
-                                        }
-                                        return memberCountType === 'before' ? (interaction.guild.memberCount - 1).toString() : (interaction.guild.memberCount).toString()
-                                    })
-                                    .replace(/{server\.id}/ig, interaction.member.guild.id),
+                                        .replace(/{user\.username}/ig, interaction.member.user.username)
+                                        .replace(/{user\.discriminator}/ig, interaction.member.user.discriminator)
+                                        .replace(/{user\.id}/ig, interaction.member.user.id)
+                                        .replace(/{user\.mention}/ig, interaction.member.user.toString())
+                                        .replace(/{user\.createdAt(?:\[(short time|long time|short date|long date|short date-time|long date-time|relative)\])?}/ig, (testParam) => {
+                                            let timeFormat;
+                                            switch (testParam) {
+                                                case 'short time':
+                                                    timeFormat = TimestampStyles.ShortTime
+                                                    break
+                                                case 'long time':
+                                                    timeFormat = TimestampStyles.LongTime
+                                                    break
+                                                case 'short date':
+                                                    timeFormat = TimestampStyles.ShortDate
+                                                    break
+                                                case 'long date':
+                                                    timeFormat = TimestampStyles.LongDate
+                                                    break
+                                                case 'short date-time':
+                                                    timeFormat = TimestampStyles.ShortDateTime
+                                                    break
+                                                case 'long date-time':
+                                                    timeFormat = TimestampStyles.LongDateTime
+                                                    break
+                                                case 'relative':
+                                                    timeFormat = TimestampStyles.RelativeTime
+                                                    break
+                                                default:
+                                                    timeFormat = TimestampStyles.ShortDateTime
+                                                    break
+                                            }
+                                            return time(interaction.member.user.createdAt, timeFormat)
+                                        })
+                                        .replace(/{server\.name}/ig, interaction.member.guild.name)
+                                        .replace(/{server\.description}/ig, interaction.member.guild.description || 'no description')
+                                        .replace(/{server\.memberCount(?:\[(before|after)\])?}/ig, (memberCountBorA) => {
+                                            let memberCountType: 'before' | 'after';
+                                            switch (memberCountBorA) {
+                                                case 'before':
+                                                    memberCountType = 'before'
+                                                    break
+                                                case 'after':
+                                                    memberCountType = 'after'
+                                                    break
+                                                default:
+                                                    memberCountType = 'after'
+                                                    break
+                                            }
+                                            return memberCountType === 'before' ? (interaction.guild.memberCount - 1).toString() : (interaction.guild.memberCount).toString()
+                                        })
+                                        .replace(/{server\.id}/ig, interaction.member.guild.id),
                                     embeds: editedSystem.embeds
                                 })
                             } catch {
                                 await btn.reply({
                                     content: 'There\'s something wrong with either your content, your embed(s) or both!',
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            )
+                                    ],
                                     ephemeral: true
                                 })
                             }
@@ -621,46 +1445,145 @@ const welcomeEditorCommand: Cmd = {
                                 }
                             })
                             toggleEnableButton
-                            .setDisabled(true)
+                                .setDisabled(true)
                             editButton
-                            .setDisabled(true)
+                                .setDisabled(true)
                             channelButton
-                            .setDisabled(true)
+                                .setDisabled(true)
                             previewButton
-                            .setDisabled(true)
+                                .setDisabled(true)
                             saveButton
-                            .setDisabled(true)
+                                .setDisabled(true)
                             discardButton
-                            .setDisabled(true)
+                                .setDisabled(true)
                             completeButton
-                            .setDisabled(true)
-                            .setLabel('Changes Saved')
-                            .setStyle(ButtonStyle.Secondary)
+                                .setDisabled(true)
+                                .setLabel('Changes Saved')
+                                .setStyle(ButtonStyle.Secondary)
                             await reply.edit({
-                                components: [
+                                components: interaction.guild.id !== '1000073833551769600' ? [
                                     editorRow,
                                     enablerRow,
-                                    completionRow
+                                    completionRow,
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    editorRow,
+                                    enablerRow,
+                                    completionRow,
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
                                 ]
                             })
-                            await btn.reply('Changes saved.')
-                            
+                            await btn.reply({
+                                content: 'Changes saved.',
+                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ]
+                            })
+
                             break
                         } catch {
                             await btn.reply({
                                 content: 'An error occured.',
+                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ],
                                 ephemeral: true
                             })
                             return
                         }
                     case 'enable':
                         toggleEnableButton
-                        .setCustomId('disable')
-                        .setLabel('Disable')
-                        .setStyle(ButtonStyle.Danger)
+                            .setCustomId('disable')
+                            .setLabel('Disable')
+                            .setStyle(ButtonStyle.Danger)
                         if (serverWelcomeSystem.enabled || editedSystem.enabled) {
                             await btn.reply({
                                 content: 'The server welcome system is already enabled!',
+                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ],
                                 ephemeral: true
                             })
                         } else {
@@ -671,55 +1594,153 @@ const welcomeEditorCommand: Cmd = {
                             })
                         }
                         editButton
-                        .setDisabled(editedSystem.channelId ? false : true)
+                            .setDisabled(editedSystem.channelId ? false : true)
                         channelButton
-                        .setDisabled(false)
+                            .setDisabled(false)
                         previewButton
-                        .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
+                            .setDisabled(editedSystem.embeds.length || editedSystem.message ? false : true)
                         saveButton
-                        .setDisabled(false)
+                            .setDisabled(false)
                         discardButton
-                        .setDisabled(false)
+                            .setDisabled(false)
                         await reply.edit({
-                            components: [
+                            components: interaction.guild.id !== '1000073833551769600' ? [
                                 editorRow,
                                 enablerRow,
-                                completionRow
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                editorRow,
+                                enablerRow,
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
                             ]
                         })
                         break
                     case 'disable':
                         toggleEnableButton
-                        .setCustomId('enable')
-                        .setLabel('Enable')
-                        .setStyle(ButtonStyle.Success)
+                            .setCustomId('enable')
+                            .setLabel('Enable')
+                            .setStyle(ButtonStyle.Success)
                         if (!(serverWelcomeSystem.enabled || editedSystem.enabled)) {
                             await btn.reply({
                                 content: 'The server welcome system isn\'t enabled!',
+                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ],
                                 ephemeral: true
                             })
                         } else {
                             editedSystem.enabled = false
                             await btn.reply({
                                 content: 'Server welcome system disabled.',
+                                components: interaction.guild.id !== '1000073833551769600' ? [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('🔗')
+                                                .setLabel('Join ZBot Support Server!')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.gg/6tkn6m5g52'),
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ] : [
+                                    new ActionRowBuilder<ButtonBuilder>()
+                                        .addComponents(
+                                            new ButtonBuilder()
+                                                .setEmoji('⚠')
+                                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                                .setStyle(ButtonStyle.Link)
+                                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        )
+                                ],
                                 ephemeral: true
                             })
                         }
                         editButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         channelButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         previewButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         saveButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         discardButton
-                        .setDisabled(true)
+                            .setDisabled(true)
                         await reply.edit({
-                            components: [
+                            components: interaction.guild.id !== '1000073833551769600' ? [
                                 editorRow,
                                 enablerRow,
-                                completionRow
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                editorRow,
+                                enablerRow,
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
                             ]
                         })
                         break
@@ -732,18 +1753,67 @@ const welcomeEditorCommand: Cmd = {
                         discardButton.setDisabled(true)
                         toggleEnableButton.setDisabled(true)
                         completeButton
-                        .setDisabled(true)
-                        .setLabel(btn.customId === 'complete' ? 'Editing complete' : 'Changes Discarded')
-                        .setStyle(ButtonStyle.Secondary)
+                            .setDisabled(true)
+                            .setLabel(btn.customId === 'complete' ? 'Editing complete' : 'Changes Discarded')
+                            .setStyle(ButtonStyle.Secondary)
                         await reply.edit({
-                            components: [
+                            components: interaction.guild.id !== '1000073833551769600' ? [
                                 editorRow,
                                 enablerRow,
-                                completionRow
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                editorRow,
+                                enablerRow,
+                                completionRow,
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
                             ]
                         })
                         await btn.reply({
                             content: 'All your changes have been discarded.',
+                            components: interaction.guild.id !== '1000073833551769600' ? [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ],
                             ephemeral: true
                         })
                         collector.stop()
@@ -751,6 +1821,30 @@ const welcomeEditorCommand: Cmd = {
                     default:
                         await btn.reply({
                             content: 'Unrecognised button.',
+                            components: interaction.guild.id !== '1000073833551769600' ? [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('🔗')
+                                            .setLabel('Join ZBot Support Server!')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.gg/6tkn6m5g52'),
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ] : [
+                                new ActionRowBuilder<ButtonBuilder>()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setEmoji('⚠')
+                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setStyle(ButtonStyle.Link)
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    )
+                            ],
                             ephemeral: true
                         })
                         break
