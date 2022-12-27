@@ -93,44 +93,44 @@ const leaderboardCommand: Cmd = {
             if (option === 'global') {
                 await interaction.deferReply()
 
-                const globalLeaderboard = (
-                    await Promise.all(
-                        leaderboard
-                            .map(async (model) => {
-                                try {
-                                    await interaction.client.users.fetch(model.id)
-                                    return model
-                                } catch (error) {
-                                    return undefined
-                                }
-                            })
-                    )
-                )
-                    .filter(notEmpty)
-                const globalSortedLeaderboard = (
-                    await Promise.all(
-                        leaderboard
-                            .filter(async (model) => {
-                                try {
-                                    await interaction.client.users.fetch(model.id)
-                                    return model
-                                } catch (error) {
-                                    return undefined
-                                }
-                            })
-                    )
-                )
-                    .filter(notEmpty)
-                    .sort((l1, l2) => {
-                        if (l1.lvl > l2.lvl) return -1
-                        else if (l1.lvl < l2.lvl) return 1
-                        else {
-                            if (l1.xp > l2.xp) return -1
-                            else if (l1.xp < l2.xp) return 1
-                            else return 0
+            const globalLeaderboard = (
+                await Promise.all(
+                    leaderboard
+                    .map(async (model) => {
+                        try {
+                            await interaction.client.users.fetch(model.id)
+                            return model
+                        } catch (error) {
+                            return undefined
                         }
                     })
-                    .slice(0, 10)
+                )
+            )
+            .filter(notEmpty)
+            const globalSortedLeaderboard = (
+                await Promise.all(
+                    leaderboard
+                    .filter(async (model) => {
+                        try {
+                            await interaction.client.users.fetch(model.id)
+                            return model
+                        } catch (error) {
+                            return undefined
+                        }
+                    })
+                )
+            )
+            .filter(notEmpty)
+            .sort((l1, l2) => {
+                if (l1.lvl > l2.lvl) return -1
+                else if (l1.lvl < l2.lvl) return 1
+                else {
+                    if (l1.xp > l2.xp) return -1
+                    else if (l1.xp < l2.xp) return 1
+                    else return 0
+                }
+            })
+            .slice(0, 10)
 
                 try {
                     await interaction.editReply({

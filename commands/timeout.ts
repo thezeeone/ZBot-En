@@ -1,4 +1,5 @@
-import { ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField, EmbedBuilder, bold, inlineCode, italic, time } from "discord.js"
+import { ActionRowBuilder, ButtonBuilder, ApplicationCommandOptionType, ChatInputCommandInteraction, ButtonStyle, ComponentType, GuildMember, PermissionsBitField, EmbedBuilder, bold, inlineCode, italic, time, underscore } from "discord.js"
+import { BlacklistModel } from "../database"
 import { WarningTypes } from "../database"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
@@ -541,14 +542,39 @@ const timeoutCommand: Cmd = {
 
                 const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
                     componentType: ComponentType.Button,
-                    time: 120000
-                })
+                filter: async (btn) => {
+                        const isUserBlacklisted = await BlacklistModel.findOne({
+                        where: {
+                            id: btn.user.id
+                        }
+                        })
 
-                confirmationCollector.on('collect', async (button): Promise<any> => {
-                    if (button.user.id !== interaction.user.id) return await button.reply({
-                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
-                        ephemeral: true
-                    })
+                        if (isUserBlacklisted) {
+                        await btn.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                .setColor(0x000000)
+                            ]
+                        })
+                        return false
+                    }
+                    
+                        if (btn.user.id !== interaction.user.id) {
+                        await btn.reply({
+                                content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                                ephemeral: true
+                            })
+                        return false
+                    } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                    return true
+                },
+                time: 120000
+            })
+
+            confirmationCollector.on('collect', async (button): Promise<any> => {
                     if (button.customId === 'yes') {
                         const original = await interaction.fetchReply()
                         yesButton.setDisabled(true)
@@ -1129,6 +1155,35 @@ const timeoutCommand: Cmd = {
 
                 const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
                     componentType: ComponentType.Button,
+                filter: async (btn) => {
+                    if (btn.user.id !== interaction.user.id) {
+                        await btn.reply({
+                            content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                            ephemeral: true
+                        })
+                        return false
+                    } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                    const isUserBlacklisted = await BlacklistModel.findOne({
+                        where: {
+                            id: btn.user.id
+                        }
+                    })
+
+                    if (isUserBlacklisted) {
+                        await btn.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                .setColor(0x000000)
+                            ]
+                        })
+                        return false
+                    }
+
+                    return true
+                },
                     time: 120000
                 })
 

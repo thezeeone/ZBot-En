@@ -1,5 +1,5 @@
-import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time } from "discord.js"
-import { LevelModel } from "../database"
+import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, EmbedBuilder, ChatInputCommandInteraction, ApplicationCommandOptionType, bold, inlineCode, italic, time, underscore } from "discord.js"
+import { BlacklistModel, LevelModel } from "../database"
 import { Cmd } from "./command-exports"
 
 const tttCommand: Cmd = {
@@ -109,6 +109,41 @@ const tttCommand: Cmd = {
 
         const requestCollector = requestMessage.createMessageComponentCollector({
             componentType: ComponentType.Button,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+    
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+
+                if (btn.user.id !== interaction.user.id && btn.user.id !== opponent.user.id) {
+                    await btn.reply({
+                        content: 'You\'re not playing this match! Please start a new game with someone to be able to play a match.',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.user.id === interaction.user.id) {
+                    await btn.reply({
+                        content: 'Leave it for the other person to reply!',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.customId !== 'accept' && btn.customId !== 'reject') return false
+
+                return true
+            },
             time: 120000
         })
 
@@ -245,7 +280,56 @@ const tttCommand: Cmd = {
                     ]
                 })
 
-                const buttonCollector = requestMessage.createMessageComponentCollector({ componentType: ComponentType.Button })
+                const buttonCollector = requestMessage.createMessageComponentCollector({
+                    componentType: ComponentType.Button,
+                    filter: async (btn) => {
+                        const isUserBlacklisted = await BlacklistModel.findOne({
+                            where: {
+                                id: btn.user.id
+                            }
+                        })
+            
+                        if (isUserBlacklisted) {
+                            await btn.reply({
+                                embeds: [
+                                    new EmbedBuilder()
+                                    .setTitle(underscore('You are blacklisted from using this bot.'))
+                                    .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                    .setColor(0x000000)
+                                ]
+                            })
+                            return false
+                        }
+                        
+                        if (btn.user.id !== interaction.user.id && btn.user.id !== opponent.user.id) {
+                            await btn.reply({
+                                content: 'You\'re not playing this match! Please start a new game to be able to play a match.',
+                                ephemeral: true
+                            })
+                            return false
+                        } else {
+                            if (btn.customId === 'cancel') {
+                                if (btn.user.id !== interaction.user.id && btn.user.id !== opponent.user.id) {
+                                    await btn.reply({
+                                        content: 'Only the two people playing can cancel the game.',
+                                        ephemeral: true
+                                    })
+                                    return false
+                                }
+                            } else {
+                                if (btn.user.id !== (playerTurn === 0 ? opponent.user : interaction.user).id) {
+                                    await btn.reply({
+                                        content: 'It\'s not your turn.',
+                                        ephemeral: true
+                                    })
+                                    return false
+                                }
+                            }
+                        }
+
+                        return true
+                    }
+                })
 
                 buttonCollector.on('collect', async (collectedBtn): Promise<any> => {
                     if (collectedBtn.user.id !== interaction.user.id && collectedBtn.user.id !== opponent.user.id) return await collectedBtn.reply({

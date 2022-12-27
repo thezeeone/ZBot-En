@@ -1,4 +1,4 @@
-import { ActionRow, ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, inlineCode, italic } from "discord.js"
+import { ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, inlineCode, italic } from "discord.js"
 import { EconomyModel } from "../database"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -23,7 +23,6 @@ const balanceCommand: Cmd = {
                 id: user.id
             }
         })
-
 
         if (!userBalance || (userBalance?.bank === 0 && userBalance?.wallet === 0)) return await interaction.reply({
             content: `${user.id === interaction.user.id

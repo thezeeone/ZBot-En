@@ -17,8 +17,8 @@ const memberInfoCommand: Cmd = {
                     name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
                     iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                 })
-                .setTitle(`User unknown`)
-                .setDescription('Couldn\'t find that user.')
+                .setTitle(`Member unknown`)
+                .setDescription('Couldn\'t find that member.')
                 .setColor(0xff0000)
             ],
             ephemeral: true 
@@ -107,6 +107,7 @@ const memberInfoCommand: Cmd = {
                 }`
             }
         ])
+        
         try {
             const avatarURL = displayAvatarURL({ forceStatic: false })
             if (isNotEmpty(avatarURL)) embed.setThumbnail(avatarURL)
@@ -139,7 +140,7 @@ const memberInfoCommand: Cmd = {
 }
 
 function isNotEmpty<T>(v: T | null | undefined): v is T {
-    return v !== null && v !== undefined
+    return !!v
 }
 
 export {

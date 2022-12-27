@@ -1,4 +1,5 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time } from "discord.js"
+import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time, underscore } from "discord.js"
+import { BlacklistModel } from "../database"
 import { WarningTypes } from "../database"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
@@ -21,8 +22,10 @@ const banCommand: Cmd = {
                     },
                     {
                         name: 'reason',
-                        description: 'The reason for banning this user',
+                        description: 'The reason for banning this user (max len 200)',
                         type: ApplicationCommandOptionType.String,
+                        minLength: 1,
+                        maxLength: 200,
                         required: false
                     },
                     {
@@ -87,8 +90,10 @@ const banCommand: Cmd = {
                     },
                     {
                         name: 'reason',
-                        description: 'The reason for unbanning this user',
+                        description: 'The reason for unbanning this user (max len 200)',
                         type: ApplicationCommandOptionType.String,
+                        minLength: 1,
+                        maxLength: 200,
                         required: false
                     },
                     {
@@ -307,7 +312,7 @@ const banCommand: Cmd = {
                 const confirmationRow = new ActionRowBuilder<ButtonBuilder>()
                     .addComponents([yesButton, noButton])
 
-                await interaction.reply({
+                const reply = await interaction.reply({
                     embeds: [
                         new EmbedBuilder()
                             .setAuthor({
@@ -354,14 +359,19 @@ const banCommand: Cmd = {
                                     .setStyle(ButtonStyle.Link)
                                     .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
                             )
-                    ]
+                    ],
+                fetchReply: true
                 })
 
-                const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
+                const confirmationCollector = reply.createMessageComponentCollector({
                     componentType: ComponentType.Button,
                     maxComponents: 1,
-                    time: 120000
-                })
+                filter: async (btn) => {
+                        const isUserBlacklisted = await BlacklistModel.findOne({
+                        where: {
+                            id: btn.user.id
+                        }
+                        })
 
                 confirmationCollector.on('collect', async (button): Promise<any> => {
                     if (button.user.id !== interaction.user.id) {
@@ -493,13 +503,163 @@ const banCommand: Cmd = {
                         await button.reply('Unban cancelled.')
                     }
                 })
+                    if (isUserBlacklisted) {
+                        await btn.reply({
+                            embeds: [
+                                new EmbedBuilder()
+                                .setTitle(underscore('You are blacklisted from using this bot.'))
+                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                .setColor(0x000000)
+                            ]
+                        })
+                        return false
+                    }
+
+                    if (btn.user.id !== interaction.user.id) {
+                        await btn.reply({
+                            content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                            ephemeral: true
+                        })
+                        return false
+                    } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                    return true
+                }
+                time: 120000
+            })
+
+            confirmationCollector.on('collect', async (button): Promise<any> => {
+                if (button.customId === 'yes') {
+                    const original = await interaction.fetchReply()
+                    yesButton.setDisabled(true)
+                    noButton.setDisabled(true)
+                    original.edit({
+                        embeds: [
+                            EmbedBuilder.from(reply.embeds[0])
+                            .setColor(0x00ff00)
+                            .setTitle('Successful Unban')
+                            .setDescription(`Successfully unbanned ${
+                                bold(user.tag)
+                            } (${inlineCode(user.id)}) ${
+                                reason
+                                ? `with reason ${bold(reason)}`
+                                : 'without a reason'
+                            }.`)
+                        ],
+                        components: []
+                    })
+                    
+                    // Unban the user
+                    user.send({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setColor(0x00ff00)
+                            .setTitle('Unban')
+                            .setDescription(`Your ban has been removed in ${bold(interaction.guild.name)}.`)
+                            .addFields([
+                                {
+                                    name: 'Reason',
+                                    value: reason
+                                        ? reason
+                                        : italic(inlineCode('No reason provided'))
+                                }
+                            ])
+                        ]
+                    })
+                    .then(async () => {
+                        await button.reply({
+                            content: 'Unban successful. Member has been messaged.',
+                            embeds: [
+                                EmbedBuilder.from(reply.embeds[0])
+                                .setColor(0x00ff00)
+                                .setTitle('Unban Successful')
+                                .setDescription(`Successfully unbanned ${
+                                    bold(user.tag)
+                                } (${inlineCode(user.id)}) from ${
+                                    bold(interaction.guild.name)  
+                                } ${
+                                    reason
+                                    ? `with reason ${bold(reason)}`
+                                    : 'without a reason'
+                                }.`)
+                                .setFooter(
+                                    Math.random() < 0.1
+                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
+                                    : null
+                                )
+                                .setAuthor(null)
+                                .setFields([])
+                            ]
+                        })
+                    })
+                    .catch(async () => {
+                        await button.reply({
+                            content: 'Unban removal successful. Couldn\'t send the member a message.',
+                            embeds: [
+                                EmbedBuilder.from(reply.embeds[0])
+                                .setColor(0x00ff00)
+                                .setTitle('Unban Successful')
+                                .setDescription(`Successfully unbanned ${
+                                    bold(user.tag)
+                                } (${inlineCode(user.id)}) from ${
+                                    bold(interaction.guild.name)
+                                } ${
+                                    reason
+                                    ? `with reason ${bold(reason)}`
+                                    : 'without a reason'
+                                }.`)
+                                .setFooter(
+                                    Math.random() < 0.1
+                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
+                                    : null
+                                )
+                                .setAuthor(null)
+                                .setFields([])
+                            ]
+                        })
+                    })
+                    .finally(async () => {
+                        await interaction.guild.members.unban(user, `Unbanned by ${
+                                interaction.user.tag
+                            } (${
+                                interaction.user.id
+                            }) ${
+                                reason 
+                                ? `with reason ${reason}` 
+                                : 'without a reason'
+                            }.`
+                        )
+                    })
+                } else {
+                    const original = await interaction.fetchReply()
+                    yesButton.setDisabled(true)
+                    noButton.setDisabled(true)
+                    original.edit({
+                        components: [ confirmationRow ],
+                        embeds: [
+                            EmbedBuilder.from(reply.embeds[0])
+                            .setColor(0xff0000)
+                            .setTitle('Unban Cancellation')
+                            .setDescription(`Cancelled the unban for ${bold(user.tag)} (${inlineCode(user.id)}).`)
+                            .setAuthor(null)
+                            .setFields([])
+                            .setFooter(
+                                Math.random() < 0.1
+                                ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
+                                : null
+                            )
+                        ]
+                    })
+                    interaction.followUp('You cancelled the unban.')
+                }
+            })
 
                 confirmationCollector.on('end', async (collected): Promise<any> => {
                     if (!collected.size) {
                         const original = await interaction.fetchReply()
                         original.edit({
                             embeds: [
-                                EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                                EmbedBuilder.from(reply.embeds[0])
                                     .setColor(0xff0000)
                                     .setTitle('Unban Cancellation')
                                     .setDescription('A response wasn\'t received in time.')
@@ -829,7 +989,7 @@ const banCommand: Cmd = {
                 const confirmationRow = new ActionRowBuilder<ButtonBuilder>()
                     .addComponents([yesButton, noButton])
 
-                await interaction.reply({
+                const reply = await interaction.reply({
                     embeds: [
                         new EmbedBuilder()
                             .setAuthor({
@@ -876,7 +1036,8 @@ const banCommand: Cmd = {
                                     .setStyle(ButtonStyle.Link)
                                     .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
                             )
-                    ]
+                    ],
+                fetchReply: true
                 })
 
                 const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({

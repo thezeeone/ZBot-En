@@ -58,7 +58,7 @@ const withdrawCommand: Cmd = {
 
         if (userBalance.maxWallet - userBalance.wallet > 0 && amount > userBalance.maxWallet - userBalance.wallet) return await interaction.reply(`You only have ${bold(`${inlineCode((userBalance.maxWallet - userBalance.wallet).toLocaleString('ru'))} Z🪙`)} free in your wallet.`)
 
-        userBalance.increment({
+        return userBalance.increment({
             wallet: amount,
             bank: -amount
         })

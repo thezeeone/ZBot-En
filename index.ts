@@ -1,9 +1,10 @@
 import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel, CategoryChannel, ChannelType, DMChannel, time, OverwriteType, bold, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 import { config } from "dotenv"
+import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, memoryGameCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, sudokuCommand, voteCommand, zBankCommand, quizCommand, warnCommand, welcomeEditorCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, EconomyModel, BlacklistModel, RankCardModel, TicketSystemModel, ZCentralBankModel, XPBoostsModel } from "./database"
+import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, memoryGameCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, quizCommand, sudokuCommand, voteCommand, warnCommand, welcomeEditorCommand, zBankCommand } from "./commands/command-exports"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel, EconomyModel, XPBoostsModel, ZCentralBankModel } from "./database"
 import { commaList, pluralise } from "./util"
 
 const repliedMessages = new Set<string>()
@@ -19,6 +20,7 @@ const commands: Cmd[] = [
     pingCommand,
     slowmodeCommand,
     helpCommand,
+    blacklistCommand,
     serverInfoCommand,
     inviteCommand,
     updatesCommand,
@@ -71,17 +73,17 @@ client.on('ready', async () => {
     );
 
     ['744138083372367924', '885566428697202719', '929299656737976360', '923315540024500304', '712943338206003233', '999703297399201864', '871417904548155393', '921158371749535765', '740356765425598615', '988115217269530674', '550338040011423754', '755959891553812483', '1013212542681755698', '968561563021742170', '743040512365166634', '751180340181074010', '749687494299091015', '1036354172225855558', '738753771177508975', '877522557132238898', '768505782634938398', '953374745238339644', '895717127074500638', '948714494866124800', '847933213438771250', '582974622195253287', '786984851014025286', '930485664175231006', '768856508279685191', '748204055679205468', '897576155614412842', '667453927486259220', '703604602833993768', '1014486062309052416']
-    .forEach(async (user) => {
-        if (
-            await XPBoostsModel.findOne({ where: { user } })
-        ) return
-        else await XPBoostsModel.create({
-            user,
-            XPBoosts: [
-                { boost: 2, expiryDate: new Date(Date.now() + 432000000) }
-            ]
+        .forEach(async (user) => {
+            if (
+                await XPBoostsModel.findOne({ where: { user } })
+            ) return
+            else await XPBoostsModel.create({
+                user,
+                XPBoosts: [
+                    { boost: 2, expiryDate: new Date(Date.now() + 432000000) }
+                ]
+            })
         })
-    })
 
     const guild = client.guilds.cache.get('1000073833551769600') as Guild
 
@@ -138,9 +140,9 @@ client.on('ready', async () => {
         setInterval(async () => {
             const moreThanSixHours = Math.floor(
                 ZBank.lastTimeAdded.getTime() - ZBank.initialiseDate.getTime()
-             / 21600000) === Math.floor(
-                Date.now() - ZBank.initialiseDate.getTime()
-             / 21600000)
+                / 21600000) === Math.floor(
+                    Date.now() - ZBank.initialiseDate.getTime()
+                    / 21600000)
             const sixHourPeriods = moreThanSixHours
                 ? Math.floor((ZBank.lastTimeAdded.getTime() - ZBank.initialiseDate.getTime()) / 21600000)
                 : Math.floor(((Date.now() - ZBank.initialiseDate.getTime()) - (ZBank.lastTimeAdded.getTime() - ZBank.initialiseDate.getTime())) / 21600000)
@@ -184,22 +186,17 @@ client.on('ready', async () => {
                     lastTimeAdded: new Date(),
                     originalGiven: false
                 })
-                await channel.send(`${
-                    bold(`${inlineCode(total.toLocaleString('ru'))} Z🪙`)
-                } has been added to ZBank, it now has ${
-                    bold(`${inlineCode((ZBank.original + ZBank.numberToAdd).toLocaleString('ru'))}`)
-                } Z🪙.\n${
-                    italic(
-                        `${
-                            ZBank.timesUsedInDay === 0 
-                            ? 'Nobody' 
+                await channel.send(`${bold(`${inlineCode(total.toLocaleString('ru'))} Z🪙`)
+                    } has been added to ZBank, it now has ${bold(`${inlineCode((ZBank.original + ZBank.numberToAdd).toLocaleString('ru'))}`)
+                    } Z🪙.\n${italic(
+                        `${ZBank.timesUsedInDay === 0
+                            ? 'Nobody'
                             : pluralise(ZBank.timesUsedInDay, 'user', 'users')} used the ZBank in the past 24 hours.`
                     )
-                }\n${
-                    italic(
+                    }\n${italic(
                         `${bold(`${inlineCode(ZBank.moneyTaken.toLocaleString('ru'))} Z🪙`)} ${ZBank.moneyTaken === 1 ? 'was' : 'were'} taken out of the ZBank.`
                     )
-                }`);
+                    }`);
             } catch (error) {
                 console.log((error as Error).message)
                 await channel.send((error as Error).message)
@@ -599,15 +596,15 @@ client.on('interactionCreate', async (interaction): Promise<any> => {
         if (isBlacklist) return await interaction.reply({
             embeds: [
                 new EmbedBuilder()
-                    .setTitle(underscore('You are blacklisted from using this bot.'))
-                    .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
-                    .setColor(0x000000)
+                .setTitle(underscore('You are blacklisted from using this bot.'))
+                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                .setColor(0x000000)
             ],
             ephemeral: true
         })
 
         commands.find(command => command.data.name === interaction.commandName)
-            ?.execute(interaction as ChatInputCommandInteraction<"cached">)
+        ?.execute(interaction as ChatInputCommandInteraction<"cached">)
     } else if (interaction.type === InteractionType.MessageComponent) {
         if (interaction.customId === 'announcement-ping') {
             if ((interaction.member?.roles as GuildMemberRoleManager).cache.has('1010997349079863351')) {
@@ -702,7 +699,7 @@ client.on('messageCreate', async (message): Promise<any> => {
     const attachments = message.attachments
 
     let totalXP = (
-        attachments.size * 100
+        attachments.size * 20
     ) + (
             words.length >= 3
                 ? (
@@ -714,10 +711,10 @@ client.on('messageCreate', async (message): Promise<any> => {
                     }).reduce((a, b) => a + b, 0)
                 )
                 : 0
-        ) >= (attachments.size * 100 + 40)
-        ? (attachments.size * 100 + 40)
+        ) >= (attachments.size * 20 + 40)
+        ? (attachments.size * 20 + 40)
         : (
-            attachments.size * 100
+            attachments.size * 20
         ) + (
             words.length >= 3
                 ? (
@@ -732,9 +729,9 @@ client.on('messageCreate', async (message): Promise<any> => {
         )
 
     if (
-        (await XPBoostsModel.findOne({ where: { user: message.author.id }}))
+        (await XPBoostsModel.findOne({ where: { user: message.author.id } }))
         &&
-        (await XPBoostsModel.findOne({ where: { user: message.author.id }}))?.XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
+        (await XPBoostsModel.findOne({ where: { user: message.author.id } }))?.XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
     ) {
         totalXP *= ((await XPBoostsModel.findOne({ where: { user: message.author.id } }))?.XPBoosts.map(({ boost }) => boost).reduce((a1, a2) => a1 + a2) || 1)
     }
@@ -768,19 +765,18 @@ client.on('messageCreate', async (message): Promise<any> => {
             embeds: [
                 new EmbedBuilder()
                     .setTitle('Level Up!')
-                    .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!${
-                        (await XPBoostsModel.findOne({ where: { user: message.author.id }}))
-                        &&
-                        (await XPBoostsModel.findOne({ where: { user: message.author.id }}))?.XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
-                        ? `\n*This user has a ${(
-                            Number(
-                                // @ts-ignore
-                                (await XPBoostsModel.findOne({ where: { user: message.author.id }}))
-                                .XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
-                            ) * 100
-                        ).toFixed(2)}% XP boost.*`
-                        : ''
-                    }`)
+                    .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!${(await XPBoostsModel.findOne({ where: { user: message.author.id } }))
+                            &&
+                            (await XPBoostsModel.findOne({ where: { user: message.author.id } }))?.XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
+                            ? `\n*This user has a ${(
+                                Number(
+                                    // @ts-ignore
+                                    (await XPBoostsModel.findOne({ where: { user: message.author.id } }))
+                                        .XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
+                                ) * 100
+                            ).toFixed(2)}% XP boost.*`
+                            : ''
+                        }`)
                     .setColor((await RankCardModel.findOne({ where: { id: message.author.id } }))?.colour ?? 0x00ffff)
                     .setFooter(
                         Math.random() < 0.1

@@ -1,9 +1,9 @@
 import { ActionRowBuilder, ApplicationCommandOptionType, AttachmentBuilder, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, inlineCode } from "discord.js";
 import { Cmd, tipsAndTricks } from "./command-exports";
 import { LevelModel, RankCardModel } from "../database";
-import { createCanvas, registerFont, loadImage } from "canvas";
-
-registerFont('fonts/static/Rubik-Bold.ttf', { family: 'Rubik', weight: '400', style: 'Bold' })
+import { ordinalNumber } from "../util";
+import { createCanvas, loadImage } from "canvas";
+const isBoostingTime = Date.now() >= 1663097400000 && Date.now() < (1663097400000 + 3 * 24 * 60 * 60 * 1000)
 
 const rankCommand: Cmd = {
     data: {

@@ -1,5 +1,5 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, inlineCode, ButtonBuilder, ButtonStyle, ActionRowBuilder, bold, italic, time, ComponentType } from "discord.js"
-import { LevelModel, EconomyModel } from "../database"
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, inlineCode, ButtonBuilder, ButtonStyle, ActionRowBuilder, bold, italic, time, ComponentType, EmbedBuilder, underscore } from "discord.js"
+import { LevelModel, EconomyModel, BlacklistModel } from "../database"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
 const giveCommand: Cmd = {
@@ -152,6 +152,43 @@ const giveCommand: Cmd = {
 
             const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
                 componentType: ComponentType.Button,
+            filter: async (btn) => {
+                const isUserBlacklisted = await BlacklistModel.findOne({
+                    where: {
+                        id: btn.user.id
+                    }
+                })
+                
+                if (isUserBlacklisted) {
+                    await btn.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                            .setTitle(underscore('You are blacklisted from using this bot.'))
+                            .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                            .setColor(0x000000)
+                        ]
+                    })
+                    return false
+                }
+                
+                if (btn.user.id !== interaction.user.id) {
+                    await btn.reply({
+                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                if (btn.user.id !== interaction.user.id) {
+                    await btn.reply({
+                        content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                        ephemeral: true
+                    })
+                    return false
+                } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                else return true
+            },
                 time: 120000
             })
 

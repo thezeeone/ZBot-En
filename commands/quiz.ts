@@ -317,6 +317,12 @@ const quizCommand: Cmd = {
     },
     // @ts-ignore
     async execute(interaction: ChatInputCommandInteraction<"cached">) {
+        return await interaction.reply({
+            content: 'Next quiz night, **Januzary Quiz Night** on <t:1674676800:F> (<t:1674676800:R>).\n[Click here if interested](https://discord.com/events/1000073833551769600/1056540084096209006)',
+            ephemeral: true
+        })
+
+        /*
         if (
             !interaction.client.guilds.cache.get('1000073833551769600')
                 ?.members.cache.get(interaction.user.id)
@@ -1214,6 +1220,7 @@ async function nextQuestion(interaction: ChatInputCommandInteraction<"cached">) 
     }
 
     return
+    */
 }
 
 function notEmpty<T>(value: T | null | undefined): value is T {

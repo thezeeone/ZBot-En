@@ -3,7 +3,7 @@ import { tipsAndTricks } from "../../facts"
 
 interface Cmd {
     data: ApplicationCommandData,
-    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">): any
+    execute(interaction: ChatInputCommandInteraction<"cached"> | ContextMenuCommandInteraction<"cached">)
 }
 
 import { rankCommand } from "./rank";
@@ -38,9 +38,13 @@ import { zBankCommand } from "./zbank";
 import { quizCommand } from "./quiz";
 import { warnCommand } from "./warn";
 import { welcomeEditorCommand } from "./welcomeeditor";
+import { giveXPCommand } from "./givexp";
+import { imageCommand } from "./image";
+import { removeXPCommand } from "./removexp";
 
 export {
     Cmd,
+    tipsAndTricks,
     rankCommand,
     leaderboardCommand,
     timeoutCommand,
@@ -56,12 +60,20 @@ export {
     inviteCommand,
     updatesCommand,
     userInfoCommand,
-    tipsAndTricks,
     memberInfoCommand,
     balanceCommand,
     depositCommand,
     withdrawCommand,
     giveCommand,
+    ticketCommand,
+    imageCommand,
+    reportMemberCommand,
+    reportMessageCommand,
+    quizCommand,
+    channelBLCommand,
+    channelWLCommand,
+    questionCommand,
+    giveXPCommand,
     channelBLCommand,
     channelWLCommand,
     questionCommand,
@@ -71,7 +83,6 @@ export {
     voteCommand,
     sudokuCommand,
     zBankCommand,
-    quizCommand,
     warnCommand,
     welcomeEditorCommand
 }
