@@ -1,6 +1,7 @@
-.env
-node_modules/
 *.js
-commands/*.js
-package*.json
+!commands/sudoku-generator.js
+node_modules/
 *.png
+.env
+package*.json
+facts.ts

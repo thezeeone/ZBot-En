@@ -1,33 +1,33 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, italic, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, EmbedBuilder, ChatInputApplicationCommandData, bold, inlineCode, underscore, ComponentType, SelectMenuBuilder, time } from "discord.js";
 import { BlacklistModel } from "../database";
-import { Cmd, imageCommand } from "./command-exports";
 import {
+    Cmd,
     banCommand,
-    gtwCommand,
     inviteCommand,
     kickCommand,
     leaderboardCommand,
     memoryGameCommand,
     pingCommand,
     rankCommand,
+    reportMemberCommand,
+    reportMessageCommand,
     timeoutCommand,
     tttCommand,
-    reportCommand,
     slowmodeCommand,
     serverInfoCommand,
-    updatesCommand,
-    userInfoCommand,
     balanceCommand,
     withdrawCommand,
     depositCommand,
-    exchangeCommand,
     giveCommand,
     channelWLCommand,
     channelBLCommand,
     questionCommand,
     ticketCommand,
-    reportMemberCommand,
-    reportMessageCommand
+    sudokuCommand,
+    updatesCommand,
+    userInfoCommand,
+    voteCommand,
+    zBankCommand,
 } from './command-exports'
 
 const helpCommand: Cmd = {
@@ -63,8 +63,8 @@ const helpCommand: Cmd = {
                 ]
             },
             {
-                name: 'Level System',
-                embedDescription: 'Here you can see all commans relating to ZBot\'s level system. Remember, the rules for gaining XP are:\n• You can only gain 5 XP if you send at least 3 words in one sentence. Otherwise, you get no XP at all.\n• After the 3 words, every single two words is 2 XP as long as one or both of them is at least 3 letters long.\n• You can play mini-games to gain lots of XP!',
+                name: 'Rank System',
+                embedDescription: 'Here you can see all commans relating to ZBot\'s ranking systems (XP or ZCoins). Remember, the rules for gaining XP are:\n• You can only gain 5 XP if you send at least 3 words in one sentence. Otherwise, you get no XP at all.\n• After the 3 words, every single two words is 2 XP as long as one or both of them is at least 3 letters long.\n• You can play mini-games to gain lots of XP!',
                 selectMenuDescription: 'See all commands relating to ZBot level system',
                 commands: [
                     rankCommand.data,
@@ -75,12 +75,12 @@ const helpCommand: Cmd = {
             },
             {
                 name: 'Mini-games',
-                embedDescription: 'Want to have fun with your friends? Play mini-games!',
+                embedDescription: 'Want to have fun with your friends? Play mini-games! (we will continue development on Sudoku. please note guess the word has been discontinued)',
                 selectMenuDescription: 'See all mini-games',
                 commands: [
                     tttCommand.data,
                     memoryGameCommand.data,
-                    gtwCommand.data
+                    sudokuCommand.data
                 ]
             },
             {
@@ -89,7 +89,7 @@ const helpCommand: Cmd = {
                 selectMenuDescription: 'See miscellaneous commands',
                 commands: [
                     pingCommand.data,
-                    reportCommand.data,
+                    voteCommand.data,
                     questionCommand.data
                 ]
             },
@@ -106,24 +106,27 @@ const helpCommand: Cmd = {
                 name: 'Level System',
                 embedDescription: '**What is ZBot\'s Level System?**\nZBot\'s level system is a reward system where members gain XP through interacting with the bot or chatting. Every time you hit a certain amount of XP, you level up, and each level is harder than the previous.\nThere are currently two ways of getting XP:\n\n\`1\` **__Sending Messages__**\nYou can get XP through message sending, and the more and longer messages you send, the more XP you get.\n\n\`2\` **__Playing mini-games__**\nPlaying mini-games are worth a fortune when it comes to gaining XP, you can gain lots of XP for winning mini-games easily.\n\n**How do I check my progress?**\nYou can check your progress through the \`/rank\` command which displays your position on the leaderboard, and you can also use the \`/leaderboard\` command to see how you compete against the top ranking users, in either your server or globally.',
                 selectMenuDescription: 'Display info on the level system',
-                commands: []
+                commands: [
+                    channelWLCommand.data,
+                    channelBLCommand.data
+                ]
             },
             {
                 name: 'Economy System',
-                embedDescription: `${italic('This is currently under development - some features are experimental and may break at any time.')}\nCheck out some new economy commands!`,
-                selectMenuDescription: 'Economy system (currently under development)',
+                embedDescription: 'Yay! Who doesn\'t love a Zconomy system with lots of ZCoins. To claim ZCoins, you can get them off ZBank using the `/zbank` command.\n\n**How are storages calculated?**\n__Wallet__\nTake your level and add 1 if you didn\'t boost the support server or 2 if you did. Take your result and multiply it by 4 if you didn\'t boost the support server or 6 if you did, then multiply the result by 100 - that is the maximum storage for your wallet.\n__Bank__\nTake your level and add 1 if you didn\'t boost the support server or 2 if you did. Take your result and multiply it by 8 if you didn\'t boost the support server or 12 if you did, then multiply the result by 100 - that is the maximum storage for your wallet.',
+                selectMenuDescription: 'Zconomy system and ZCoins',
                 commands: [
-                    exchangeCommand.data,
                     balanceCommand.data,
                     withdrawCommand.data,
                     depositCommand.data,
-                    giveCommand.data
+                    giveCommand.data,
+                    zBankCommand.data
                 ]
             },
             {
                 name: 'Ticket System',
-                embedDescription: 'The ticket system is a system that helps members to communicate to staff quicker! Tickets close after 45 minutes of inactivity.',
-                selectMenuDescription: 'View ticket system and commands',
+                embedDescription: 'Want to report a member or message? Feel free! Just make sure you abide by section 5 of the rules in the support server (do not abuse tickets, make reports detailed etc).',
+                selectMenuDescription: 'How do I create a ticket?',
                 commands: [
                     ticketCommand.data,
                     reportMemberCommand.data,
@@ -131,18 +134,13 @@ const helpCommand: Cmd = {
                 ]
             },
             {
-                name: 'Experimental Commands and Features',
-                embedDescription: `Some of the experimental commands you may come across.\n\n⚠ **Note: these are experimental features and may break while in use.**`,
-                selectMenuDescription: 'View features under testing',
-                commands: [
-                    imageCommand.data
-                ]
-            },
-            {
                 name: 'Links',
                 embedDescription: `**__Links__**\n**Join our support server,** [ZBot Server (En)](https://discord.gg/6tkn6m5g52).\n**Add this bot to your server** with [this invite link](https://discord.com/oauth2/authorize?client_id=956596792542257192&permissions=1644971949559&scope=bot%20applications.commands) (all permissions).\n**See our GitHub repository:** [Zahid556/ZBot-En](https://github.com/Zahid556/ZBot-Ar)\n**Read the Discord Guidelines** [here](https://discord.com/community-guidelines), the **Discord Terms of Service** [here](https://discord.com/terms) or the **Discord Privacy Policy** [here](https://discord.com/privacy).`,
                 selectMenuDescription: 'See available links',
-                commands: []
+                commands: [
+                    channelBLCommand.data,
+                    channelWLCommand.data
+                ]
             }
         ]
         let currentPage = 1
@@ -208,7 +206,17 @@ const helpCommand: Cmd = {
             embeds: [
                 embed
             ],
-            components: [
+            components: interaction.guild.id !== '1000073833551769600' ? [
+                buttons,
+                new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setEmoji('🔗')
+                            .setLabel('Join ZBot Support Server!')
+                            .setStyle(ButtonStyle.Link)
+                            .setURL('https://discord.gg/6tkn6m5g52')
+                    )
+            ] : [
                 buttons
             ],
             fetchReply: true
@@ -261,7 +269,17 @@ const helpCommand: Cmd = {
                         components: buttons.components.map((b, i) => i === 0 ? b.setDisabled(true) : b.setDisabled(false))
                     })
                     reply.edit({
-                        components: [
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            buttons,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : [
                             buttons
                         ]
                     })
@@ -319,7 +337,17 @@ const helpCommand: Cmd = {
                         embeds: [
                             embed
                         ],
-                        components: [
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            buttons,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : [
                             buttons
                         ]
                     })
@@ -341,7 +369,17 @@ const helpCommand: Cmd = {
                         components: buttons.components.map((b, i, arr) => i + 1 === arr.length ? b.setDisabled(true) : b.setDisabled(false))
                     })
                     reply.edit({
-                        components: [
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            buttons,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : [
                             buttons
                         ]
                     })
@@ -399,7 +437,17 @@ const helpCommand: Cmd = {
                         embeds: [
                             embed
                         ],
-                        components: [
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            buttons,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : [
                             buttons
                         ]
                     })
@@ -512,7 +560,17 @@ const helpCommand: Cmd = {
                         embeds: [
                             embed
                         ],
-                        components: [
+                        components: interaction.guild.id !== '1000073833551769600' ? [
+                            buttons,
+                            new ActionRowBuilder<ButtonBuilder>()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setEmoji('🔗')
+                                        .setLabel('Join ZBot Support Server!')
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL('https://discord.gg/6tkn6m5g52')
+                                )
+                        ] : [
                             buttons
                         ]
                     })
@@ -563,7 +621,19 @@ const helpCommand: Cmd = {
 
         collector.on('end', () => {
             reply.edit({
-                components: [
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    new ActionRowBuilder<ButtonBuilder>({
+                        components: buttons.components.map(b => b.setDisabled(true))
+                    }),
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52')
+                        )
+                ] : [
                     new ActionRowBuilder<ButtonBuilder>({
                         components: buttons.components.map(b => b.setDisabled(true))
                     })

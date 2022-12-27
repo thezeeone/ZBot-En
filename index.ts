@@ -1,10 +1,10 @@
-import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel, CategoryChannel, ChannelType, DMChannel, time, OverwriteType, bold, TimestampStyles } from "discord.js"
+import { Client, italic, GatewayIntentBits, GuildMemberRoleManager, InteractionType, ChatInputCommandInteraction, ClientApplication, Guild, GuildMember, underscore, EmbedBuilder, inlineCode, ActivitiesOptions, ActivityType, ClientUser, PermissionsBitField, TextChannel, CategoryChannel, ChannelType, DMChannel, time, OverwriteType, bold, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, imageCommand, tttCommand, gtwCommand, memoryGameCommand, reportCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, exchangeCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, quizCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel, WelcomeMessageEditorModel } from "./database"
+import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, memoryGameCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, quizCommand, sudokuCommand, voteCommand, warnCommand, welcomeEditorCommand, zBankCommand } from "./commands/command-exports"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel, EconomyModel, XPBoostsModel, ZCentralBankModel } from "./database"
 import { commaList, pluralise } from "./util"
 
 const repliedMessages = new Set<string>()
@@ -16,32 +16,30 @@ const commands: Cmd[] = [
     kickCommand,
     banCommand,
     tttCommand,
-    gtwCommand,
     memoryGameCommand,
-    reportCommand,
     pingCommand,
     slowmodeCommand,
     helpCommand,
+    blacklistCommand,
     serverInfoCommand,
     inviteCommand,
     updatesCommand,
     userInfoCommand,
-    exchangeCommand,
     memberInfoCommand,
     balanceCommand,
     withdrawCommand,
     depositCommand,
     giveCommand,
     ticketCommand,
-    imageCommand,
     reportMemberCommand,
     reportMessageCommand,
     questionCommand,
-    quizCommand
-]
-
-const privateCommands: Cmd[] = [
-    blacklistCommand
+    sudokuCommand,
+    voteCommand,
+    zBankCommand,
+    quizCommand,
+    warnCommand,
+    welcomeEditorCommand
 ]
 
 const client = new Client({
@@ -60,7 +58,7 @@ const client = new Client({
 
 client.on('ready', async () => {
     console.log('Client is now ready!')
-    
+
     sequelize.authenticate().then(() => {
         console.log("Successfully connected to database")
     })
@@ -74,11 +72,138 @@ client.on('ready', async () => {
         commands.map(c => c.data)
     );
 
-    // Private
+    ['744138083372367924', '885566428697202719', '929299656737976360', '923315540024500304', '712943338206003233', '999703297399201864', '871417904548155393', '921158371749535765', '740356765425598615', '988115217269530674', '550338040011423754', '755959891553812483', '1013212542681755698', '968561563021742170', '743040512365166634', '751180340181074010', '749687494299091015', '1036354172225855558', '738753771177508975', '877522557132238898', '768505782634938398', '953374745238339644', '895717127074500638', '948714494866124800', '847933213438771250', '582974622195253287', '786984851014025286', '930485664175231006', '768856508279685191', '748204055679205468', '897576155614412842', '667453927486259220', '703604602833993768', '1014486062309052416']
+        .forEach(async (user) => {
+            if (
+                await XPBoostsModel.findOne({ where: { user } })
+            ) return
+            else await XPBoostsModel.create({
+                user,
+                XPBoosts: [
+                    { boost: 2, expiryDate: new Date(Date.now() + 432000000) }
+                ]
+            })
+        })
+
     const guild = client.guilds.cache.get('1000073833551769600') as Guild
-    guild.commands.set(
-        privateCommands.map(p => p.data)
-    )
+
+    const ZBank = (await ZCentralBankModel.findAll())?.[0]
+
+    EconomyModel.findAll().then((all) => {
+        all.forEach(async (user) => {
+            const userLevel = await LevelModel.findOne({
+                where: {
+                    id: user.id
+                }
+            }) || await LevelModel.create({
+                id: user.id,
+                lvl: 0,
+                xp: 0
+            })
+            await user
+                .update({
+                    maxWallet: (
+                        guild.members.cache.get(user.id)?.premiumSinceTimestamp
+                            ? (100 * 6 * (userLevel.lvl + 2))
+                            : (100 * 4 * (userLevel.lvl + 1))
+                    ),
+                    maxBank: (
+                        guild.members.cache.get(user.id)?.premiumSinceTimestamp
+                            ? (100 * 12 * (userLevel.lvl + 2))
+                            : (100 * 8 * (userLevel.lvl + 1))
+                    )
+                })
+            // if (user.wallet > user.maxWallet) {
+            //     await ZBank.increment({
+            //         original: user.wallet - user.maxWallet,
+            //         moneyTaken: user.wallet - user.maxWallet
+            //     })
+            //     await user
+            //     .decrement({
+            //         wallet: -1 * (user.wallet - user.maxWallet)
+            //     })
+            // }
+            // if (user.bank > user.maxBank) {
+            //     await ZBank.increment({
+            //         original: user.bank - user.maxBank,
+            //         moneyTaken: user.bank - user.maxBank
+            //     })
+            //     await user
+            //     .decrement({
+            //         bank: -1 * (user.bank - user.maxBank)
+            //     })
+            // }
+        })
+    })
+
+    if (Date.now() >= ZBank.lastTimeAdded.setHours(ZBank.lastTimeAdded.getHours() + 6) + 21600000) {
+        setInterval(async () => {
+            const moreThanSixHours = Math.floor(
+                ZBank.lastTimeAdded.getTime() - ZBank.initialiseDate.getTime()
+                / 21600000) === Math.floor(
+                    Date.now() - ZBank.initialiseDate.getTime()
+                    / 21600000)
+            const sixHourPeriods = moreThanSixHours
+                ? Math.floor((ZBank.lastTimeAdded.getTime() - ZBank.initialiseDate.getTime()) / 21600000)
+                : Math.floor(((Date.now() - ZBank.initialiseDate.getTime()) - (ZBank.lastTimeAdded.getTime() - ZBank.initialiseDate.getTime())) / 21600000)
+
+            const total = Math.round(
+                (
+                    ZBank.moneyTaken
+                    +
+                    (
+                        500
+                        *
+                        (
+                            moreThanSixHours
+                                ? sixHourPeriods
+                                : (sixHourPeriods ** 2 + sixHourPeriods) / 2
+                        )
+                    )
+                ) * (
+                    (2 * ZBank.moneyTaken / (ZBank.original + ZBank.moneyTaken))
+                    +
+                    (1 * ZBank.timesUsedInDay * 0.4)
+                )
+            )
+
+            const channel = (client.guilds.cache.get('1000073833551769600') as Guild).channels.cache.get('1000073833551769603') as TextChannel
+
+            try {
+                await ZBank.update({
+                    numberToAdd: total,
+                    originalGiven: true,
+                    moneyAdded: false
+                })
+                await ZBank.increment({
+                    original: ZBank.numberToAdd
+                });
+                await ZBank.update({
+                    timesUsedInDay: 0,
+                    numberToAdd: 0,
+                    moneyAdded: true,
+                    moneyTaken: 0,
+                    lastTimeAdded: new Date(),
+                    originalGiven: false
+                })
+                await channel.send(`${bold(`${inlineCode(total.toLocaleString('ru'))} Z🪙`)
+                    } has been added to ZBank, it now has ${bold(`${inlineCode((ZBank.original + ZBank.numberToAdd).toLocaleString('ru'))}`)
+                    } Z🪙.\n${italic(
+                        `${ZBank.timesUsedInDay === 0
+                            ? 'Nobody'
+                            : pluralise(ZBank.timesUsedInDay, 'user', 'users')} used the ZBank in the past 24 hours.`
+                    )
+                    }\n${italic(
+                        `${bold(`${inlineCode(ZBank.moneyTaken.toLocaleString('ru'))} Z🪙`)} ${ZBank.moneyTaken === 1 ? 'was' : 'were'} taken out of the ZBank.`
+                    )
+                    }`);
+            } catch (error) {
+                console.log((error as Error).message)
+                await channel.send((error as Error).message)
+            }
+        }, 21600000)
+    }
+
 
     const ticketsCategory = <CategoryChannel>await client.channels.fetch('1021361153202470942')
 
@@ -420,12 +545,24 @@ client.on('ready', async () => {
             type: ActivityType.Listening
         },
         {
-            name: `${pluralise(client.guilds.cache.size, 'server')} and ${pluralise(
-                client.guilds.cache
-                    .map(r => r.members.cache.filter(s => !s.user.bot).size)
-                    .reduce((num1, num2) => {
-                        return num1 + num2
-                    }), 'user')
+            name: `${client.guilds.cache.size.toLocaleString('ru')} ${client.guilds.cache.size === 1
+                ? 'server'
+                : 'servers'
+                } and ${client.guilds.cache
+                    .map(r => [...r.members.cache.filter(m => !m.user.bot).values()])
+                    .flat()
+                    .map(m => m.id)
+                    .filter((m, i, a) => a.indexOf(m) === i)
+                    .length
+                    .toLocaleString('ru')
+                } ${client.guilds.cache
+                    .map(r => [...r.members.cache.filter(m => !m.user.bot).values()])
+                    .flat()
+                    .map(m => m.id)
+                    .filter((m, i, a) => a.indexOf(m) === i)
+                    .length === 1
+                    ? 'user'
+                    : 'users'
                 }`,
             type: ActivityType.Watching
         },
@@ -436,89 +573,16 @@ client.on('ready', async () => {
         {
             name: 'your feedbacks and reports on this bot',
             type: ActivityType.Listening
+        },
+        {
+            name: 'your opinions',
+            type: ActivityType.Listening
         }
     ]
 
     setInterval(async () => {
         (client.user as ClientUser).setPresence({ status: 'dnd', activities: customStatuses })
     }, 300000)
-})
-
-client.on('guildMemberAdd', async (member) => {
-    const serverWelcomeSystem = await WelcomeMessageEditorModel.findOne({
-        where: {
-            id: member.guild.id
-        }
-    })
-
-    if (!serverWelcomeSystem) return
-
-    try {
-        const channel = await member.client.channels.fetch(serverWelcomeSystem.channelId || '')
-
-        if (!channel?.isTextBased()) return
-
-        channel?.send({
-            content: serverWelcomeSystem.message 
-            ? serverWelcomeSystem.message
-            .replace(/{user\.username}/ig, member.user.username)
-            .replace(/{user\.discriminator}/ig, member.user.discriminator)
-            .replace(/{user\.id}/ig, member.user.id)
-            .replace(/{user\.mention}/ig, member.user.toString())
-            .replace(/{user\.createdAt(?:\[(short time|long time|short date|long date|short date-time|long date-time|relative)\])?}/ig, (testParam) => {
-                let timeFormat;
-                switch (testParam) {
-                    case 'short time':
-                        timeFormat = TimestampStyles.ShortTime
-                        break
-                    case 'long time':
-                        timeFormat = TimestampStyles.LongTime
-                        break
-                    case 'short date':
-                        timeFormat = TimestampStyles.ShortDate
-                        break
-                    case 'long date':
-                        timeFormat = TimestampStyles.LongDate
-                        break
-                    case 'short date-time':
-                        timeFormat = TimestampStyles.ShortDateTime
-                        break
-                    case 'long date-time':
-                        timeFormat = TimestampStyles.LongDateTime
-                        break
-                    case 'relative':
-                        timeFormat = TimestampStyles.RelativeTime
-                        break
-                    default:
-                        timeFormat = TimestampStyles.ShortDateTime
-                        break
-                }
-                return time(member.user.createdAt, timeFormat)
-            })
-            .replace(/{server\.name}/ig, member.guild.name)
-            .replace(/{server\.description}/ig, member.guild.description || 'no description')
-            .replace(/{server\.memberCount(?:\[(before|after)\])?}/ig, (memberCountBorA) => {
-                let memberCountType: 'before' | 'after';
-                switch (memberCountBorA) {
-                    case 'before':
-                        memberCountType = 'before'
-                        break
-                    case 'after':
-                        memberCountType = 'after'
-                        break
-                    default:
-                        memberCountType = 'after'
-                        break
-                }
-                return memberCountType === 'before' ? (member.guild.memberCount - 1).toString() : (member.guild.memberCount).toString()
-            })
-            .replace(/{server\.id}/ig, member.guild.id)
-            : '',
-            embeds: serverWelcomeSystem.embeds
-        })
-    } catch {
-        return
-    }
 })
 
 client.on('interactionCreate', async (interaction): Promise<any> => {
@@ -634,7 +698,7 @@ client.on('messageCreate', async (message): Promise<any> => {
     const words = message.content.split(' ').filter(s => s.match(/\b[\w\-\_']+\b/g))
     const attachments = message.attachments
 
-    const totalXP = (
+    let totalXP = (
         attachments.size * 20
     ) + (
             words.length >= 3
@@ -664,6 +728,16 @@ client.on('messageCreate', async (message): Promise<any> => {
                 : 0
         )
 
+    if (
+        (await XPBoostsModel.findOne({ where: { user: message.author.id } }))
+        &&
+        (await XPBoostsModel.findOne({ where: { user: message.author.id } }))?.XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
+    ) {
+        totalXP *= ((await XPBoostsModel.findOne({ where: { user: message.author.id } }))?.XPBoosts.map(({ boost }) => boost).reduce((a1, a2) => a1 + a2) || 1)
+    }
+
+    totalXP = Math.floor(totalXP)
+
     const lvl = await (await LevelModel.findOne({
         where: { id: message.author.id }
     }))?.increment({ xp: totalXP }) || await (await LevelModel.create({
@@ -691,14 +765,35 @@ client.on('messageCreate', async (message): Promise<any> => {
             embeds: [
                 new EmbedBuilder()
                     .setTitle('Level Up!')
-                    .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!`)
+                    .setDescription(`🎉 **Congratulations ${message.author}**, you have levelled up to **Level ${inlineCode(lvl.lvl.toString())}**!${(await XPBoostsModel.findOne({ where: { user: message.author.id } }))
+                            &&
+                            (await XPBoostsModel.findOne({ where: { user: message.author.id } }))?.XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
+                            ? `\n*This user has a ${(
+                                Number(
+                                    // @ts-ignore
+                                    (await XPBoostsModel.findOne({ where: { user: message.author.id } }))
+                                        .XPBoosts.some(boost => Date.now() <= new Date(boost.expiryDate).getTime())
+                                ) * 100
+                            ).toFixed(2)}% XP boost.*`
+                            : ''
+                        }`)
                     .setColor((await RankCardModel.findOne({ where: { id: message.author.id } }))?.colour ?? 0x00ffff)
                     .setFooter(
                         Math.random() < 0.1
                             ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
                             : null
                     )
-            ]
+            ],
+            components: message.guild?.id !== '1000073833551769600' ? [
+                new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setEmoji('🔗')
+                            .setLabel('Join ZBot Support Server!')
+                            .setStyle(ButtonStyle.Link)
+                            .setURL('https://discord.gg/6tkn6m5g52')
+                    )
+            ] : []
         });
         return
     } else if (lvl.xp < 0) {
@@ -721,12 +816,16 @@ client.on('messageCreate', async (message): Promise<any> => {
 
     (<Guild>message.client.guilds.cache.get('1000073833551769600'))
         .members.fetch(message.author.id)
-        .then((member: GuildMember) => {
-            if (lvl.lvl >= 100 && !member.roles.cache.has(levelRoles[0])) member.roles.add(levelRoles[0])
-            else if (lvl.lvl < 5) member.roles.remove(levelRoles)
-            else {
-                member.roles.remove(
-                    levelRoles.filter((r, i) => i !== (20 - Math.floor(lvl.lvl / 5)) && member.roles.cache.has(r))
+        .then(async (member: GuildMember) => {
+            if (lvl.lvl < 5 || (await BlacklistModel.findOne({ where: { id: member.id } }))) member.roles.remove(levelRoles)
+            else if (lvl.lvl >= 100) {
+                if (!member.roles.cache.has(levelRoles[0])) {
+                    member.roles.remove(levelRoles.filter((_, i) => i !== 0))
+                    member.roles.add(levelRoles[0])
+                }
+            } else {
+                if (levelRoles.some(r => r !== levelRoles[20 - Math.floor(lvl.lvl / 5)] && member.roles.cache.has(r))) member.roles.remove(
+                    levelRoles.filter((_, i) => i !== 20 - Math.floor(lvl.lvl / 5))
                 )
                 member.roles.add(
                     levelRoles[20 - Math.floor(lvl.lvl / 5)]
@@ -739,5 +838,5 @@ client.on('messageCreate', async (message): Promise<any> => {
 client.login(process.env.TOKEN)
 
 export {
-    repliedMessages   
+    repliedMessages
 }

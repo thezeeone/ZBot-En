@@ -1,4 +1,4 @@
-import { bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode, ChannelType, italic, time, GuildMFALevel, GuildDefaultMessageNotifications, GuildExplicitContentFilter, GuildNSFWLevel, GuildPremiumTier } from "discord.js"
+import { bold, ChatInputCommandInteraction, EmbedBuilder, inlineCode, ChannelType, italic, time, GuildMFALevel, GuildDefaultMessageNotifications, GuildExplicitContentFilter, GuildNSFWLevel, GuildPremiumTier, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 import { pluralise, commaList } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -316,7 +316,17 @@ const serverInfoCommand: Cmd = {
                         ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
                         : null
                     )
-                ]
+                ],
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52')
+                        )
+                ] : []
             })
         }
     }

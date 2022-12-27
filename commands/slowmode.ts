@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember, TextChannel } from "discord.js"
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, ChannelType, EmbedBuilder, bold, inlineCode, PermissionsBitField, GuildMember, TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonBuilder, ActionRowBuilder, ButtonStyle } from "discord.js"
 import { commaList, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -56,6 +56,16 @@ const slowmodeCommand: Cmd = {
                     .setDescription(`The channel type is invalid.\nThe channel must be a text channel.`)
                     .setColor(0xff0000)
                 ],
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52')
+                        )
+                ] : [],
                 ephemeral: true
             })
 
@@ -89,7 +99,17 @@ const slowmodeCommand: Cmd = {
                         ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
                         : null
                     )
-                ]
+                ],
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52')
+                        )
+                ] : []
             })
         } else {
             const botMember = <GuildMember>interaction.guild.members.me
@@ -104,7 +124,7 @@ const slowmodeCommand: Cmd = {
                     embeds: [
                         new EmbedBuilder()
                         .setAuthor({
-                            name: `${interaction.user.tag} (${interaction.user.id})`,
+                            name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
                             iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
                         })
                         .setTitle(`Missing Permissions`)
@@ -151,6 +171,16 @@ const slowmodeCommand: Cmd = {
                         }.`)
                         .setColor(0xff0000)
                     ],
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : [],
                     ephemeral: true
                 })
             }
@@ -164,6 +194,16 @@ const slowmodeCommand: Cmd = {
                     .setDescription(`The channel type is invalid.\nThe channel must be a text channel.`)
                     .setColor(0xff0000)
                 ],
+                components: interaction.guild.id !== '1000073833551769600' ? [
+                    new ActionRowBuilder<ButtonBuilder>()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setEmoji('🔗')
+                                .setLabel('Join ZBot Support Server!')
+                                .setStyle(ButtonStyle.Link)
+                                .setURL('https://discord.gg/6tkn6m5g52')
+                        )
+                ] : [],
                 ephemeral: true
             })
 
@@ -224,7 +264,17 @@ const slowmodeCommand: Cmd = {
                             ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
                             : null
                         )
-                    ]
+                    ],
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : []
                 })
             })
             .catch(async () => {
@@ -234,10 +284,22 @@ const slowmodeCommand: Cmd = {
                         .setColor(0xff0000)
                         .setTitle('Failed to Set Channel Slowmode')
                         .setDescription(`Failed to set the slowmode for ${(interaction.channel as TextChannel).id === channel.id ? 'the channel' : channel.toString()}. Reason unknown.`)
-                    ]
+                    ],
+                    components: interaction.guild.id !== '1000073833551769600' ? [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setEmoji('🔗')
+                                    .setLabel('Join ZBot Support Server!')
+                                    .setStyle(ButtonStyle.Link)
+                                    .setURL('https://discord.gg/6tkn6m5g52')
+                            )
+                    ] : []
                 })
             })
         }
+
+        return
     }
 }
 
