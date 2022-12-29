@@ -3,7 +3,7 @@ import { config } from "dotenv"
 import { blacklistCommand } from "./commands/blacklist"
 config()
 
-import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, memoryGameCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, quizCommand, sudokuCommand, voteCommand, warnCommand, welcomeEditorCommand, zBankCommand } from "./commands/command-exports"
+import { Cmd, tipsAndTricks, leaderboardCommand, serverInfoCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, memoryGameCommand, pingCommand, slowmodeCommand, helpCommand, inviteCommand, updatesCommand, userInfoCommand, memberInfoCommand, balanceCommand, withdrawCommand, depositCommand, giveCommand, ticketCommand, reportMessageCommand, reportMemberCommand, questionCommand, quizCommand, sudokuCommand, voteCommand, warnCommand, zBankCommand } from "./commands/command-exports"
 import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel, EconomyModel, XPBoostsModel, ZCentralBankModel } from "./database"
 import { commaList, pluralise } from "./util"
 
@@ -38,8 +38,7 @@ const commands: Cmd[] = [
     voteCommand,
     zBankCommand,
     quizCommand,
-    warnCommand,
-    welcomeEditorCommand
+    warnCommand
 ]
 
 const client = new Client({
