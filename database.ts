@@ -6,12 +6,6 @@ const sequelize = new Sequelize(process.env.DATABASE_URL as string, {
     logging: false
 })
 
-const enum TicketTypes {
-    Normal,
-    ReportMember,
-    ReportMessage
-}
-
 // @ts-ignore
 interface LevelModel extends Model<InferAttributes<LevelModel>, InferCreationAttributes<LevelModel>> {
     id: string,
@@ -31,15 +25,6 @@ interface RankCardModel extends Model<InferAttributes<RankCardModel>, InferCreat
 }
 
 // @ts-ignore
-interface WelcomeMessageEditorModel extends Model<InferAttributes<WelcomeMessageEditorModel>, InferCreationAttributes<WelcomeMessageEditorModel>> {
-    id: string,
-    channelId?: string,
-    message?: string,
-    embeds?: object[],
-    enabled: boolean
-}
-
-// @ts-ignore
 interface EconomyModel extends Model<InferAttributes<EconomyModel>, InferCreationAttributes<EconomyModel>> {
     id: string,
     bank: number,
@@ -53,17 +38,6 @@ interface LevelsChannelListModel extends Model<InferAttributes<LevelsChannelList
     guildId: string,
     channelId: string,
     allowed: boolean
-}
-
-// @ts-ignore
-interface TicketSystemModel extends Model<InferAttributes<TicketSystemModel>, InferCreationAttributes<TicketSystemModel>> {
-    id: number,
-    creator: string,
-    ticketChannelId: string,
-    ticketRecipientChannelId: string,
-    referenceMessage: string,
-    closed: boolean,
-    ticketType: TicketTypes
 }
 
 // @ts-ignore
@@ -179,48 +153,6 @@ const EconomyModel = sequelize.define<EconomyModel>('EconomySystems', {
 })
 
 // @ts-ignore
-const WelcomeMessageEditorModel = sequelize.define<WelcomeMessageEditorModel>('PerServerWelcomeMessageEditors', {
-    id: {
-        type: DataTypes.STRING,
-        primaryKey: true
-    },
-    channelId: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    message: {
-        type: DataTypes.STRING,
-        defaultValue: ''
-    },
-    embeds: {
-        type: DataTypes.ARRAY(DataTypes.JSON),
-        defaultValue: []
-    },
-    enabled: DataTypes.BOOLEAN
-})
-
-// @ts-ignore
-const TicketSystemModel = sequelize.define<TicketSystemModel>('TicketSystems', {
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    creator: DataTypes.STRING,
-    ticketChannelId: DataTypes.STRING,
-    ticketRecipientChannelId: DataTypes.STRING,
-    referenceMessage: DataTypes.STRING,
-    ticketType: {
-        type: DataTypes.INTEGER,
-        defaultValue: TicketTypes.Normal
-    },
-    closed: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-    }
-})
-
-// @ts-ignore
 const SudokuGridsModel = sequelize.define<SudokuGridsModel>('SudokuBoards', {
     game: DataTypes.STRING,
     numberOfAttempts: {
@@ -303,9 +235,6 @@ export {
     RankCardModel,
     EconomyModel,
     LevelsChannelListModel,
-    WelcomeMessageEditorModel,
-    TicketSystemModel,
-    TicketTypes,
     SudokuGridsModel,
     ZCentralBankModel,
     ZBankCooldowns,
