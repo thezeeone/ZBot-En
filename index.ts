@@ -4,7 +4,7 @@ import { blacklistCommand } from "./commands/blacklist"
 config()
 
 import { Cmd, tipsAndTricks, leaderboardCommand, rankCommand, timeoutCommand, kickCommand, banCommand, tttCommand, memoryGameCommand, pingCommand, slowmodeCommand, helpCommand, balanceCommand, withdrawCommand, depositCommand, questionCommand, quizCommand, sudokuCommand, voteCommand, warnCommand, zBankCommand } from "./commands/command-exports"
-import { sequelize, LevelModel, BlacklistModel, RankCardModel, TicketSystemModel, EconomyModel, XPBoostsModel, ZCentralBankModel } from "./database"
+import { sequelize, LevelModel, BlacklistModel, RankCardModel, EconomyModel, XPBoostsModel, ZCentralBankModel } from "./database"
 import { commaList, pluralise } from "./util"
 
 const commands: Cmd[] = [
