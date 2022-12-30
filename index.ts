@@ -35,8 +35,7 @@ const commands: Cmd[] = [
     voteCommand,
     zBankCommand,
     quizCommand,
-    warnCommand,
-    welcomeEditorCommand
+    warnCommand
 ]
 
 const client = new Client({
