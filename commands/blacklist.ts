@@ -25,7 +25,7 @@ const blacklistCommand: Cmd = {
 			embeds: [
 				new EmbedBuilder()
 				.setAuthor({
-					name: `${interaction.user.tag} (${interaction.user.id})`,
+					name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
 					iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
 				})
 				.setTitle(`User not found`)
@@ -45,7 +45,7 @@ const blacklistCommand: Cmd = {
 			embeds: [
 				new EmbedBuilder()
 				.setAuthor({
-					name: `${interaction.user.tag} (${interaction.user.id})`,
+					name: `${interaction.member?.nickname ? `${interaction.member.nickname} (${interaction.user.tag})` : interaction.user.tag} (${interaction.user.id})`,
 					iconURL: interaction.user.displayAvatarURL({ forceStatic: false })
 				})
 				.setDescription(`This user, ${bold(user.tag)} (${inlineCode(user.id)}), is already blacklisted, and is therefore permanently banned from using this bot.`)

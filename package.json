@@ -2,7 +2,7 @@
   "name": "zhbot",
   "version": "1.0.0",
   "engines": {
-     "version": "17.x"
+    "version": "17.x"
   },
   "description": "",
   "main": "index.js",
@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/voice": "^0.10.0",
+    "canvas": "^2.10.1",
     "discord.js": "^14.0.1",
     "dotenv": "^16.0.0",
     "ffmpeg-static": "^5.0.2",

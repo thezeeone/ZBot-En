@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, ContextMenuCommandInteraction, EmbedBuilder, inlineCode } from "discord.js"
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ContextMenuCommandInteraction, EmbedBuilder, inlineCode } from "discord.js"
 import { Cmd } from "./command-exports"
 
 const pingCommand: Cmd = {
@@ -109,8 +109,20 @@ const pingCommand: Cmd = {
                         ) 
                     ]
                 )
-            ]
+            ],
+            components: interaction.guild.id !== '1000073833551769600' ? [
+                new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setEmoji('🔗')
+                            .setLabel('Join ZBot Support Server!')
+                            .setStyle(ButtonStyle.Link)
+                            .setURL('https://discord.gg/6tkn6m5g52')
+                    )
+            ] : []
         })
+
+        return
     }
 }
 

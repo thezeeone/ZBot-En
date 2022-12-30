@@ -1,0 +1,7 @@
+*.js
+!commands/sudoku-generator.js
+node_modules/
+*.png
+.env
+package*.json
+facts.ts
