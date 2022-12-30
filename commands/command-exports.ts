@@ -17,30 +17,15 @@ import { blacklistCommand } from "./blacklist";
 import { pingCommand } from "./ping"
 import { slowmodeCommand } from "./slowmode";
 import { helpCommand } from "./help";
-import { serverInfoCommand } from "./serverinfo";
-import { inviteCommand } from "./invite";
-import { updatesCommand } from "./updates";
-import { userInfoCommand } from "./userinfo";
-import { memberInfoCommand } from "./memberinfo";
 import { balanceCommand } from "./balance";
 import { depositCommand } from "./deposit";
 import { withdrawCommand } from "./withdraw";
-import { giveCommand } from "./givecoins";
-import { channelBLCommand } from "./channelblacklist";
-import { channelWLCommand } from "./channelwhitelist";
 import { questionCommand } from "./question";
-import { reportMemberCommand } from "./report-member";
-import { reportMessageCommand } from "./report-message";
-import { ticketCommand } from "./ticket";
 import { voteCommand } from "./vote";
 import { sudokuCommand } from "./sudoku";
 import { zBankCommand } from "./zbank";
 import { quizCommand } from "./quiz";
 import { warnCommand } from "./warn";
-import { welcomeEditorCommand } from "./welcomeeditor";
-import { giveXPCommand } from "./givexp";
-import { imageCommand } from "./image";
-import { removeXPCommand } from "./removexp";
 
 export {
     Cmd,
@@ -56,33 +41,14 @@ export {
     pingCommand,
     slowmodeCommand,
     helpCommand,
-    serverInfoCommand,
-    inviteCommand,
-    updatesCommand,
-    userInfoCommand,
-    memberInfoCommand,
     balanceCommand,
     depositCommand,
     withdrawCommand,
-    giveCommand,
     ticketCommand,
-    imageCommand,
-    reportMemberCommand,
-    reportMessageCommand,
     quizCommand,
-    channelBLCommand,
-    channelWLCommand,
     questionCommand,
-    giveXPCommand,
-    channelBLCommand,
-    channelWLCommand,
-    questionCommand,
-    reportMemberCommand,
-    reportMessageCommand,
-    ticketCommand,
     voteCommand,
     sudokuCommand,
     zBankCommand,
     warnCommand,
-    welcomeEditorCommand
 }
