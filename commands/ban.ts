@@ -1,6 +1,5 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time, underscore } from "discord.js"
-import { BlacklistModel } from "../database"
-import { WarningTypes } from "../database"
+import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, TextChannel, time, underscore } from "discord.js"
+import { BlacklistModel, CaseSystem, PunishmentTypes } from "../database"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -70,6 +69,12 @@ const banCommand: Cmd = {
                         ]
                     },
                     {
+                        name: 'referenceCases',
+                        description: 'Cases to make a reference to (list of numbers)',
+                        type: ApplicationCommandOptionType.String,
+                        required: false
+                    },
+                    {
                         name: 'skip-confirmation',
                         description: 'Whether to ban without confirmation',
                         type: ApplicationCommandOptionType.Boolean,
@@ -94,6 +99,12 @@ const banCommand: Cmd = {
                         type: ApplicationCommandOptionType.String,
                         minLength: 1,
                         maxLength: 200,
+                        required: false
+                    },
+                    {
+                        name: 'referenceCases',
+                        description: 'Cases to make a reference to (list of numbers)',
+                        type: ApplicationCommandOptionType.String,
                         required: false
                     },
                     {
@@ -214,6 +225,33 @@ const banCommand: Cmd = {
             })
 
             if (skipConfirmation) {
+                const refCases = interaction.options.getString('referenceCases')
+                    ? await Promise.all(interaction.options
+                        .getString('referenceCases', true)
+                        .split(/\D+/g)
+                        .map(n => Number(n))
+                        .filter(async (n) => !isNaN(n) && isFinite(n) && await CaseSystem.findOne({ where: { id: n } })))
+                    : []
+
+                const punishment = await CaseSystem.create({
+                    guild: interaction.guild.id,
+                    moderator: interaction.user.id,
+                    user: user.id,
+                    reason: reason ?? '',
+                    edited: false,
+                    type: PunishmentTypes.BAN_REMOVE,
+                    referenceCases: refCases,
+                    DMMessage: {
+                        channelId: '',
+                        messageId: ''
+                    },
+                    modLogMessage: {
+                        channelId: '',
+                        messageId: ''
+                    },
+                    id: 0
+                })
+
                 await interaction.reply({
                     embeds: [
                         new EmbedBuilder()
@@ -225,11 +263,12 @@ const banCommand: Cmd = {
                                     : 'without a reason'
                                 }. ${italic('Confirmation has been skipped.')
                                 }`)
-                            .setFooter(
-                                Math.random() < 0.1
-                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                    : null
-                            )
+                            .setFooter({
+                                text: `Case ${punishment.id}${Math.random() < 0.1
+                                    ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                    : ''
+                                    }`
+                            })
                     ],
                     components: interaction.guild.id !== '1000073833551769600' ? [
                         new ActionRowBuilder<ButtonBuilder>()
@@ -241,30 +280,20 @@ const banCommand: Cmd = {
                                     .setURL('https://discord.gg/6tkn6m5g52'),
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ] : [
                         new ActionRowBuilder<ButtonBuilder>()
                             .addComponents(
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ]
-                })
-
-                // @ts-ignore
-                const punishment = await CaseSystem.create({
-                    user: user.id,
-                    moderator: interaction.user.id,
-                    type: WarningTypes.BAN_REMOVE,
-                    reason: reason || '',
-                    guild: interaction.guild.id,
-                    edited: false
                 })
 
                 // Unban the user
@@ -282,17 +311,78 @@ const banCommand: Cmd = {
                                         : italic(inlineCode('No reason provided'))
                                 }
                             ])
-                            .setFooter({ text: `Case ${punishment.id}` })
+                            .setFooter({
+                                text: `Case ${punishment.id}`
+                            })
                     ]
                 })
+                    .then(async (DMMsg) => {
+                        await punishment.update({
+                            DMMessage: {
+                                channelId: DMMsg.channel.id,
+                                messageId: DMMsg.id
+                            }
+                        })
+                    })
                     .finally(async () => {
-                        await interaction.guild.members.unban(user, `Unbanned by ${interaction.user.tag
-                            } (${interaction.user.id
-                            }) ${reason
-                                ? `with reason ${reason}`
-                                : 'without a reason'
+                        await interaction.guild.members.unban(user, `Unbanned by ${interaction.user.tag} (${interaction.user.id}) ${reason
+                            ? `with reason ${reason}`
+                            : 'without a reason'
                             }.`
                         )
+                        if (interaction.guild.id !== '786984851014025286') return
+                        try {
+                            const channel = interaction.client.channels.cache.get('1046386065570799656') as unknown as TextChannel
+                            if (!channel) return
+                            channel.send({
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setColor(0x00ff00)
+                                        .setTitle('Unban')
+                                        .setAuthor({
+                                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
+                                            name: interaction.member.nickname
+                                                ? `${interaction.member.nickname} (${interaction.member.user.tag}) (${interaction.member.id})`
+                                                : `${interaction.member.user.tag} (${interaction.member.id})`
+                                        })
+                                        .setThumbnail(user.displayAvatarURL({ forceStatic: false }))
+                                        .setDescription(`**User** ${user.tag} (${user.id})\n**Reason** ${reason ?? '*`No reason provided`*'}${(await Promise.all(punishment.referenceCases.filter(async (caseNum) => await CaseSystem.findOne({ where: { id: caseNum } })))).filter(notEmpty).length
+                                            ? `**Reference Cases** ${commaList(
+                                                (await Promise.all(punishment.referenceCases.map(async (caseNum) => {
+                                                    const fetchedPunishment = await CaseSystem.findOne({
+                                                        where: {
+                                                            id: caseNum
+                                                        }
+                                                    })
+                                                    return fetchedPunishment ? (
+                                                        fetchedPunishment.modLogMessage.channelId && fetchedPunishment.modLogMessage.messageId
+                                                            ? `[${caseNum}](https://discord.com/messages/${fetchedPunishment.guild}/${fetchedPunishment.modLogMessage.channelId}/${fetchedPunishment.modLogMessage.messageId})`
+                                                            : String(fetchedPunishment.id)
+                                                    ) : undefined
+                                                })))
+                                                    .filter(notEmpty)
+                                            )}`
+                                            : ''
+                                            }`)
+                                        .setFooter({
+                                            text: `Case ${punishment.id}`
+                                        })
+                                ]
+                            })
+                                .then(async (modLogMsg) => {
+                                    await punishment.update({
+                                        modLogMessage: {
+                                            channelId: modLogMsg.channel.id,
+                                            messageId: modLogMsg.id
+                                        }
+                                    })
+                                })
+                                .catch(() => {
+                                    return
+                                })
+                        } catch {
+                            return
+                        }
                     })
             } else {
                 const [
@@ -345,9 +435,9 @@ const banCommand: Cmd = {
                                     .setURL('https://discord.gg/6tkn6m5g52'),
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ] : [
                         confirmationRow,
@@ -355,39 +445,292 @@ const banCommand: Cmd = {
                             .addComponents(
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ],
-                fetchReply: true
+                    fetchReply: true
                 })
 
                 const confirmationCollector = reply.createMessageComponentCollector({
                     componentType: ComponentType.Button,
                     maxComponents: 1,
-                filter: async (btn) => {
+                    filter: async (btn) => {
                         const isUserBlacklisted = await BlacklistModel.findOne({
-                        where: {
-                            id: btn.user.id
-                        }
+                            where: {
+                                id: btn.user.id
+                            }
                         })
 
-                confirmationCollector.on('collect', async (button): Promise<any> => {
-                    if (button.user.id !== interaction.user.id) {
-                        confirmationCollector.dispose(button)
-                        return await button.reply({
-                            content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
-                            ephemeral: true
+                        confirmationCollector.on('collect', async (button): Promise<any> => {
+                            if (button.user.id !== interaction.user.id) {
+                                confirmationCollector.dispose(button)
+                                return await button.reply({
+                                    content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                                    ephemeral: true
+                                })
+                            }
+                            if (button.customId === 'yes') {
+                                const refCases = interaction.options.getString('referenceCases')
+                                    ? await Promise.all(interaction.options
+                                        .getString('referenceCases', true)
+                                        .split(/\D+/g)
+                                        .map(n => Number(n))
+                                        .filter(async (n) => !isNaN(n) && isFinite(n) && await CaseSystem.findOne({ where: { id: n } })))
+                                    : []
+
+                                const punishment = await CaseSystem.create({
+                                    guild: interaction.guild.id,
+                                    moderator: interaction.user.id,
+                                    user: user.id,
+                                    reason: reason ?? '',
+                                    edited: false,
+                                    type: PunishmentTypes.BAN_REMOVE,
+                                    referenceCases: refCases,
+                                    DMMessage: {
+                                        channelId: '',
+                                        messageId: ''
+                                    },
+                                    modLogMessage: {
+                                        channelId: '',
+                                        messageId: ''
+                                    },
+                                    id: 0
+                                })
+
+                                const original = await interaction.fetchReply()
+                                yesButton.setDisabled(true)
+                                noButton.setDisabled(true)
+                                original.edit({
+                                    embeds: [
+                                        EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                                            .setColor(0x00ff00)
+                                            .setTitle('Successful Unban')
+                                            .setDescription(`Successfully unbanned ${bold(user.tag)
+                                                } (${inlineCode(user.id)}) ${reason
+                                                    ? `with reason ${bold(reason)}`
+                                                    : 'without a reason'
+                                                }.`)
+                                            .setFooter({
+                                                text: `Case ${punishment.id}${Math.random() < 0.1
+                                                    ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                                    : ''
+                                                    }`
+                                            })
+                                    ],
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('ZBot New Year\'s Updates')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('ZBot New Year\'s Updates')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
+                                            )
+                                    ]
+                                })
+
+                                // Unban the user
+                                user.send({
+                                    embeds: [
+                                        new EmbedBuilder()
+                                            .setColor(0x00ff00)
+                                            .setTitle('Unban')
+                                            .setDescription(`You have been unbanned from ${bold(interaction.guild.name)}.`)
+                                            .addFields([
+                                                {
+                                                    name: 'Reason',
+                                                    value: reason
+                                                        ? reason
+                                                        : italic(inlineCode('No reason provided'))
+                                                }
+                                            ])
+                                            .setFooter({
+                                                text: `Case ${punishment.id}`
+                                            })
+                                    ]
+                                })
+                                    .then(async (DMMsg) => {
+                                        await button.reply('Unban successful. Member has been messaged.')
+                                        await punishment.update({
+                                            DMMessage: {
+                                                channelId: DMMsg.channel.id,
+                                                messageId: DMMsg.id
+                                            }
+                                        })
+                                    })
+                                    .catch(async () => {
+                                        await button.reply('Unban removal successful. Couldn\'t send the member a message.')
+                                        return
+                                    })
+                                    .finally(async () => {
+                                        await interaction.guild.members.unban(user, `Unbanned by ${interaction.user.tag} (${interaction.user.id}) ${reason
+                                            ? `with reason ${reason}`
+                                            : 'without a reason'
+                                            }.`
+                                        )
+                                        if (interaction.guild.id !== '786984851014025286') return
+                                        try {
+                                            const channel = interaction.client.channels.cache.get('1046386065570799656') as unknown as TextChannel
+                                            if (!channel) return
+                                            channel.send({
+                                                embeds: [
+                                                    new EmbedBuilder()
+                                                        .setColor(0x00ff00)
+                                                        .setTitle('Unban')
+                                                        .setAuthor({
+                                                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
+                                                            name: interaction.member.nickname
+                                                                ? `${interaction.member.nickname} (${interaction.member.user.tag}) (${interaction.member.id})`
+                                                                : `${interaction.member.user.tag} (${interaction.member.id})`
+                                                        })
+                                                        .setThumbnail(user.displayAvatarURL({ forceStatic: false }))
+                                                        .setDescription(`**User** ${user.tag} (${user.id})\n**Reason** ${reason ?? '*`No reason provided`*'}${(await Promise.all(punishment.referenceCases.filter(async (caseNum) => await CaseSystem.findOne({ where: { id: caseNum } })))).filter(notEmpty).length
+                                                            ? `**Reference Cases** ${commaList(
+                                                                (await Promise.all(punishment.referenceCases.map(async (caseNum) => {
+                                                                    const fetchedPunishment = await CaseSystem.findOne({
+                                                                        where: {
+                                                                            id: caseNum
+                                                                        }
+                                                                    })
+                                                                    return fetchedPunishment ? (
+                                                                        fetchedPunishment.modLogMessage.channelId && fetchedPunishment.modLogMessage.messageId
+                                                                            ? `[${caseNum}](https://discord.com/messages/${fetchedPunishment.guild}/${fetchedPunishment.modLogMessage.channelId}/${fetchedPunishment.modLogMessage.messageId})`
+                                                                            : String(fetchedPunishment.id)
+                                                                    ) : undefined
+                                                                })))
+                                                                    .filter(notEmpty)
+                                                            )}`
+                                                            : ''
+                                                            }`)
+                                                        .setFooter({
+                                                            text: `Case ${punishment.id}`
+                                                        })
+                                                ]
+                                            })
+                                                .then(async (modLogMsg) => {
+                                                    await punishment.update({
+                                                        modLogMessage: {
+                                                            channelId: modLogMsg.channel.id,
+                                                            messageId: modLogMsg.id
+                                                        }
+                                                    })
+                                                })
+                                                .catch(() => {
+                                                    return
+                                                })
+                                        } catch {
+                                            return
+                                        }
+                                    })
+                            } else {
+                                const original = await interaction.fetchReply()
+                                original.edit({
+                                    components: interaction.guild.id !== '1000073833551769600' ? [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('🔗')
+                                                    .setLabel('Join ZBot Support Server!')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.gg/6tkn6m5g52'),
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('ZBot New Year\'s Updates')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
+                                            )
+                                    ] : [
+                                        new ActionRowBuilder<ButtonBuilder>()
+                                            .addComponents(
+                                                new ButtonBuilder()
+                                                    .setEmoji('⚠')
+                                                    .setLabel('ZBot New Year\'s Updates')
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
+                                            )
+                                    ],
+                                    embeds: [],
+                                    content: `Cancelled the unban for ${user.tag} (${inlineCode(user.id)}).`
+                                })
+                                await button.reply('Unban cancelled.')
+                            }
                         })
-                    }
+                        if (isUserBlacklisted) {
+                            await btn.reply({
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setTitle(underscore('You are blacklisted from using this bot.'))
+                                        .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
+                                        .setColor(0x000000)
+                                ]
+                            })
+                            return false
+                        }
+
+                        if (btn.user.id !== interaction.user.id) {
+                            await btn.reply({
+                                content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
+                                ephemeral: true
+                            })
+                            return false
+                        } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
+
+                        return true
+                    },
+                    time: 120000
+                })
+
+                confirmationCollector.on('collect', async (button): Promise<any> => {
                     if (button.customId === 'yes') {
+                        const refCases = interaction.options.getString('referenceCases')
+                            ? await Promise.all(interaction.options
+                                .getString('referenceCases', true)
+                                .split(/\D+/g)
+                                .map(n => Number(n))
+                                .filter(async (n) => !isNaN(n) && isFinite(n) && await CaseSystem.findOne({ where: { id: n } })))
+                            : []
+
+                        const punishment = await CaseSystem.create({
+                            guild: interaction.guild.id,
+                            moderator: interaction.user.id,
+                            user: user.id,
+                            reason: reason ?? '',
+                            edited: false,
+                            type: PunishmentTypes.BAN_REMOVE,
+                            referenceCases: refCases,
+                            DMMessage: {
+                                channelId: '',
+                                messageId: ''
+                            },
+                            modLogMessage: {
+                                channelId: '',
+                                messageId: ''
+                            },
+                            id: 0
+                        })
+
                         const original = await interaction.fetchReply()
                         yesButton.setDisabled(true)
                         noButton.setDisabled(true)
                         original.edit({
                             embeds: [
-                                EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
+                                EmbedBuilder.from(reply.embeds[0])
                                     .setColor(0x00ff00)
                                     .setTitle('Successful Unban')
                                     .setDescription(`Successfully unbanned ${bold(user.tag)
@@ -395,46 +738,8 @@ const banCommand: Cmd = {
                                             ? `with reason ${bold(reason)}`
                                             : 'without a reason'
                                         }.`)
-                                    .setFooter(
-                                        Math.random() < 0.1
-                                            ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                            : null
-                                    )
                             ],
-                            components: interaction.guild.id !== '1000073833551769600' ? [
-                                new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(
-                                        new ButtonBuilder()
-                                            .setEmoji('🔗')
-                                            .setLabel('Join ZBot Support Server!')
-                                            .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.gg/6tkn6m5g52'),
-                                        new ButtonBuilder()
-                                            .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
-                                            .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
-                                    )
-                            ] : [
-                                new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(
-                                        new ButtonBuilder()
-                                            .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
-                                            .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
-                                    )
-                            ]
-                        })
-
-                        // @ts-ignore
-                        const punishment = await CaseSystem.create({
-                            user: user.id,
-                            moderator: interaction.user.id,
-                            type: WarningTypes.BAN_REMOVE,
-                            reason: reason || '',
-                            guild: interaction.guild.id,
-                            edited: false
+                            components: []
                         })
 
                         // Unban the user
@@ -443,7 +748,7 @@ const banCommand: Cmd = {
                                 new EmbedBuilder()
                                     .setColor(0x00ff00)
                                     .setTitle('Unban')
-                                    .setDescription(`You have been unbanned from ${bold(interaction.guild.name)}.`)
+                                    .setDescription(`Your ban has been removed in ${bold(interaction.guild.name)}.`)
                                     .addFields([
                                         {
                                             name: 'Reason',
@@ -452,207 +757,143 @@ const banCommand: Cmd = {
                                                 : italic(inlineCode('No reason provided'))
                                         }
                                     ])
-                                    .setFooter({ text: `Case ${punishment.id}` })
+                                    .setFooter({
+                                        text: `Case ${punishment.id}`
+                                    })
                             ]
                         })
-                            .then(async () => {
-                                await button.reply('Unban successful. Member has been messaged.')
+                            .then(async (DMMsg) => {
+                                await button.reply({
+                                    content: 'Unban successful. Member has been messaged.',
+                                    embeds: [
+                                        EmbedBuilder.from(reply.embeds[0])
+                                            .setColor(0x00ff00)
+                                            .setTitle('Unban Successful')
+                                            .setDescription(`Successfully unbanned ${bold(user.tag)
+                                                } (${inlineCode(user.id)}) from ${bold(interaction.guild.name)
+                                                } ${reason
+                                                    ? `with reason ${bold(reason)}`
+                                                    : 'without a reason'
+                                                }.`)
+                                            .setFooter({
+                                                text: `Case ${punishment.id}${Math.random() < 0.1
+                                                    ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                                    : ''
+                                                    }`
+                                            })
+                                            .setAuthor(null)
+                                            .setFields([])
+                                    ]
+                                })
+                                await punishment.update({
+                                    DMMessage: {
+                                        channelId: DMMsg.channel.id,
+                                        messageId: DMMsg.id
+                                    }
+                                })
                             })
                             .catch(async () => {
-                                await button.reply('Unban removal successful. Couldn\'t send the member a message.',)
+                                await button.reply({
+                                    content: 'Unban removal successful. Couldn\'t send the member a message.',
+                                    embeds: [
+                                        EmbedBuilder.from(reply.embeds[0])
+                                            .setColor(0x00ff00)
+                                            .setTitle('Unban Successful')
+                                            .setDescription(`Successfully unbanned ${bold(user.tag)
+                                                } (${inlineCode(user.id)}) from ${bold(interaction.guild.name)
+                                                } ${reason
+                                                    ? `with reason ${bold(reason)}`
+                                                    : 'without a reason'
+                                                }.`)
+                                            .setFooter({
+                                                text: `Case ${punishment.id}${Math.random() < 0.1
+                                                    ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                                    : ''
+                                                    }`
+                                            })
+                                            .setAuthor(null)
+                                            .setFields([])
+                                    ]
+                                })
                             })
                             .finally(async () => {
-                                await interaction.guild.members.unban(user, `Unbanned by ${interaction.user.tag
-                                    } (${interaction.user.id
-                                    }) ${reason
-                                        ? `with reason ${reason}`
-                                        : 'without a reason'
+                                await interaction.guild.members.unban(user, `Unbanned by ${interaction.user.tag} (${interaction.user.id}) ${reason
+                                    ? `with reason ${reason}`
+                                    : 'without a reason'
                                     }.`
                                 )
+                                if (interaction.guild.id !== '786984851014025286') return
+                                try {
+                                    const channel = interaction.client.channels.cache.get('1046386065570799656') as unknown as TextChannel
+                                    if (!channel) return
+                                    channel.send({
+                                        embeds: [
+                                            new EmbedBuilder()
+                                                .setColor(0x00ff00)
+                                                .setTitle('Unban')
+                                                .setAuthor({
+                                                    iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
+                                                    name: interaction.member.nickname
+                                                        ? `${interaction.member.nickname} (${interaction.member.user.tag}) (${interaction.member.id})`
+                                                        : `${interaction.member.user.tag} (${interaction.member.id})`
+                                                })
+                                                .setThumbnail(user.displayAvatarURL({ forceStatic: false }))
+                                                .setDescription(`**User** ${user.tag} (${user.id})\n**Reason** ${reason ?? '*`No reason provided`*'}${(await Promise.all(punishment.referenceCases.filter(async (caseNum) => await CaseSystem.findOne({ where: { id: caseNum } })))).filter(notEmpty).length
+                                                    ? `**Reference Cases** ${commaList(
+                                                        (await Promise.all(punishment.referenceCases.map(async (caseNum) => {
+                                                            const fetchedPunishment = await CaseSystem.findOne({
+                                                                where: {
+                                                                    id: caseNum
+                                                                }
+                                                            })
+                                                            return fetchedPunishment ? (
+                                                                fetchedPunishment.modLogMessage.channelId && fetchedPunishment.modLogMessage.messageId
+                                                                    ? `[${caseNum}](https://discord.com/messages/${fetchedPunishment.guild}/${fetchedPunishment.modLogMessage.channelId}/${fetchedPunishment.modLogMessage.messageId})`
+                                                                    : String(fetchedPunishment.id)
+                                                            ) : undefined
+                                                        })))
+                                                            .filter(notEmpty)
+                                                    )}`
+                                                    : ''
+                                                    }`)
+                                                .setFooter({
+                                                    text: `Case ${punishment.id}`
+                                                })
+                                        ]
+                                    })
+                                        .then(async (modLogMsg) => {
+                                            await punishment.update({
+                                                modLogMessage: {
+                                                    channelId: modLogMsg.channel.id,
+                                                    messageId: modLogMsg.id
+                                                }
+                                            })
+                                        })
+                                        .catch(() => {
+                                            return
+                                        })
+                                } catch {
+                                    return
+                                }
                             })
                     } else {
                         const original = await interaction.fetchReply()
+                        yesButton.setDisabled(true)
+                        noButton.setDisabled(true)
                         original.edit({
-                            components: interaction.guild.id !== '1000073833551769600' ? [
-                                new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(
-                                        new ButtonBuilder()
-                                            .setEmoji('🔗')
-                                            .setLabel('Join ZBot Support Server!')
-                                            .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.gg/6tkn6m5g52'),
-                                        new ButtonBuilder()
-                                            .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
-                                            .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
-                                    )
-                            ] : [
-                                new ActionRowBuilder<ButtonBuilder>()
-                                    .addComponents(
-                                        new ButtonBuilder()
-                                            .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
-                                            .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
-                                    )
-                            ],
-                            embeds: [],
-                            content: `Cancelled the unban for ${user.tag} (${inlineCode(user.id)}).`
+                            components: [confirmationRow],
+                            embeds: [
+                                EmbedBuilder.from(reply.embeds[0])
+                                    .setColor(0xff0000)
+                                    .setTitle('Unban Cancellation')
+                                    .setDescription(`Cancelled the unban for ${bold(user.tag)} (${inlineCode(user.id)}).`)
+                                    .setAuthor(null)
+                                    .setFields([])
+                            ]
                         })
-                        await button.reply('Unban cancelled.')
+                        interaction.followUp('You cancelled the unban.')
                     }
                 })
-                    if (isUserBlacklisted) {
-                        await btn.reply({
-                            embeds: [
-                                new EmbedBuilder()
-                                .setTitle(underscore('You are blacklisted from using this bot.'))
-                                .setDescription(`⛔ **You are not allowed to use the bot, or interact with its commands or message components.**`)
-                                .setColor(0x000000)
-                            ]
-                        })
-                        return false
-                    }
-
-                    if (btn.user.id !== interaction.user.id) {
-                        await btn.reply({
-                            content: 'What do you think you\'re doing, you\'re not allowed to use these buttons!',
-                            ephemeral: true
-                        })
-                        return false
-                    } else if (btn.customId !== 'yes' && btn.customId !== 'no') return false
-
-                    return true
-                }
-                time: 120000
-            })
-
-            confirmationCollector.on('collect', async (button): Promise<any> => {
-                if (button.customId === 'yes') {
-                    const original = await interaction.fetchReply()
-                    yesButton.setDisabled(true)
-                    noButton.setDisabled(true)
-                    original.edit({
-                        embeds: [
-                            EmbedBuilder.from(reply.embeds[0])
-                            .setColor(0x00ff00)
-                            .setTitle('Successful Unban')
-                            .setDescription(`Successfully unbanned ${
-                                bold(user.tag)
-                            } (${inlineCode(user.id)}) ${
-                                reason
-                                ? `with reason ${bold(reason)}`
-                                : 'without a reason'
-                            }.`)
-                        ],
-                        components: []
-                    })
-                    
-                    // Unban the user
-                    user.send({
-                        embeds: [
-                            new EmbedBuilder()
-                            .setColor(0x00ff00)
-                            .setTitle('Unban')
-                            .setDescription(`Your ban has been removed in ${bold(interaction.guild.name)}.`)
-                            .addFields([
-                                {
-                                    name: 'Reason',
-                                    value: reason
-                                        ? reason
-                                        : italic(inlineCode('No reason provided'))
-                                }
-                            ])
-                        ]
-                    })
-                    .then(async () => {
-                        await button.reply({
-                            content: 'Unban successful. Member has been messaged.',
-                            embeds: [
-                                EmbedBuilder.from(reply.embeds[0])
-                                .setColor(0x00ff00)
-                                .setTitle('Unban Successful')
-                                .setDescription(`Successfully unbanned ${
-                                    bold(user.tag)
-                                } (${inlineCode(user.id)}) from ${
-                                    bold(interaction.guild.name)  
-                                } ${
-                                    reason
-                                    ? `with reason ${bold(reason)}`
-                                    : 'without a reason'
-                                }.`)
-                                .setFooter(
-                                    Math.random() < 0.1
-                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                    : null
-                                )
-                                .setAuthor(null)
-                                .setFields([])
-                            ]
-                        })
-                    })
-                    .catch(async () => {
-                        await button.reply({
-                            content: 'Unban removal successful. Couldn\'t send the member a message.',
-                            embeds: [
-                                EmbedBuilder.from(reply.embeds[0])
-                                .setColor(0x00ff00)
-                                .setTitle('Unban Successful')
-                                .setDescription(`Successfully unbanned ${
-                                    bold(user.tag)
-                                } (${inlineCode(user.id)}) from ${
-                                    bold(interaction.guild.name)
-                                } ${
-                                    reason
-                                    ? `with reason ${bold(reason)}`
-                                    : 'without a reason'
-                                }.`)
-                                .setFooter(
-                                    Math.random() < 0.1
-                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                    : null
-                                )
-                                .setAuthor(null)
-                                .setFields([])
-                            ]
-                        })
-                    })
-                    .finally(async () => {
-                        await interaction.guild.members.unban(user, `Unbanned by ${
-                                interaction.user.tag
-                            } (${
-                                interaction.user.id
-                            }) ${
-                                reason 
-                                ? `with reason ${reason}` 
-                                : 'without a reason'
-                            }.`
-                        )
-                    })
-                } else {
-                    const original = await interaction.fetchReply()
-                    yesButton.setDisabled(true)
-                    noButton.setDisabled(true)
-                    original.edit({
-                        components: [ confirmationRow ],
-                        embeds: [
-                            EmbedBuilder.from(reply.embeds[0])
-                            .setColor(0xff0000)
-                            .setTitle('Unban Cancellation')
-                            .setDescription(`Cancelled the unban for ${bold(user.tag)} (${inlineCode(user.id)}).`)
-                            .setAuthor(null)
-                            .setFields([])
-                            .setFooter(
-                                Math.random() < 0.1
-                                ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                : null
-                            )
-                        ]
-                    })
-                    interaction.followUp('You cancelled the unban.')
-                }
-            })
 
                 confirmationCollector.on('end', async (collected): Promise<any> => {
                     if (!collected.size) {
@@ -676,18 +917,18 @@ const banCommand: Cmd = {
                                             .setURL('https://discord.gg/6tkn6m5g52'),
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ] : [
                                 new ActionRowBuilder<ButtonBuilder>()
                                     .addComponents(
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ]
                         })
@@ -883,6 +1124,33 @@ const banCommand: Cmd = {
             })
 
             if (skipConfirmation) {
+                const refCases = interaction.options.getString('referenceCases')
+                    ? await Promise.all(interaction.options
+                        .getString('referenceCases', true)
+                        .split(/\D+/g)
+                        .map(n => Number(n))
+                        .filter(async (n) => !isNaN(n) && isFinite(n) && await CaseSystem.findOne({ where: { id: n } })))
+                    : []
+
+                const punishment = await CaseSystem.create({
+                    guild: interaction.guild.id,
+                    moderator: interaction.user.id,
+                    user: user.id,
+                    reason: reason ?? '',
+                    edited: false,
+                    type: PunishmentTypes.BAN,
+                    referenceCases: refCases,
+                    DMMessage: {
+                        channelId: '',
+                        messageId: ''
+                    },
+                    modLogMessage: {
+                        channelId: '',
+                        messageId: ''
+                    },
+                    id: 0
+                })
+
                 await interaction.reply({
                     embeds: [
                         new EmbedBuilder()
@@ -897,11 +1165,12 @@ const banCommand: Cmd = {
                                     : bold(`${inlineCode(days === 7 ? '1 week' : pluralise(days, 'day'))} of message history`)
                                 }. ${italic('Confirmation has been skipped.')
                                 }`)
-                            .setFooter(
-                                Math.random() < 0.1
-                                    ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                    : null
-                            )
+                            .setFooter({
+                                text: `Case ${punishment.id}${Math.random() < 0.1
+                                    ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                    : ''
+                                    }`
+                            })
                     ],
                     components: interaction.guild.id !== '1000073833551769600' ? [
                         new ActionRowBuilder<ButtonBuilder>()
@@ -913,30 +1182,20 @@ const banCommand: Cmd = {
                                     .setURL('https://discord.gg/6tkn6m5g52'),
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ] : [
                         new ActionRowBuilder<ButtonBuilder>()
                             .addComponents(
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ]
-                })
-
-                // @ts-ignore
-                const punishment = await CaseSystem.create({
-                    user: user.id,
-                    moderator: interaction.user.id,
-                    type: WarningTypes.BAN,
-                    reason: reason || '',
-                    guild: interaction.guild.id,
-                    edited: false
                 })
 
                 // Directly message the user (if possible) and reply, if it doesn't work the bot will inform, and ban anyways
@@ -954,9 +1213,19 @@ const banCommand: Cmd = {
                                         : italic(inlineCode('No reason provided'))
                                 }
                             ])
-                            .setFooter({ text: `Case ${punishment.id}` })
+                            .setFooter({
+                                text: `Case ${punishment.id}`
+                            })
                     ]
                 })
+                    .then(async (DMMsg) => {
+                        await punishment.update({
+                            DMMessage: {
+                                channelId: DMMsg.channel.id,
+                                messageId: DMMsg.id
+                            }
+                        })
+                    })
                     .finally(async () => {
                         await interaction.guild.members.ban(user, {
                             reason: `Banned by ${interaction.user.tag
@@ -970,6 +1239,59 @@ const banCommand: Cmd = {
                                 }.`
                             , deleteMessageDays: days
                         })
+                        if (interaction.guild.id !== '786984851014025286') return
+                        try {
+                            const channel = interaction.client.channels.cache.get('1046386065570799656') as unknown as TextChannel
+                            if (!channel) return
+                            channel.send({
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setColor(0xff0000)
+                                        .setTitle('Ban')
+                                        .setAuthor({
+                                            iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
+                                            name: interaction.member.nickname
+                                                ? `${interaction.member.nickname} (${interaction.member.user.tag}) (${interaction.member.id})`
+                                                : `${interaction.member.user.tag} (${interaction.member.id})`
+                                        })
+                                        .setThumbnail(user.displayAvatarURL({ forceStatic: false }))
+                                        .setDescription(`**User** ${user.tag} (${user.id})\n**Reason** ${reason ?? '*`No reason provided`*'}${(await Promise.all(punishment.referenceCases.filter(async (caseNum) => await CaseSystem.findOne({ where: { id: caseNum } })))).filter(notEmpty).length
+                                            ? `**Reference Cases** ${commaList(
+                                                (await Promise.all(punishment.referenceCases.map(async (caseNum) => {
+                                                    const fetchedPunishment = await CaseSystem.findOne({
+                                                        where: {
+                                                            id: caseNum
+                                                        }
+                                                    })
+                                                    return fetchedPunishment ? (
+                                                        fetchedPunishment.modLogMessage.channelId && fetchedPunishment.modLogMessage.messageId
+                                                            ? `[${caseNum}](https://discord.com/messages/${fetchedPunishment.guild}/${fetchedPunishment.modLogMessage.channelId}/${fetchedPunishment.modLogMessage.messageId})`
+                                                            : String(fetchedPunishment.id)
+                                                    ) : undefined
+                                                })))
+                                                    .filter(notEmpty)
+                                            )}`
+                                            : ''
+                                            }`)
+                                        .setFooter({
+                                            text: `Case ${punishment.id}`
+                                        })
+                                ]
+                            })
+                                .then(async (modLogMsg) => {
+                                    await punishment.update({
+                                        modLogMessage: {
+                                            channelId: modLogMsg.channel.id,
+                                            messageId: modLogMsg.id
+                                        }
+                                    })
+                                })
+                                .catch(() => {
+                                    return
+                                })
+                        } catch {
+                            return
+                        }
                     })
             } else {
                 const [
@@ -1022,9 +1344,9 @@ const banCommand: Cmd = {
                                     .setURL('https://discord.gg/6tkn6m5g52'),
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ] : [
                         confirmationRow,
@@ -1032,15 +1354,15 @@ const banCommand: Cmd = {
                             .addComponents(
                                 new ButtonBuilder()
                                     .setEmoji('⚠')
-                                    .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                    .setLabel('ZBot New Year\'s Updates')
                                     .setStyle(ButtonStyle.Link)
-                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                    .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                             )
                     ],
-                fetchReply: true
+                    fetchReply: true
                 })
 
-                const confirmationCollector = (await interaction.fetchReply()).createMessageComponentCollector({
+                const confirmationCollector = reply.createMessageComponentCollector({
                     componentType: ComponentType.Button,
                     time: 120000
                 })
@@ -1054,6 +1376,33 @@ const banCommand: Cmd = {
                         })
                     }
                     if (button.customId === 'yes') {
+                        const refCases = interaction.options.getString('referenceCases')
+                            ? await Promise.all(interaction.options
+                                .getString('referenceCases', true)
+                                .split(/\D+/g)
+                                .map(n => Number(n))
+                                .filter(async (n) => !isNaN(n) && isFinite(n) && await CaseSystem.findOne({ where: { id: n } })))
+                            : []
+
+                        const punishment = await CaseSystem.create({
+                            guild: interaction.guild.id,
+                            moderator: interaction.user.id,
+                            user: user.id,
+                            reason: reason ?? '',
+                            edited: false,
+                            type: PunishmentTypes.BAN,
+                            referenceCases: refCases,
+                            DMMessage: {
+                                channelId: '',
+                                messageId: ''
+                            },
+                            modLogMessage: {
+                                channelId: '',
+                                messageId: ''
+                            },
+                            id: 0
+                        })
+
                         const original = await interaction.fetchReply()
                         yesButton.setDisabled(true)
                         noButton.setDisabled(true)
@@ -1070,11 +1419,12 @@ const banCommand: Cmd = {
                                             ? bold('no message history')
                                             : bold(`${inlineCode(days === 7 ? '1 week' : pluralise(days, 'day'))} of message history`)
                                         }.`)
-                                    .setFooter(
-                                        Math.random() < 0.1
-                                            ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                            : null
-                                    )
+                                    .setFooter({
+                                        text: `Case ${punishment.id}${Math.random() < 0.1
+                                            ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                            : ''
+                                            }`
+                                    })
                             ],
                             components: interaction.guild.id !== '1000073833551769600' ? [
                                 new ActionRowBuilder<ButtonBuilder>()
@@ -1086,30 +1436,20 @@ const banCommand: Cmd = {
                                             .setURL('https://discord.gg/6tkn6m5g52'),
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ] : [
                                 new ActionRowBuilder<ButtonBuilder>()
                                     .addComponents(
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ]
-                        })
-
-                        // @ts-ignore
-                        const punishment = await CaseSystem.create({
-                            user: user.id,
-                            moderator: interaction.user.id,
-                            type: WarningTypes.BAN,
-                            reason: reason || '',
-                            guild: interaction.guild.id,
-                            edited: false
                         })
 
                         // Directly message the user (if possible) and reply, if it doesn't work the bot will inform, and ban anyways
@@ -1127,14 +1467,28 @@ const banCommand: Cmd = {
                                                 : italic(inlineCode('No reason provided'))
                                         }
                                     ])
-                                    .setFooter({ text: `Case ${punishment.id}` })
+                                    .setFooter({
+                                        text: `Case ${punishment.id}`
+                                    })
                             ]
                         })
-                            .then(async () => {
+                            .then(async (DMMsg) => {
                                 await button.reply('Ban successful. Member has been messaged.')
+                                await punishment.update({
+                                    DMMessage: {
+                                        channelId: DMMsg.channel.id,
+                                        messageId: DMMsg.id
+                                    }
+                                })
                             })
-                            .catch(async () => {
+                            .catch(async (DMMsg) => {
                                 await button.reply('Ban successful. Couldn\'t send the member a message.')
+                                await punishment.update({
+                                    DMMessage: {
+                                        channelId: DMMsg.channel.id,
+                                        messageId: DMMsg.id
+                                    }
+                                })
                             })
                             .finally(async () => {
                                 await interaction.guild.members.ban(user, {
@@ -1149,6 +1503,59 @@ const banCommand: Cmd = {
                                         }.`
                                     , deleteMessageDays: days
                                 })
+                                if (interaction.guild.id !== '786984851014025286') return
+                                try {
+                                    const channel = interaction.client.channels.cache.get('1046386065570799656') as unknown as TextChannel
+                                    if (!channel) return
+                                    channel.send({
+                                        embeds: [
+                                            new EmbedBuilder()
+                                                .setColor(0xff0000)
+                                                .setTitle('Ban')
+                                                .setAuthor({
+                                                    iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
+                                                    name: interaction.member.nickname
+                                                        ? `${interaction.member.nickname} (${interaction.member.user.tag}) (${interaction.member.id})`
+                                                        : `${interaction.member.user.tag} (${interaction.member.id})`
+                                                })
+                                                .setThumbnail(user.displayAvatarURL({ forceStatic: false }))
+                                                .setDescription(`**User** ${user.tag} (${user.id})\n**Reason** ${reason ?? '*`No reason provided`*'}${(await Promise.all(punishment.referenceCases.filter(async (caseNum) => await CaseSystem.findOne({ where: { id: caseNum } })))).filter(notEmpty).length
+                                                    ? `**Reference Cases** ${commaList(
+                                                        (await Promise.all(punishment.referenceCases.map(async (caseNum) => {
+                                                            const fetchedPunishment = await CaseSystem.findOne({
+                                                                where: {
+                                                                    id: caseNum
+                                                                }
+                                                            })
+                                                            return fetchedPunishment ? (
+                                                                fetchedPunishment.modLogMessage.channelId && fetchedPunishment.modLogMessage.messageId
+                                                                    ? `[${caseNum}](https://discord.com/messages/${fetchedPunishment.guild}/${fetchedPunishment.modLogMessage.channelId}/${fetchedPunishment.modLogMessage.messageId})`
+                                                                    : String(fetchedPunishment.id)
+                                                            ) : undefined
+                                                        })))
+                                                            .filter(notEmpty)
+                                                    )}`
+                                                    : ''
+                                                    }`)
+                                                .setFooter({
+                                                    text: `Case ${punishment.id}`
+                                                })
+                                        ]
+                                    })
+                                        .then(async (modLogMsg) => {
+                                            await punishment.update({
+                                                modLogMessage: {
+                                                    channelId: modLogMsg.channel.id,
+                                                    messageId: modLogMsg.id
+                                                }
+                                            })
+                                        })
+                                        .catch(() => {
+                                            return
+                                        })
+                                } catch {
+                                    return
+                                }
                             })
                     } else {
                         const original = await interaction.fetchReply()
@@ -1163,18 +1570,18 @@ const banCommand: Cmd = {
                                             .setURL('https://discord.gg/6tkn6m5g52'),
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ] : [
                                 new ActionRowBuilder<ButtonBuilder>()
                                     .addComponents(
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ],
                             embeds: [],
@@ -1207,18 +1614,18 @@ const banCommand: Cmd = {
                                             .setURL('https://discord.gg/6tkn6m5g52'),
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ] : [
                                 new ActionRowBuilder<ButtonBuilder>()
                                     .addComponents(
                                         new ButtonBuilder()
                                             .setEmoji('⚠')
-                                            .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                            .setLabel('ZBot New Year\'s Updates')
                                             .setStyle(ButtonStyle.Link)
-                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                            .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                     )
                             ]
                         })
@@ -1228,6 +1635,10 @@ const banCommand: Cmd = {
             }
         }
     }
+}
+
+function notEmpty<T>(value: T | null | undefined): value is T {
+    return value !== null && value !== undefined
 }
 
 export { banCommand }
