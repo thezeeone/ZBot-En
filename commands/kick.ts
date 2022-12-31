@@ -1,5 +1,5 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, time } from "discord.js"
-import { WarningTypes } from "../database"
+import { ActionRowBuilder, ApplicationCommandOptionType, bold, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, GuildMember, inlineCode, italic, PermissionsBitField, TextChannel, time } from "discord.js"
+import { CaseSystem, PunishmentTypes } from "../database"
 import { commaList, ordinalNumber, pluralise } from "../util"
 import { Cmd, tipsAndTricks } from "./command-exports"
 
@@ -17,6 +17,12 @@ const kickCommand: Cmd = {
             {
                 name: 'reason',
                 description: 'The reason for kicking this member',
+                type: ApplicationCommandOptionType.String,
+                required: false
+            },
+            {
+                name: 'referenceCases',
+                description: 'Cases to make a reference to (list of numbers)',
                 type: ApplicationCommandOptionType.String,
                 required: false
             },
@@ -47,7 +53,7 @@ const kickCommand: Cmd = {
                     })
                     .setTitle(`Member not found`)
                     .setDescription(`Couldn't find that member.`)
-                    .setColor(0xff0000)
+                    .setColor(0xff8800)
             ],
             ephemeral: true
         })
@@ -107,7 +113,7 @@ const kickCommand: Cmd = {
                                 }`
                             )
                             }.`)
-                        .setColor(0xff0000)
+                        .setColor(0xff8800)
                 ],
                 ephemeral: true
             })
@@ -146,7 +152,7 @@ const kickCommand: Cmd = {
                                     : bold(`${inlineCode(ordinalNumber(numRoles - memberRolePos))
                                         } highest role`)
                                 }).`)
-                            .setColor(0xff0000)
+                            .setColor(0xff8800)
                     ],
                     ephemeral: true
                 })
@@ -180,7 +186,7 @@ const kickCommand: Cmd = {
                                     : bold(`${inlineCode(ordinalNumber(numRoles - memberRolePos))
                                         } highest role`)
                                 }).`)
-                            .setColor(0xff0000)
+                            .setColor(0xff8800)
                     ],
                     ephemeral: true
                 })
@@ -199,30 +205,58 @@ const kickCommand: Cmd = {
                     })
                     .setTitle(`Member unkickable`)
                     .setDescription(`Member unkickable.\nCannot kick this member, reason unknown.`)
-                    .setColor(0xff0000)
+                    .setColor(0xff8800)
             ],
             ephemeral: true
         })
 
         if (skipConfirmation) {
+            const refCases = interaction.options.getString('referenceCases')
+                ? await Promise.all(interaction.options
+                    .getString('referenceCases', true)
+                    .split(/\D+/g)
+                    .map(n => Number(n))
+                    .filter(async (n) => !isNaN(n) && isFinite(n) && await CaseSystem.findOne({ where: { id: n } })))
+                : []
+
+            const punishment = await CaseSystem.create({
+                guild: interaction.guild.id,
+                moderator: interaction.user.id,
+                user: member.id,
+                reason: reason ?? '',
+                edited: false,
+                type: PunishmentTypes.KICK,
+                referenceCases: refCases,
+                DMMessage: {
+                    channelId: '',
+                    messageId: ''
+                },
+                modLogMessage: {
+                    channelId: '',
+                    messageId: ''
+                },
+                id: 0
+            })
+
             await interaction.reply({
                 embeds: [
                     new EmbedBuilder()
                         .setColor(0x00ff00)
                         .setTitle('Kick Successful')
                         .setDescription(`Successfully kicked ${member.nickname
-                                ? `${bold(member.nickname)} (${bold(member.user.tag)})`
-                                : bold(member.user.tag)
+                            ? `${bold(member.nickname)} (${bold(member.user.tag)})`
+                            : bold(member.user.tag)
                             } (${inlineCode(member.user.id)}) ${reason
                                 ? `with reason ${bold(reason)}`
                                 : 'without a reason'
                             }. ${italic('Confirmation has been skipped.')
                             }`)
-                        .setFooter(
-                            Math.random() < 0.1
-                                ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                : null
-                        )
+                        .setFooter({
+                            text: `Case ${punishment.id}${Math.random() < 0.1
+                                ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                : ''
+                                }`
+                        })
                 ],
                 components: interaction.guild.id !== '1000073833551769600' ? [
                     new ActionRowBuilder<ButtonBuilder>()
@@ -234,37 +268,27 @@ const kickCommand: Cmd = {
                                 .setURL('https://discord.gg/6tkn6m5g52'),
                             new ButtonBuilder()
                                 .setEmoji('⚠')
-                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setLabel('ZBot New Year\'s Updates')
                                 .setStyle(ButtonStyle.Link)
-                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                         )
                 ] : [
                     new ActionRowBuilder<ButtonBuilder>()
                         .addComponents(
                             new ButtonBuilder()
                                 .setEmoji('⚠')
-                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setLabel('ZBot New Year\'s Updates')
                                 .setStyle(ButtonStyle.Link)
-                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                         )
                 ]
-            })
-
-            // @ts-ignore
-            const punishment = await CaseSystem.create({
-                user: member.id,
-                moderator: interaction.user.id,
-                type: WarningTypes.KICK,
-                reason: reason || '',
-                guild: interaction.guild.id,
-                edited: false
             })
 
             // Directly message the member and reply, if it doesn't work the bot will inform, and kick anyways
             member.send({
                 embeds: [
                     new EmbedBuilder()
-                        .setColor(0xff7700)
+                        .setColor(0xff8800)
                         .setTitle('Kick')
                         .setDescription(`You have been kicked from ${bold(interaction.guild.name)}.`)
                         .addFields([
@@ -275,17 +299,84 @@ const kickCommand: Cmd = {
                                     : italic(inlineCode('No reason provided'))
                             }
                         ])
-                        .setFooter({ text: `Case ${punishment.id}` })
+                        .setFooter({
+                            text: `Case ${punishment.id}`
+                        })
                 ]
             })
+                .then(async (DMMsg) => {
+                    await punishment.update({
+                        DMMessage: {
+                            channelId: DMMsg.channel.id,
+                            messageId: DMMsg.id
+                        }
+                    })
+                })
+                .catch(() => {
+                    return
+                })
                 .finally(async () => {
-                    await member.kick(`Kicked by ${interaction.user.tag
-                        } (${interaction.user.id
-                        }) ${reason
-                            ? `with reason ${reason}`
-                            : 'without a reason'
+                    await member.kick(`Kicked by ${interaction.user.tag} (${interaction.user.id}) ${reason
+                        ? `with reason ${reason}`
+                        : 'without a reason'
                         }.`
                     )
+                    if (interaction.guild.id !== '786984851014025286') return
+                    try {
+                        const channel = interaction.client.channels.cache.get('1046386065570799656') as unknown as TextChannel
+                        if (!channel) return
+                        channel.send({
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setColor(0xff8800)
+                                    .setTitle('Kick')
+                                    .setAuthor({
+                                        iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
+                                        name: interaction.member.nickname
+                                            ? `${interaction.member.nickname} (${interaction.member.user.tag}) (${interaction.member.id})`
+                                            : `${interaction.member.user.tag} (${interaction.member.id})`
+                                    })
+                                    .setThumbnail(member.user.displayAvatarURL({ forceStatic: false }))
+                                    .setDescription(`**Member** ${member.nickname
+                                        ? `${member.nickname} (${member.user.tag}) (${member.id})`
+                                        : `${member.user.tag} (${member.id})`
+                                        }\n**Reason** ${reason ?? '*`No reason provided`*'}${(await Promise.all(punishment.referenceCases.filter(async (caseNum) => await CaseSystem.findOne({ where: { id: caseNum } })))).filter(notEmpty).length
+                                            ? `**Reference Cases** ${commaList(
+                                                (await Promise.all(punishment.referenceCases.map(async (caseNum) => {
+                                                    const fetchedPunishment = await CaseSystem.findOne({
+                                                        where: {
+                                                            id: caseNum
+                                                        }
+                                                    })
+                                                    return fetchedPunishment ? (
+                                                        fetchedPunishment.modLogMessage.channelId && fetchedPunishment.modLogMessage.messageId
+                                                            ? `[${caseNum}](https://discord.com/messages/${fetchedPunishment.guild}/${fetchedPunishment.modLogMessage.channelId}/${fetchedPunishment.modLogMessage.messageId})`
+                                                            : String(fetchedPunishment.id)
+                                                    ) : undefined
+                                                })))
+                                                    .filter(notEmpty)
+                                            )}`
+                                            : ''
+                                        }`)
+                                    .setFooter({
+                                        text: `Case ${punishment.id}`
+                                    })
+                            ]
+                        })
+                            .then(async (modLogMsg) => {
+                                await punishment.update({
+                                    modLogMessage: {
+                                        channelId: modLogMsg.channel.id,
+                                        messageId: modLogMsg.id
+                                    }
+                                })
+                            })
+                            .catch(() => {
+                                return
+                            })
+                    } catch {
+                        return
+                    }
                 })
         } else {
             const [
@@ -314,8 +405,8 @@ const kickCommand: Cmd = {
                         })
                         .setTitle('Confirm Kick')
                         .setDescription(`Are you sure you would like to kick ${member.nickname
-                                ? `${bold(member.nickname)} (${bold(member.user.tag)})`
-                                : bold(member.user.tag)
+                            ? `${bold(member.nickname)} (${bold(member.user.tag)})`
+                            : bold(member.user.tag)
                             } (${inlineCode(member.user.id)})?\n\n${italic(`A response is required ${time(Math.floor(Date.now() / 1000) + 121, 'R')
                                 }.`)
                             }`)
@@ -341,9 +432,9 @@ const kickCommand: Cmd = {
                                 .setURL('https://discord.gg/6tkn6m5g52'),
                             new ButtonBuilder()
                                 .setEmoji('⚠')
-                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setLabel('ZBot New Year\'s Updates')
                                 .setStyle(ButtonStyle.Link)
-                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                         )
                 ] : [
                     confirmationRow,
@@ -351,9 +442,9 @@ const kickCommand: Cmd = {
                         .addComponents(
                             new ButtonBuilder()
                                 .setEmoji('⚠')
-                                .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                .setLabel('ZBot New Year\'s Updates')
                                 .setStyle(ButtonStyle.Link)
-                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                         )
                 ]
             })
@@ -373,6 +464,33 @@ const kickCommand: Cmd = {
                     })
                 }
                 if (button.customId === 'yes') {
+                    const refCases = interaction.options.getString('referenceCases')
+                        ? await Promise.all(interaction.options
+                            .getString('referenceCases', true)
+                            .split(/\D+/g)
+                            .map(n => Number(n))
+                            .filter(async (n) => !isNaN(n) && isFinite(n) && await CaseSystem.findOne({ where: { id: n } })))
+                        : []
+
+                    const punishment = await CaseSystem.create({
+                        guild: interaction.guild.id,
+                        moderator: interaction.user.id,
+                        user: member.id,
+                        reason: reason ?? '',
+                        edited: false,
+                        type: PunishmentTypes.KICK,
+                        referenceCases: refCases,
+                        DMMessage: {
+                            channelId: '',
+                            messageId: ''
+                        },
+                        modLogMessage: {
+                            channelId: '',
+                            messageId: ''
+                        },
+                        id: 0
+                    })
+
                     const original = await interaction.fetchReply()
                     yesButton.setDisabled(true)
                     noButton.setDisabled(true)
@@ -382,17 +500,18 @@ const kickCommand: Cmd = {
                                 .setColor(0x00ff00)
                                 .setTitle('Kick Successful')
                                 .setDescription(`Successfully kicked ${member.nickname
-                                        ? `${bold(member.nickname)} (${bold(member.user.tag)})`
-                                        : bold(member.user.tag)
+                                    ? `${bold(member.nickname)} (${bold(member.user.tag)})`
+                                    : bold(member.user.tag)
                                     } (${inlineCode(member.user.id)}) ${reason
                                         ? `with reason ${bold(reason)}`
                                         : 'without a reason'
                                     }.`)
-                                .setFooter(
-                                    Math.random() < 0.1
-                                        ? { text: `💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}` }
-                                        : null
-                                )
+                                .setFooter({
+                                    text: `Case ${punishment.id}${Math.random() < 0.1
+                                        ? ` • 💡 Did you know? ${tipsAndTricks[Math.floor(Math.random() * tipsAndTricks.length)]}`
+                                        : ''
+                                        }`
+                                })
                         ],
                         components: interaction.guild.id !== '1000073833551769600' ? [
                             new ActionRowBuilder<ButtonBuilder>()
@@ -404,37 +523,27 @@ const kickCommand: Cmd = {
                                         .setURL('https://discord.gg/6tkn6m5g52'),
                                     new ButtonBuilder()
                                         .setEmoji('⚠')
-                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setLabel('ZBot New Year\'s Updates')
                                         .setStyle(ButtonStyle.Link)
-                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                 )
                         ] : [
                             new ActionRowBuilder<ButtonBuilder>()
                                 .addComponents(
                                     new ButtonBuilder()
                                         .setEmoji('⚠')
-                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setLabel('ZBot New Year\'s Updates')
                                         .setStyle(ButtonStyle.Link)
-                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                 )
                         ]
-                    })
-
-                    // @ts-ignore
-                    const punishment = await CaseSystem.create({
-                        user: member.id,
-                        moderator: interaction.user.id,
-                        type: WarningTypes.KICK,
-                        reason: reason || '',
-                        guild: interaction.guild.id,
-                        edited: false
                     })
 
                     // Directly message the member and reply, if it doesn't work the bot will inform, and kick anyways
                     member.send({
                         embeds: [
                             new EmbedBuilder()
-                                .setColor(0xff7700)
+                                .setColor(0xff8800)
                                 .setTitle('Kick')
                                 .setDescription(`You have been kicked from ${bold(interaction.guild.name)}.`)
                                 .addFields([
@@ -445,30 +554,92 @@ const kickCommand: Cmd = {
                                             : italic(inlineCode('No reason provided'))
                                     }
                                 ])
-                                .setFooter({ text: `Case ${punishment.id}` })
+                                .setFooter({
+                                    text: `Case ${punishment.id}`
+                                })
                         ]
                     })
-                        .then(async () => {
+                        .then(async (DMMsg) => {
                             await button.reply('Kick successful. Member has been messaged.')
+                            await punishment.update({
+                                DMMessage: {
+                                    channelId: DMMsg.channel.id,
+                                    messageId: DMMsg.id
+                                }
+                            })
                         })
                         .catch(async () => {
                             await button.reply('Kick successful. Couldn\'t send the member a message.')
+                            return
                         })
                         .finally(async () => {
-                            await member.kick(`Kicked by ${interaction.user.tag
-                                } (${interaction.user.id
-                                }) ${reason
-                                    ? `with reason ${reason}`
-                                    : 'without a reason'
-                                }.`
-                            )
+                            await member.kick(`Kicked by ${interaction.user.tag} (${interaction.user.id}) ${reason
+                                ? `with reason ${reason}`
+                                : 'without a reason'
+                                }.`)
+                            if (interaction.guild.id !== '786984851014025286') return
+                            try {
+                                const channel = interaction.client.channels.cache.get('1046386065570799656') as unknown as TextChannel
+                                if (!channel) return
+                                channel.send({
+                                    embeds: [
+                                        new EmbedBuilder()
+                                            .setColor(0xff8800)
+                                            .setTitle('Kick')
+                                            .setAuthor({
+                                                iconURL: interaction.user.displayAvatarURL({ forceStatic: false }),
+                                                name: interaction.member.nickname
+                                                    ? `${interaction.member.nickname} (${interaction.member.user.tag}) (${interaction.member.id})`
+                                                    : `${interaction.member.user.tag} (${interaction.member.id})`
+                                            })
+                                            .setThumbnail(member.user.displayAvatarURL({ forceStatic: false }))
+                                            .setDescription(`**Member** ${member.nickname
+                                                ? `${member.nickname} (${member.user.tag}) (${member.id})`
+                                                : `${member.user.tag} (${member.id})`
+                                                }\n**Reason** ${reason ?? '*`No reason provided`*'}${(await Promise.all(punishment.referenceCases.filter(async (caseNum) => await CaseSystem.findOne({ where: { id: caseNum } })))).filter(notEmpty).length
+                                                    ? `**Reference Cases** ${commaList(
+                                                        (await Promise.all(punishment.referenceCases.map(async (caseNum) => {
+                                                            const fetchedPunishment = await CaseSystem.findOne({
+                                                                where: {
+                                                                    id: caseNum
+                                                                }
+                                                            })
+                                                            return fetchedPunishment ? (
+                                                                fetchedPunishment.modLogMessage.channelId && fetchedPunishment.modLogMessage.messageId
+                                                                    ? `[${caseNum}](https://discord.com/messages/${fetchedPunishment.guild}/${fetchedPunishment.modLogMessage.channelId}/${fetchedPunishment.modLogMessage.messageId})`
+                                                                    : String(fetchedPunishment.id)
+                                                            ) : undefined
+                                                        })))
+                                                            .filter(notEmpty)
+                                                    )}`
+                                                    : ''
+                                                }`)
+                                            .setFooter({
+                                                text: `Case ${punishment.id}`
+                                            })
+                                    ]
+                                })
+                                    .then(async (modLogMsg) => {
+                                        await punishment.update({
+                                            modLogMessage: {
+                                                channelId: modLogMsg.channel.id,
+                                                messageId: modLogMsg.id
+                                            }
+                                        })
+                                    })
+                                    .catch(() => {
+                                        return
+                                    })
+                            } catch {
+                                return
+                            }
                         })
                 } else {
                     const original = await interaction.fetchReply()
                     original.edit({
                         content: `Cancelled the kick for ${member.nickname
-                                ? `${bold(member.nickname)} (${bold(member.user.tag)})`
-                                : bold(member.user.tag)
+                            ? `${bold(member.nickname)} (${bold(member.user.tag)})`
+                            : bold(member.user.tag)
                             } (${inlineCode(member.user.id)}).`,
                         embeds: [],
                         components: interaction.guild.id !== '1000073833551769600' ? [
@@ -481,18 +652,18 @@ const kickCommand: Cmd = {
                                         .setURL('https://discord.gg/6tkn6m5g52'),
                                     new ButtonBuilder()
                                         .setEmoji('⚠')
-                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setLabel('ZBot New Year\'s Updates')
                                         .setStyle(ButtonStyle.Link)
-                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                 )
                         ] : [
                             new ActionRowBuilder<ButtonBuilder>()
                                 .addComponents(
                                     new ButtonBuilder()
                                         .setEmoji('⚠')
-                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setLabel('ZBot New Year\'s Updates')
                                         .setStyle(ButtonStyle.Link)
-                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                 )
                         ]
                     })
@@ -507,7 +678,7 @@ const kickCommand: Cmd = {
                     original.edit({
                         embeds: [
                             EmbedBuilder.from((await interaction.fetchReply()).embeds[0])
-                                .setColor(0xff0000)
+                                .setColor(0xff8800)
                                 .setTitle('Kick Cancellation')
                                 .setDescription('A response wasn\'t received in time.')
                                 .setAuthor(null)
@@ -523,18 +694,18 @@ const kickCommand: Cmd = {
                                         .setURL('https://discord.gg/6tkn6m5g52'),
                                     new ButtonBuilder()
                                         .setEmoji('⚠')
-                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setLabel('ZBot New Year\'s Updates')
                                         .setStyle(ButtonStyle.Link)
-                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                 )
                         ] : [
                             new ActionRowBuilder<ButtonBuilder>()
                                 .addComponents(
                                     new ButtonBuilder()
                                         .setEmoji('⚠')
-                                        .setLabel('Breaking Changes coming to PSWMEs, Case System, Rank Cards, and Sudoku')
+                                        .setLabel('ZBot New Year\'s Updates')
                                         .setStyle(ButtonStyle.Link)
-                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1042885833235103804')
+                                        .setURL('https://discord.com/channels/1000073833551769600/1010853170328633394/1057250247014879273')
                                 )
                         ]
                     })
@@ -547,4 +718,10 @@ const kickCommand: Cmd = {
     }
 }
 
-export { kickCommand }
+function notEmpty<T>(value: T | null | undefined): value is T {
+    return value !== null && value !== undefined
+}
+
+export {
+    kickCommand
+}
